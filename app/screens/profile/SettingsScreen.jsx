@@ -1,11 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
-  Modal,
   TouchableOpacity,
-  Image,
-  Pressable,
   ActivityIndicator,
   ScrollView,
   Alert,
@@ -14,22 +11,21 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useAuthStore } from "../../store/authStore";
 import { useLogoutUser } from "../../hooks/useAuth";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import ReusableBottomSheet from "../../components/Ui/ReusableBottomSheet";
+import { LinearGradient } from 'expo-linear-gradient';
+import { Feather, MaterialCommunityIcons, MaterialIcons, Ionicons, FontAwesome, AntDesign, FontAwesome6 } from '@expo/vector-icons';
 
 const SettingsScreen = () => {
   const navigation = useNavigation();
   const { user } = useAuthStore();
-  const logoutUser = useLogoutUser();
-  const [modalVisible, setModalVisible] = useState(false);
+ const logoutUser = useLogoutUser();
+  const [pressedAction, setPressedAction] = useState(null);
+  const signOutBottomSheetRef = useRef(null);
 
   const handleLogout = () => {
     logoutUser.mutate(null, {
       onSuccess: () => {
-        setModalVisible(false);
+        signOutBottomSheetRef.current?.close();
         navigation.reset({
           index: 0,
           routes: [{ name: "Auth" }],
@@ -38,9 +34,19 @@ const SettingsScreen = () => {
     });
   };
 
-  const closeModal = () => {
-    setModalVisible(false);
+  const handleBackPress = () => {
+    navigation.goBack();
   };
+
+  const handleSignOutPress = () => {
+    signOutBottomSheetRef.current?.snapToIndex(0);
+  };
+
+  const handleSignOutCancel = () => {
+    signOutBottomSheetRef.current?.close();
+  };
+
+  const handleSignOutBottomSheetChange = (index) => {};
 
   const handleDeleteAccount = () => {
     Alert.alert(
@@ -51,104 +57,253 @@ const SettingsScreen = () => {
     );
   };
 
+    const renderSettingsItem = (icon, iconLibrary, title, onPress, disabled = false, isDestructive = false) => {
+    const IconComponent = iconLibrary;
+    const textColor = disabled ? 'text-gray-400' : isDestructive ? 'text-red-600' : 'text-gray-700';
+    const iconColor = disabled ? '#9CA3AF' : isDestructive ? '#DC2626' : '#374151';
+    
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={disabled}
+        className={`flex-row items-center justify-between p-5 border-b border-gray-100 ${
+          disabled ? 'opacity-50' : ''
+        }`}
+        activeOpacity={0.7}
+      >
+        <View className="flex-row items-center flex-1">
+          <View className="mr-4">
+            <IconComponent name={icon} size={22} color={iconColor} />
+          </View>
+          <Text className={`text-base font-medium ${textColor}`}>
+            {title}
+          </Text>
+        </View>
+        <MaterialIcons name="arrow-forward-ios" size={16} color="#9CA3AF" />
+      </TouchableOpacity>
+    );
+  };
+
+  const renderSectionCard = (title, iconName, iconColors, children) => (
+    <View className="p-8 py-10 mt-6 bg-white border shadow-sm rounded-3xl border-slate-100">
+      <View className="flex-row items-start mb-6">
+        <View className="mr-5 overflow-hidden rounded-2xl">
+          <LinearGradient
+            colors={iconColors}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            className="p-4"
+          >
+            <Feather name={iconName} size={20} color="#ffffff" />
+          </LinearGradient>
+        </View>
+        <View className="flex-1">
+          <Text className="text-2xl font-bold text-gray-900">
+            {title}
+          </Text>
+          <Text className="text-base text-gray-500">
+            Manage your preferences
+          </Text>
+        </View>
+      </View>
+      <View className="overflow-hidden bg-gray-50 rounded-2xl">
+        {children}
+      </View>
+    </View>
+  );
+
   return (
-    <View className="flex-1">
-      {/* Top Section (30% height, light grey) */}
-      <View className="h-[20%] bg-gray-100 relative p-8">
-        <StatusBar backgroundColor="#f3f4f6" barStyle="dark-content" />
-        <TouchableOpacity onPress={() => navigation.goBack()} className="absolute left-8 top-10">
-          <Text className="text-5xl font-bold">&#8592;</Text>
-        </TouchableOpacity>
-        <Text className="absolute mt-4 text-3xl font-bold left-10 top-24">Settings</Text>
+    <View className="flex-1 bg-white">
+      {/* <StatusBar backgroundColor="#111827" barStyle="light-content" /> */}
+
+      {/* Header */}
+      <View className="flex-1">
+        <ScrollView className="flex-1 bg-white">
+          <View className="flex-row items-center justify-center px-8 py-16 bg-gray-900">
+            <TouchableOpacity
+              onPress={handleBackPress}
+              className="absolute left-8 p-3 py-5 bg-[#2C3441] bg-opacity-50 border border-slate-500 rounded-xl"
+            >
+              <Feather name="arrow-left" size={24} color="white" />
+            </TouchableOpacity>
+            <Text className="ml-4 text-3xl font-black text-center text-white">
+              Settings
+            </Text>
+          </View>
+
+          <View className="px-6">
+            {/* Settings Overview Card */}
+            <View className="p-8 -mt-6 bg-white shadow-2xl rounded-2xl">
+              <View className="flex-row items-center justify-between mb-3">
+                <Text className="text-xl font-semibold text-gray-700">
+                  App Settings
+                </Text>
+                <Ionicons name="settings" size={24} color="#1F2937" />
+              </View>
+              <Text className="text-sm text-gray-600">
+                Customize your app experience and manage your account preferences.
+              </Text>
+            </View>
+
+            {/* General Settings Section */}
+            {renderSectionCard(
+              "General",
+              "settings",
+              ["#3B82F6", "#1D4ED8"],
+              <>
+                {renderSettingsItem(
+                  "account-edit-outline",
+                  MaterialCommunityIcons,
+                  "Account",
+                  () => navigation.navigate("Account")
+                )}
+                {renderSettingsItem(
+                  "shield-outline",
+                  Ionicons,
+                  "Privacy & Security",
+                  () => console.log("Privacy settings")
+                )}
+                {renderSettingsItem(
+                  "bell",
+                  FontAwesome6,
+                  "Notifications",
+                  () => console.log("Notification settings")
+                )}
+                {renderSettingsItem(
+                  "globe-outline",
+                  Ionicons,
+                  "Language & Region",
+                  () => console.log("Language settings")
+                )}
+              </>
+            )}
+
+            {/* Support & Feedback Section */}
+            {renderSectionCard(
+              "Support & Feedback",
+              "help-circle",
+              ["#10B981", "#059669"],
+              <>
+                {renderSettingsItem(
+                  "bug-outline",
+                  Ionicons,
+                  "Report a Bug",
+                  () => navigation.navigate("ReportBug")
+                )}
+                {renderSettingsItem(
+                  "paper-plane-o",
+                  FontAwesome,
+                  "Give Feedback",
+                  () => navigation.navigate("Feedback")
+                )}
+                {renderSettingsItem(
+                  "help-circle-outline",
+                  MaterialCommunityIcons,
+                  "Help Center",
+                  () => console.log("Help center")
+                )}
+                {renderSettingsItem(
+                  "information-circle-outline",
+                  Ionicons,
+                  "About",
+                  () => console.log("About app")
+                )}
+              </>
+            )}
+
+            {/* Account Actions Section */}
+            {renderSectionCard(
+              "Account Actions",
+              "user-x",
+              ["#EF4444", "#DC2626"],
+              <>
+                {renderSettingsItem(
+                  "logout",
+                  MaterialCommunityIcons,
+                  "Sign Out",
+                  handleSignOutPress,
+                  false,
+                  true
+                )}
+                {renderSettingsItem(
+                  "warning",
+                  AntDesign,
+                  "Delete Account (Unavailable)",
+                  handleDeleteAccount,
+                  true,
+                  true
+                )}
+              </>
+            )}
+
+            {/* App Version Footer */}
+            <View className="items-center py-8 mt-8">
+              <Text className="text-sm text-gray-400">
+                Version 1.0.0
+              </Text>
+              <Text className="mt-1 text-xs text-gray-400">
+                © 2025 Buildorite
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
       </View>
 
-      {/* Bottom Section (white, scrollable content) */}
-      <ScrollView className="flex-1 p-4 bg-white">
-        {/* General Settings */}
-        <Text className="mt-8 text-xl font-bold">General</Text>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Account")}
-          className="flex-row items-center justify-between p-4 mt-4 border-b border-gray-300"
-        >
-          <View className="flex-row items-center">
-            <MaterialCommunityIcons name="account-edit-outline" size={22} color="black" />
-            <Text className="ml-3 font-semibold">Account</Text>
-          </View>
-          <MaterialIcons name="arrow-forward-ios" size={18} color="gray" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => setModalVisible(true)}
-          className="flex-row items-center justify-between p-4 border-b border-gray-300"
-        >
-          <View className="flex-row items-center">
-            <MaterialCommunityIcons name="logout" size={22} color="black" />
-            <Text className="ml-3 font-semibold">Sign out</Text>
-          </View>
-          <MaterialIcons name="arrow-forward-ios" size={18} color="gray" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleDeleteAccount}
-          className="flex-row items-center justify-between p-4 border-b border-gray-300 opacity-50" // Greyed out
-          disabled={true} // Disabled
-        >
-          <View className="flex-row items-center">
-            <AntDesign name="warning" size={22} color="gray" />
-            <Text className="ml-3 font-semibold text-gray-500">Delete Account (Unavailable)</Text>
-          </View>
-          <MaterialIcons name="arrow-forward-ios" size={18} color="gray" />
-        </TouchableOpacity>
-
-        {/* Feedback Section */}
-        <Text className="mt-8 text-xl font-bold">Feedback</Text>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("ReportBug")}
-          className="flex-row items-center justify-between p-4 mt-4 border-b border-gray-300"
-        >
-          <View className="flex-row items-center">
-            <Ionicons name="bug-outline" size={22} color="black" />
-            <Text className="ml-3 font-semibold">Report a Bug</Text>
-          </View>
-          <MaterialIcons name="arrow-forward-ios" size={18} color="gray" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Feedback")}
-          className="flex-row items-center justify-between p-4 border-b border-gray-300"
-        >
-          <View className="flex-row items-center">
-            <FontAwesome name="paper-plane-o" size={22} color="black" />
-            <Text className="ml-3 font-semibold">Give Feedback</Text>
-          </View>
-          <MaterialIcons name="arrow-forward-ios" size={18} color="gray" />
-        </TouchableOpacity>
-      </ScrollView>
-
-      {/* Logout Modal */}
-      <Modal
-        animationType="fade"
-        statusBarTranslucent={true}
-        navigationBarTranslucent={true}
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={closeModal}
+      <ReusableBottomSheet
+        ref={signOutBottomSheetRef}
+        enablePanDownToClose={true}
+        backgroundStyle={{ backgroundColor: "#fff" }}
+        handleIndicatorStyle={{ backgroundColor: "#d1d5db" }}
+        onChange={handleSignOutBottomSheetChange}
+        enableOverDrag={false}
+        android_keyboardInputMode="adjustResize"
       >
-        <Pressable
-          onPress={closeModal}
-          className="items-center justify-center flex-1 bg-[00000060] bg-opacity-50"
-        >
-          <View className="w-4/5 p-6 bg-white rounded-lg">
-            <Text className="mb-4 text-lg font-bold text-center">Do you want to Sign Out?</Text>
+        <View className="flex-1 p-6">
+          <View className="items-center mb-8">
+            <View className="p-4 mb-6 bg-red-100 rounded-full">
+              <FontAwesome name="sign-out" size={28} color="#EF4444" />
+            </View>
+            <Text className="mb-3 text-2xl font-bold text-center text-gray-900">
+              Sign Out
+            </Text>
+            <Text className="text-center text-gray-600 text-md">
+              Are you sure you want to sign out of your account?
+            </Text>
+            <Text className="mt-2 text-sm text-center text-gray-500">
+              You'll need to sign in again to access your account.
+            </Text>
+          </View>
 
+          <View className="gap-4 mt-auto">
             <TouchableOpacity
               onPress={handleLogout}
-              className="w-full py-3 mt-4 bg-red-500 rounded-lg shadow-lg shadow-red-400"
+              disabled={logoutUser.isLoading}
+              className="flex-row items-center justify-center p-4 bg-red-500 rounded-2xl"
             >
-              <Text className="font-semibold text-center text-white">
-                {logoutUser.isLoading ? <ActivityIndicator color="#fff" /> : "Sign Out"}
+              {logoutUser.isLoading ? (
+                <ActivityIndicator color="#ffffff" size="small" />
+              ) : (
+                <>
+                  <FontAwesome name="sign-out" size={18} color="#ffffff" />
+                  <Text className="ml-2 text-lg font-bold text-white">
+                    Sign Out
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleSignOutCancel}
+              className="p-4 bg-gray-100 rounded-2xl"
+              disabled={logoutUser.isLoading}
+            >
+              <Text className="text-lg font-bold text-center text-gray-700">
+                Cancel
               </Text>
             </TouchableOpacity>
           </View>
-        </Pressable>
-      </Modal>
+        </View>
+      </ReusableBottomSheet>
     </View>
   );
 };

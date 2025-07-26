@@ -39,11 +39,30 @@ export const useRegisterUser = () => {
         phone,
         role,
       });
+      api.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`;
       return data;
     },
-    onSuccess: (data) => {
-      setUser(data.user, data.accessToken);
-    }
+    onSuccess: (registerData) => {
+      setUser(registerData.user, registerData.accessToken);
+    },
+    onError: (err) => {
+      console.error("Register error:", err.response?.data?.message || err.message);
+    },
+  });
+};
+
+export const useRegisterDriver = () => {
+  return useMutation({
+    mutationFn: async ({ phone, name }) => {
+      const { data } = await api.post("/auth/register-driver", { phone, name });
+      return data;
+    },
+    onSuccess: (registerData) => {
+      console.log("Driver registered successfully:", registerData);
+    },
+    onError: (err) => {
+      console.error("Register Driver error:", err.response?.data?.message || err.message);
+    },
   });
 };
 

@@ -29,6 +29,11 @@
       "googleServicesFile": "./google-services.json",
       "package": "com.buildorite.truckApp"
     },
+    "androidStatusBar": {
+      "barStyle": "light-content",
+      "backgroundColor": "#00000000",
+      "translucent": true
+    },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
@@ -44,7 +49,6 @@
           }
         }
       ],
-      "expo-font",
       "expo-secure-store"
     ]
   }

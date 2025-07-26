@@ -1,33 +1,50 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   Image,
   ScrollView,
-  StatusBar,
   ActivityIndicator,
   RefreshControl,
+  Dimensions,
+  Linking,
+  Share,
+  Alert,
 } from "react-native";
 import Carousel from "react-native-snap-carousel";
 import { useNavigation } from "@react-navigation/native";
 import dayjs from "dayjs";
+import Feather from "@expo/vector-icons/Feather";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import MaterialDesignIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { useFetchMineById } from "../../hooks/useMine";
+import ReusableBottomSheet from "../../components/Ui/ReusableBottomSheet";
+import LocationComponent from "../../components/Ui/LocationComponent";
+import Toast from "react-native-toast-message";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+import utc from "dayjs/plugin/utc";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+dayjs.extend(customParseFormat);
+dayjs.extend(utc);
+
+const { width: screenWidth } = Dimensions.get("window");
 
 const MineDetail = ({ route }) => {
   const { mineId } = route.params;
   const navigation = useNavigation();
-  const [selectedDay, setSelectedDay] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-
+  const contactBottomSheetRef = useRef(null);
+  const directionBottomSheetRef = useRef(null);
+  const [checkboxes, setCheckboxes] = useState({
+    materials: false,
+    requests: false,
+    trips: false,
+  });
   const { data: mine, isLoading, error, refetch } = useFetchMineById(mineId);
-
-  useEffect(() => {
-    if (mine) {
-      const today = dayjs().format("dddd").toLowerCase();
-      setSelectedDay(today);
-    }
-  }, [mine]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -38,22 +55,173 @@ const MineDetail = ({ route }) => {
     }
   };
 
-  const daysOfWeek = [
-    { label: "Mon", value: "monday" },
-    { label: "Tue", value: "tuesday" },
-    { label: "Wed", value: "wednesday" },
-    { label: "Thu", value: "thursday" },
-    { label: "Fri", value: "friday" },
-    { label: "Sat", value: "saturday" },
-    { label: "Sun", value: "sunday" },
-  ];
+  const shareMineWithAppLink = async (mine) => {
+    try {
+      const deepLink = `buildorite-mine://mine/${mine._id}`;
 
-  const getDaySchedule = (day) => {
-    const schedule = mine?.operational_hours?.[day];
-    if (schedule?.open && schedule?.close) {
-      return `${schedule.open} - ${schedule.close}`;
+      const shareContent = `🏔️ Check out ${mine?.name || "this mine"}!
+
+📍 Location: ${
+        mine?.location?.address?.split(",").slice(0, 2).join(", ") || "N/A"
+      }
+⚒️ Materials: ${mine?.materials?.length || 0} available
+
+Tap to open in Buildorite Mine App:
+${deepLink}
+
+Don't have the app? Download it:
+https://play.google.com/store/apps/details?id=com.buildorite.mineApp`;
+
+      const shareOptions = {
+        message: shareContent,
+        title: `${mine?.name || "Mine"} - Buildorite Mine App`,
+      };
+
+      if (mine?.banner_images?.length > 0) {
+        shareOptions.url = mine.banner_images[0];
+      }
+
+      const result = await Share.share(shareOptions);
+      if (result.action === Share.sharedAction) {
+        console.log("Mine shared successfully");
+      }
+    } catch (error) {
+      console.error("Share error:", error);
+      Toast.show({
+        type: "error",
+        text1: "Failed to share mine",
+        text2: "Please try again later.",
+      });
     }
-    return "Holiday";
+  };
+
+  const handleDirectionsPress = () => {
+    directionBottomSheetRef.current?.snapToIndex(0);
+  };
+
+  const resetCheckboxes = () => {
+    setCheckboxes({
+      materials: false,
+      requests: false,
+      trips: false,
+    });
+  };
+
+  const handleDeleteBottomSheetChange = (index) => {
+    if (index === -1) {
+      resetCheckboxes();
+    }
+  };
+
+  const handleContactPress = () => {
+    contactBottomSheetRef.current?.snapToIndex(0);
+  };
+
+  const handleCallPress = () => {
+    const phoneNumber = mine?.owner_id?.phone;
+    if (phoneNumber) {
+      Alert.alert(
+        "Call Mine Owner",
+        `Do you want to call ${mine?.owner_id?.name || "mine owner"}?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Call",
+            onPress: () => {
+              Linking.openURL(`tel:${phoneNumber}`);
+              contactBottomSheetRef.current?.close();
+            },
+          },
+        ]
+      );
+    }
+  };
+
+  const daysOfWeek = [
+    { label: "Monday", short: "Mon", value: "monday" },
+    { label: "Tuesday", short: "Tue", value: "tuesday" },
+    { label: "Wednesday", short: "Wed", value: "wednesday" },
+    { label: "Thursday", short: "Thu", value: "thursday" },
+    { label: "Friday", short: "Fri", value: "friday" },
+    { label: "Saturday", short: "Sat", value: "saturday" },
+    { label: "Sunday", short: "Sun", value: "sunday" },
+  ];
+  const to24HourFormat = (t) => {
+    const clean = t
+      .replace(/\u202F/g, " ")
+      .replace(/[^\x00-\x7F]/g, "")
+      .trim()
+      .toLowerCase();
+
+    const [hour, minute] = clean.match(/\d+/g);
+    const isPM = clean.includes("pm");
+    const h = parseInt(hour, 10);
+    const m = parseInt(minute, 10);
+    const hour24 = isPM && h !== 12 ? h + 12 : !isPM && h === 12 ? 0 : h;
+
+    return `${String(hour24).padStart(2, "0")}:${String(m).padStart(
+      2,
+      "0"
+    )}:00`;
+  };
+
+  const timeToMs = (timeStr) => {
+    const [h, m, s] = timeStr.split(":").map(Number);
+    return h * 3600000 + m * 60000 + s * 1000;
+  };
+
+  const getCurrentStatus = () => {
+    const now = dayjs();
+    const currentDay = now.format("dddd").toLowerCase();
+    const todaySchedule = mine?.operational_hours?.[currentDay];
+
+    if (!todaySchedule?.open || !todaySchedule?.close) {
+      return { status: "Closed", subtitle: "Holiday today", color: "#EF4444" };
+    }
+
+    const open = todaySchedule.open;
+    const close = todaySchedule.close;
+
+    const currentMs =
+      now.hour() * 3600000 + now.minute() * 60000 + now.second() * 1000;
+
+    const openTimeMs = timeToMs(to24HourFormat(open));
+    const closeTimeMs = timeToMs(to24HourFormat(close));
+
+    const isOpen = currentMs >= openTimeMs && currentMs <= closeTimeMs;
+
+    if (isOpen) {
+      return {
+        status: "Open Today",
+        subtitle: `Closes at ${close}`,
+        color: "#10B981",
+      };
+    } else {
+      return {
+        status: "Closed",
+        subtitle: `Opens at ${open}`,
+        color: "#EF4444",
+      };
+    }
+  };
+
+  const timeAgo = (timestamp) => {
+    const now = new Date();
+    const updatedTime = new Date(timestamp);
+    const seconds = Math.floor((now - updatedTime) / 1000);
+    if (seconds < 60) return `${seconds} seconds ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} minutes ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hours ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days} days ago`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return `${weeks} weeks ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months} months ago`;
+    const years = Math.floor(days / 365);
+    return `${years} years ago`;
   };
 
   const bannerImages = mine?.banner_images?.length
@@ -64,105 +232,499 @@ const MineDetail = ({ route }) => {
         },
       ];
 
+  const materialIcons = [
+    { icon: "mountain", color: "#F97316" },
+    { icon: "cubes", color: "#374151" },
+    { icon: "gem", color: "#D97706" },
+  ];
+
   if (isLoading) {
     return (
-      <View className="items-center justify-center flex-1 bg-white">
-        <ActivityIndicator size="large" color="#000" />
+      <View className="items-center justify-center flex-1 bg-gray-50">
+        <ActivityIndicator size="large" color="#1F2937" />
+        <Text className="mt-4 text-gray-600">Loading mine details...</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View className="items-center justify-center flex-1 bg-white">
-        <Text className="text-red-500">Failed to load mine data.</Text>
+      <View className="items-center justify-center flex-1 bg-gray-50">
+        <View className="items-center p-8">
+          <Feather name="alert-triangle" size={48} color="#EF4444" />
+          <Text className="mb-2 text-lg font-semibold text-gray-800">
+            Failed to load mine data
+          </Text>
+          <Text className="mb-6 text-center text-gray-600">
+            Please check your connection and try again
+          </Text>
+          <TouchableOpacity
+            onPress={onRefresh}
+            className="px-6 py-3 bg-gray-800 rounded-lg"
+          >
+            <Text className="font-semibold text-white">Retry</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
+  const status = getCurrentStatus();
+  const materials = mine?.materials || [];
+
+  const insets = useSafeAreaInsets();
+
   return (
-    <ScrollView
-      className="flex-1 p-4 bg-white"
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
-      <StatusBar barStyle="dark-content" backgroundColor={"#fff"} />
-
+    <View className="flex-1 bg-gray-50">
       {/* Header */}
-      <View className="flex-row items-center justify-center mb-8">
-        <TouchableOpacity onPress={() => navigation.goBack()} className="absolute left-0 p-4">
-          <Text className="text-5xl font-bold">&#8592;</Text>
-        </TouchableOpacity>
-        <Text className="text-xl font-bold text-center">Mine</Text>
-      </View>
+      <View
+        className="bg-[#111827] px-4 py-3"
+        style={{ paddingTop: insets.top }}
+      >
+        <View className="flex-row items-center">
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            className="p-3 py-5 bg-[#2C3441] bg-opacity-50 border border-slate-500 rounded-xl"
+          >
+            <Feather name="arrow-left" size={24} color="white" />
+          </TouchableOpacity>
 
-      {/* Image Carousel */}
-      <Carousel
-        data={bannerImages}
-        renderItem={({ item }) => (
-          <Image source={{ uri: item.url }} className="w-full rounded-lg h-72" />
-        )}
-        sliderWidth={400}
-        itemWidth={400}
-        loop={true}
-      />
-
-      {/* Mine Name and Address */}
-      <View className="mt-8">
-        <Text className="text-2xl font-bold">{mine?.name}</Text>
-      </View>
-      {/* Location */}
-      <View className="mt-8">
-        <Text className="text-xl font-bold text-black">Location</Text>
-
-        <View className="flex-row items-center p-4 mt-2 bg-gray-100 rounded-lg">
-          <Image source={require("../../../assets/icons/location.png")} className="w-6 h-6 mr-4" />
-          <Text className="text-base text-slate-600 w-[90%]">{mine?.location?.address || "Not available"}</Text>
+          <Text className="pr-12 mx-auto text-3xl font-black text-center text-white">
+            Mine
+          </Text>
         </View>
       </View>
 
-      {/* Operational Hours */}
-      <Text className="mt-8 text-xl font-bold text-black">Operational Hours</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-4">
-        {daysOfWeek.map(({ label, value }) => (
-          <TouchableOpacity
-            key={value}
-            activeOpacity={1}
-            className={`px-4 py-2 mr-2 rounded-lg ${selectedDay === value ? "bg-black text-white" : "bg-gray-100"}`}
-            onPress={() => setSelectedDay(value)}
-          >
-            <Text className={selectedDay === value ? "text-white font-bold" : "text-black font-medium"}>
-              {label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        showsVerticalScrollIndicator={false}
+        className="flex-1"
+      >
+        {/* Carousel */}
+        <View className="relative">
+          <Carousel
+            data={bannerImages}
+            renderItem={({ item }) => (
+              <View className="relative">
+                <Image
+                  source={{ uri: item.url }}
+                  className="w-full h-96"
+                  style={{ resizeMode: "cover" }}
+                />
+              </View>
+            )}
+            sliderWidth={screenWidth}
+            itemWidth={screenWidth}
+            loop={true}
+            autoplay={true}
+            autoplayDelay={5000}
+            autoplayInterval={4000}
+          />
 
-      <View className="flex items-center justify-center p-4 mt-4 bg-gray-100 rounded-lg min-h-24">
-        {mine?.operational_hours?.[selectedDay]?.open && mine?.operational_hours?.[selectedDay]?.close ? (
-          <View className="flex-row items-center justify-center space-x-4">
-            <View className="px-6 py-3 bg-white rounded-lg shadow-md">
-              <Text className="mt-1 text-xl font-bold text-black">{mine.operational_hours[selectedDay].open}</Text>
-            </View>
-
-            <Text className="mx-4 text-2xl font-bold text-black">to</Text>
-
-            <View className="px-6 py-3 bg-white rounded-lg shadow-md">
-              <Text className="mt-1 text-xl font-bold text-black">{mine.operational_hours[selectedDay].close}</Text>
+          {/* Status Badge */}
+          <View className="absolute z-10 bottom-4 right-4">
+            <View
+              className="flex-row items-center px-4 py-1 rounded-full"
+              style={{ backgroundColor: status.color }}
+            >
+              <View className="w-3 h-3 mr-2 bg-white rounded-full" />
+              <Text className="font-semibold text-white text-md">
+                {status.status}
+              </Text>
             </View>
           </View>
-        ) : (
-          <Text className="text-lg font-bold text-center text-red-500">Holiday</Text>
-        )}
-      </View>
+        </View>
 
-      {/* View Materials Button */}
-      <TouchableOpacity
-        onPress={() => navigation.navigate("MineMaterials", { mineId: mine?._id })}
-        className="w-full py-4 mt-8 bg-black rounded-lg"
+        {/* Main Content */}
+        <View className="flex-1 bg-white">
+          <View className="p-6">
+            {/* Mine Header */}
+            <View className="my-4">
+              <Text className="mb-2 text-3xl font-bold text-gray-900 capitalize">
+                {mine?.name || "Mine Name"}
+              </Text>
+              <View className="flex-row items-center">
+                <FontAwesome6 name="location-dot" size={18} color="#2563eb" />
+                <Text
+                  className="ml-2 text-[16px] text-ellipsis font-semibold text-gray-700"
+                  numberOfLines={1}
+                >
+                  {mine?.location?.address?.split(",").slice(0, 2).join(", ") ||
+                    "Location not available"}
+                </Text>
+              </View>
+            </View>
+            {/* Quick Action Buttons */}
+            <View className="flex-row justify-between mt-2 mb-8">
+              <TouchableOpacity
+                onPress={handleContactPress}
+                className="items-center"
+                activeOpacity={0.9}
+              >
+                <View className="px-10 py-6 bg-[#EEF2FF] rounded-2xl">
+                  <View className="p-3 bg-blue-600 rounded-full">
+                    <Ionicons name="call" size={20} color="white" />
+                  </View>
+                  <Text className="mt-2 text-base font-semibold text-center text-blue-600">
+                    Call
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="items-center"
+                activeOpacity={0.9}
+                onPress={handleDirectionsPress}
+              >
+                <View className="px-8 py-6 bg-[#F0FDF4] rounded-2xl">
+                  <View className="p-4 mx-auto bg-green-600 rounded-full">
+                    <FontAwesome5
+                      name="location-arrow"
+                      size={13}
+                      color="white"
+                    />
+                  </View>
+                  <Text className="mt-2 text-base font-semibold text-green-600">
+                    Directions
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="items-center"
+                activeOpacity={0.9}
+                onPress={() => shareMineWithAppLink(mine)}
+              >
+                <View className="flex-col p-6 px-6 bg-[#f8efff] rounded-2xl">
+                  <View className="flex items-center justify-center px-3 py-3 mx-auto bg-purple-600 rounded-full">
+                    <MaterialDesignIcons
+                      name="share-variant"
+                      size={20}
+                      color="white"
+                    />
+                  </View>
+                  <Text className="mt-2 text-base font-semibold text-purple-600">
+                    Share Mine
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Current Status Card */}
+            <View className="px-6 py-4 mb-5 bg-white border border-gray-100 shadow-sm rounded-2xl">
+              <View className="flex-row items-start justify-between">
+                <View className="flex-1">
+                  <Text className="mb-4 text-xl font-bold text-gray-900">
+                    Current Status
+                  </Text>
+                  <Text
+                    className="text-xl font-bold "
+                    style={{ color: status.color }}
+                  >
+                    {status.status}
+                  </Text>
+                </View>
+                <View
+                  className="w-4 h-4 mt-2 rounded-full"
+                  style={{ backgroundColor: status.color }}
+                />
+              </View>
+              <View className="flex-row items-center justify-between">
+                <Text className="text-xl text-gray-600 font-[600]">
+                  {status.subtitle}
+                </Text>
+                <Text className="pt-2 font-semibold text-indigo-600 text-md">
+                  View Schedule
+                </Text>
+              </View>
+            </View>
+
+            {/* Mine Information */}
+            <View className="p-6 mb-5 bg-white border border-gray-100 shadow-sm rounded-2xl">
+              <Text className="mb-5 text-xl font-bold text-gray-900">
+                Mine Information
+              </Text>
+              <View className="flex gap-4 space-y-4">
+                <View className="flex-row justify-between">
+                  <Text className="text-lg font-semibold text-gray-600">
+                    Owner
+                  </Text>
+                  <Text className="font-semibold text-black text-md">
+                    {mine?.owner_id?.name || "John Mitchell"}
+                  </Text>
+                </View>
+                <View className="flex-row justify-between">
+                  <Text className="text-lg font-semibold text-gray-600">
+                    Mine Name
+                  </Text>
+                  <Text className="font-semibold text-black text-md">
+                    {mine?.name || "Mine Name"}
+                  </Text>
+                </View>
+                <View className="flex-row justify-between">
+                  <Text className="text-lg font-semibold text-gray-600">
+                    Updated
+                  </Text>
+                  <Text className="font-semibold text-black text-md">
+                    {mine?.updatedAt ? timeAgo(mine.updatedAt) : "2 days ago"}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Available Materials */}
+            <View className="p-6 mb-8 bg-white border border-gray-100 shadow-sm rounded-2xl">
+              {/* Header: Title and material count */}
+              <View className="flex-row items-center justify-between mb-6">
+                <Text className="text-xl font-bold text-gray-900">
+                  Available Materials
+                </Text>
+                <View className="px-3 pt-1 bg-blue-100 rounded-full pb-[2px]">
+                  <Text className="font-semibold text-blue-600 text-md">
+                    {materials.length} Materials
+                  </Text>
+                </View>
+              </View>
+
+              {/* Conditional Display: Show materials or an empty state message */}
+              {materials.length === 0 ? (
+                // Empty state: No materials found, no button is shown.
+                <View className="items-center py-8">
+                  <View className="p-6 mb-4 bg-gray-200 rounded-2xl">
+                    <FontAwesome6
+                      name="box-open"
+                      size={24}
+                      color="#6B7280"
+                      solid
+                    />
+                  </View>
+                  <Text className="mb-2 text-lg font-semibold text-gray-800">
+                    No Materials Found
+                  </Text>
+                  <Text className="text-sm text-center text-gray-500">
+                    There are currently no materials listed for this mine.
+                  </Text>
+                </View>
+              ) : (
+                // Materials exist: Show a preview list AND the "View All" button.
+                <>
+                  {/* Materials list preview */}
+                  <View className="flex-row justify-start gap-4 mb-6">
+                    {materials.slice(0, 3).map((material, index) => (
+                      <View key={material._id} className="items-center">
+                        <View className="p-4 bg-slate-50 rounded-2xl w-[104px]">
+                          <View
+                            className="p-3 mx-auto rounded-xl"
+                            style={{
+                              backgroundColor: materialIcons[index]?.color,
+                            }}
+                          >
+                            <FontAwesome6
+                              name={materialIcons[index]?.icon}
+                              size={16}
+                              color="#ffffff"
+                              solid
+                            />
+                          </View>
+                          <Text
+                            className="mt-3 text-sm font-medium text-center text-black text-ellipsis"
+                            numberOfLines={1}
+                          >
+                            {material.name}
+                          </Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+
+                  {/* Button to navigate and view all materials */}
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate("MineMaterials", {
+                        mineId: mine?._id,
+                      })
+                    }
+                    activeOpacity={0.8}
+                    className="w-full py-4 bg-blue-50 rounded-xl"
+                  >
+                    <View className="flex-row items-center justify-center">
+                      <Text className="text-lg font-semibold text-blue-700">
+                        View All Materials
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+
+            {/* Operating Hours */}
+            <View className="p-2 mb-8 bg-white border border-gray-100 shadow-sm rounded-2xl">
+              <View className="p-4 border-b border-gray-100">
+                <View className="flex-row items-center">
+                  {/* <Feather name="clock" size={20} color="#1F2937" /> */}
+                  <Text className="text-xl font-bold text-gray-800">
+                    Operational Hours
+                  </Text>
+                </View>
+                {/* <Text className="mt-1 text-gray-600">Weekly schedule</Text> */}
+              </View>
+              <View className="py-0 ">
+                {daysOfWeek.map(({ label, value }, index) => {
+                  const schedule = mine?.operational_hours?.[value];
+                  const isToday =
+                    dayjs().format("dddd").toLowerCase() === value;
+                  const isOpen = schedule?.open && schedule?.close;
+
+                  return (
+                    <View
+                      key={value}
+                      className={`flex-row items-center justify-between py-3 ${
+                        index !== daysOfWeek.length - 1 ? "ca" : ""
+                      } ${isToday ? " -mx-4 px-4 rounded-lg" : ""}`}
+                    >
+                      <View className="flex-row items-center px-4">
+                        <Text
+                          className={`font-semibold text-lg ${
+                            isToday ? "text-blue-600" : "text-gray-600"
+                          }`}
+                        >
+                          {label}
+                        </Text>
+                        {isToday && (
+                          <View className="px-2 py-1 ml-2 bg-blue-500 rounded-full">
+                            <Text className="text-xs font-medium text-white">
+                              Today
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      <View className="items-end px-4">
+                        {isOpen ? (
+                          <Text className="text-lg font-semibold text-gray-900">
+                            {schedule.open} - {schedule.close}
+                          </Text>
+                        ) : (
+                          <Text className="text-lg font-semibold text-red-500">
+                            Closed
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Location & Distance */}
+            <LocationComponent mine={mine} />
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Contact Bottom Sheet */}
+      <ReusableBottomSheet
+        ref={contactBottomSheetRef}
+        enablePanDownToClose={true}
+        backgroundStyle={{ backgroundColor: "#fff" }}
+        handleIndicatorStyle={{ backgroundColor: "#d1d5db" }}
+        handleDeleteBottomSheetChange={handleDeleteBottomSheetChange}
+        enableOverDrag={false}
+        android_keyboardInputMode="adjustResize"
       >
-        <Text className="text-lg font-bold text-center text-white">View Materials</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <View className="flex-1 p-6">
+          <View className="items-center mb-8">
+            <View className="p-4 mb-6 bg-blue-100 rounded-full">
+              <Feather name="phone" size={28} color="#3B82F6" />
+            </View>
+            <Text className="mb-3 text-2xl font-bold text-center text-gray-900">
+              Contact Mine Owner
+            </Text>
+            <Text className="text-center text-gray-600 text-md">
+              Get in touch with the mine owner for inquiries
+            </Text>
+          </View>
+
+          <View className="mb-8">
+            <View className="p-4 bg-gray-50 rounded-2xl">
+              <View className="flex-row items-center mb-3">
+                <View className="p-2 mr-3 bg-white rounded-full">
+                  <Feather name="user" size={16} color="#6B7280" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-sm font-medium text-gray-500">
+                    Owner Name
+                  </Text>
+                  <Text className="text-lg font-semibold text-gray-900">
+                    {mine?.owner_id?.name || "Not available"}
+                  </Text>
+                </View>
+              </View>
+
+              <View className="flex-row items-center">
+                <View className="p-2 mr-3 bg-white rounded-full">
+                  <Feather name="phone" size={16} color="#6B7280" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-sm font-medium text-gray-500">
+                    Phone Number
+                  </Text>
+                  <Text className="text-lg font-semibold text-gray-900">
+                    {mine?.owner_id?.phone || "Not available"}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <View className="gap-4 mt-auto">
+            <TouchableOpacity
+              onPress={handleCallPress}
+              disabled={!mine?.owner_id?.phone}
+              className={`flex-row items-center justify-center p-4 rounded-2xl ${
+                !mine?.owner_id?.phone ? "bg-gray-200" : "bg-blue-500"
+              }`}
+            >
+              <FontAwesome6
+                name="phone"
+                size={18}
+                color={!mine?.owner_id?.phone ? "#9CA3AF" : "#ffffff"}
+                solid
+              />
+              <Text
+                className={`ml-2 text-lg font-bold ${
+                  !mine?.owner_id?.phone ? "text-gray-500" : "text-white"
+                }`}
+              >
+                {!mine?.owner_id?.phone ? "Phone Not Available" : "Call Now"}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => contactBottomSheetRef.current?.close()}
+              className="p-4 bg-gray-100 rounded-2xl"
+            >
+              <Text className="text-lg font-bold text-center text-gray-700">
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ReusableBottomSheet>
+
+      {/* Directions Bottom Sheet */}
+      <ReusableBottomSheet
+        ref={directionBottomSheetRef}
+        enablePanDownToClose={true}
+        backgroundStyle={{ backgroundColor: "#fff" }}
+        handleIndicatorStyle={{ backgroundColor: "#d1d5db" }}
+        enableOverDrag={false}
+        android_keyboardInputMode="adjustResize"
+      >
+        <LocationComponent mine={mine} />
+      </ReusableBottomSheet>
+    </View>
   );
 };
 

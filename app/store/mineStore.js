@@ -7,6 +7,8 @@ export const useMineStore = create(
   persist(
     (set, get) => ({
       mines: [],
+      totalCount: 0,
+      totalPages: 0,
       filters: {
         page: 1,
         limit: 10,
@@ -15,11 +17,14 @@ export const useMineStore = create(
       },
       searchTerm: '',
 
+      setMinePagination: ({ totalCount, totalPages }) => set({ totalCount, totalPages }),
       setMines: (mines) => set({ mines }),
       appendMines: (newMines) => set((state) => ({ mines: [...state.mines, ...newMines] })),
       clearMines: () => set({ mines: [] }),
       resetStore: () => set({
         mines: [],
+        totalCount: 0,
+        totalPages: 0,
         filters: {
           page: 1,
           limit: 10,

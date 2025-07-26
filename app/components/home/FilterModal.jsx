@@ -7,14 +7,16 @@ import { useMaterialStore } from "../../store/materialStore";
 
 const FilterModal = ({ isVisible, onClose, onReset }) => {
   const { filters: mineFilters, setFilters: setMineFilters } = useMineStore();
-  const { filters: materialFilters, setFilters: setMaterialFilters } = useMaterialStore();
+  const { filters: materialFilters, setFilters: setMaterialFilters } =
+    useMaterialStore();
   const [selectedTab, setSelectedTab] = useState("mines");
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [locationPermission, setLocationPermission] = useState(false);
 
   // Get the active filters based on selected tab
   const activeFilters = selectedTab === "mines" ? mineFilters : materialFilters;
-  const setActiveFilters = selectedTab === "mines" ? setMineFilters : setMaterialFilters;
+  const setActiveFilters =
+    selectedTab === "mines" ? setMineFilters : setMaterialFilters;
 
   // Check location permission when the modal opens
   useEffect(() => {
@@ -27,12 +29,13 @@ const FilterModal = ({ isVisible, onClose, onReset }) => {
   const checkLocationPermission = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     setLocationPermission(status === "granted");
-    
+
     // If we already have coordinates in filters, enable the toggle
-    const hasCoordinates = selectedTab === "mines" 
-      ? (mineFilters.lat && mineFilters.lng) 
-      : (materialFilters.lat && materialFilters.lng);
-    
+    const hasCoordinates =
+      selectedTab === "mines"
+        ? mineFilters.lat && mineFilters.lng
+        : materialFilters.lat && materialFilters.lng;
+
     setLocationEnabled(status === "granted" && hasCoordinates);
   };
 
@@ -42,11 +45,11 @@ const FilterModal = ({ isVisible, onClose, onReset }) => {
       try {
         const location = await Location.getCurrentPositionAsync({});
         const { latitude, longitude } = location.coords;
-        
+
         setActiveFilters({
           sortBy: "distance",
           lat: latitude,
-          lng: longitude
+          lng: longitude,
         });
         setLocationEnabled(true);
       } catch (error) {
@@ -58,7 +61,7 @@ const FilterModal = ({ isVisible, onClose, onReset }) => {
       setActiveFilters({
         sortBy: "price",
         lat: null,
-        lng: null
+        lng: null,
       });
       setLocationEnabled(false);
     }
@@ -68,10 +71,15 @@ const FilterModal = ({ isVisible, onClose, onReset }) => {
   const handleTabChange = (tab) => {
     setSelectedTab(tab);
     // Update location toggle based on current filters for the selected tab
-    const hasCoordinates = tab === "mines" 
-      ? (mineFilters.lat && mineFilters.lng && mineFilters.sortBy === "distance") 
-      : (materialFilters.lat && materialFilters.lng && materialFilters.sortBy === "distance");
-    
+    const hasCoordinates =
+      tab === "mines"
+        ? mineFilters.lat &&
+          mineFilters.lng &&
+          mineFilters.sortBy === "distance"
+        : materialFilters.lat &&
+          materialFilters.lng &&
+          materialFilters.sortBy === "distance";
+
     setLocationEnabled(locationPermission && hasCoordinates);
   };
 
@@ -92,7 +100,7 @@ const FilterModal = ({ isVisible, onClose, onReset }) => {
               <Ionicons name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>
-          
+
           {/* Tab Selector */}
           <View className="flex-row bg-gray-100">
             <TouchableOpacity
@@ -101,7 +109,11 @@ const FilterModal = ({ isVisible, onClose, onReset }) => {
                 selectedTab === "mines" ? "border-b-2 border-black" : ""
               }`}
             >
-              <Text className={`font-medium ${selectedTab === "mines" ? "text-black" : "text-gray-500"}`}>
+              <Text
+                className={`font-medium ${
+                  selectedTab === "mines" ? "text-black" : "text-gray-500"
+                }`}
+              >
                 Mines
               </Text>
             </TouchableOpacity>
@@ -111,20 +123,27 @@ const FilterModal = ({ isVisible, onClose, onReset }) => {
                 selectedTab === "materials" ? "border-b-2 border-black" : ""
               }`}
             >
-              <Text className={`font-medium ${selectedTab === "materials" ? "text-black" : "text-gray-500"}`}>
+              <Text
+                className={`font-medium ${
+                  selectedTab === "materials" ? "text-black" : "text-gray-500"
+                }`}
+              >
                 Materials
               </Text>
             </TouchableOpacity>
           </View>
-          
-          {/* Filter Options */}
+
           <View className="px-4 py-6">
             <Text className="mb-4 text-lg font-semibold">Sort Options</Text>
-            
-            {/* Sort by Distance Option */}
+
             <View className="flex-row items-center justify-between mb-4">
               <View className="flex-row items-center">
-                <Ionicons name="location" size={20} color="#555" className="mr-2" />
+                <Ionicons
+                  name="location"
+                  size={20}
+                  color="#555"
+                  className="mr-2"
+                />
                 <Text className="text-base">Sort by Distance</Text>
               </View>
               <Switch
@@ -136,30 +155,36 @@ const FilterModal = ({ isVisible, onClose, onReset }) => {
                 disabled={!locationPermission}
               />
             </View>
-            
+
             {!locationPermission && (
               <View className="p-3 mb-4 rounded-md bg-yellow-50">
                 <Text className="text-sm text-yellow-800">
-                  Location permission is required to sort by distance. Please enable location permissions in your device settings.
+                  Location permission is required to sort by distance. Please
+                  enable location permissions in your device settings.
                 </Text>
               </View>
             )}
-            
+
             {/* Current Sorting */}
             <View className="p-3 mt-2 bg-gray-100 rounded-md">
               <Text className="text-sm text-gray-700">
-                Current sorting: <Text className="font-semibold">{activeFilters.sortBy === "distance" ? "Distance (nearest first)" : "Price (lowest first)"}</Text>
+                Current sorting:{" "}
+                <Text className="font-semibold">
+                  {activeFilters.sortBy === "distance"
+                    ? "Distance (nearest first)"
+                    : "Price (lowest first)"}
+                </Text>
               </Text>
             </View>
           </View>
-          
+
           {/* Action Buttons */}
           <View className="flex-row justify-between p-4 border-t border-gray-200">
             <TouchableOpacity onPress={handleReset} className="px-4 py-2">
               <Text className="font-medium text-red-500">Reset Filters</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              onPress={onClose} 
+            <TouchableOpacity
+              onPress={onClose}
               className="px-4 py-2 bg-black rounded-md"
             >
               <Text className="font-medium text-white">Apply</Text>

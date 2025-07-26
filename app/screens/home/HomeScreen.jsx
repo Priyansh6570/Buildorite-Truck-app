@@ -25,12 +25,7 @@ import { useNavigation } from "@react-navigation/native";
 
 const HomeScreen = () => {
   const navigation = useNavigation();
-  useFocusEffect(
-    React.useCallback(() => {
-      StatusBar.setBarStyle("light-content");
-      StatusBar.setBackgroundColor("#000000");
-    }, [])
-  );
+
   const {
     filters: mineFilters,
     setMineFilters: setMineFilters,
@@ -68,19 +63,6 @@ const HomeScreen = () => {
     }
   }, [selectedTab, mineFilters, materialFilters, refetchMines, refetchMaterials]);
 
-  useFocusEffect(
-    useCallback(() => {
-      StatusBar.setBarStyle("light-content");
-      StatusBar.setBackgroundColor("#000000");
-      fetchData();
-
-      return () => {
-        StatusBar.setBarStyle("dark-content");
-        StatusBar.setBackgroundColor("#ffffff");
-      };
-    }, [fetchData])
-  );
-
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchData();
@@ -103,7 +85,6 @@ const HomeScreen = () => {
   
   return (
     <View className="flex-1 bg-white">
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
       <View className="w-full h-[50%] absolute top-0" />
 
       <FlatList

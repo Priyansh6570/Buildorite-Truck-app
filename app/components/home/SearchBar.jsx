@@ -21,8 +21,8 @@ const SearchBar = ({
   const currentSearch = selectedTab === "mines" ? mineSearch : materialSearch;
 
   return (
-    <View className="px-12 bg-black">
-      <View className="flex-row items-center px-4 py-4 mt-6 bg-white rounded-lg shadow-lg">
+    <View className="px-6">
+      <View className="flex-row items-center px-6 py-6 -mt-8 bg-white shadow-xl rounded-2xl">
         <Ionicons name="search" size={20} color="gray" className="mr-3" />
         <TextInput
           placeholder={selectedTab === "mines" ? "Search mines..." : "Search materials..."}
@@ -38,7 +38,7 @@ const SearchBar = ({
           </TouchableOpacity>
         ) : null}
       </View>
-      <View className="h-6" />
+       {/* <View className="h-6" /> */}
     </View>
   );
 };

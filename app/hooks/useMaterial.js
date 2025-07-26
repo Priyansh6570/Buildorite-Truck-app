@@ -2,9 +2,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../api/axiosInstance";
 import { useMaterialStore } from "../store/materialStore";
 
-// Fetch all materials
 export const useFetchMaterials = (filters, searchTerm) => {
-  const { appendMaterials, setMaterials } = useMaterialStore();
+  const { appendMaterials, setMaterials, setMaterialPagination } = useMaterialStore();
+  
   return useQuery({
     queryKey: ['materials', filters, searchTerm],
     queryFn: async () => {
@@ -15,31 +15,38 @@ export const useFetchMaterials = (filters, searchTerm) => {
         order: filters.order || 'desc',
         ...(searchTerm ? { searchTerm: searchTerm } : {}),
       });
-
+      
       const endpoint = searchTerm
         ? `/search?model=material&${params.toString()}`
-        : `/material?${params.toString()}`;
-
+        : `/search?model=material&${params.toString()}`
+      
       const { data } = await api.get(endpoint);
-      if (filters.page > 1) {
-        appendMaterials(data.data);
-      } else {
-        setMaterials(data.data);
-      }
 
+      setMaterialPagination({
+        totalCount: data.totalCount,
+        totalPages: data.totalPages
+      });
+      
+      if (filters.page > 1) {
+        appendMaterials(data.materials || data.data);
+      } else {
+        setMaterials(data.materials || data.data);
+      }
+      
       return {
-        data: data.data,
-        totalPages: data.totalPages || 1
+        data: data.materials || data.data,
+        pagination: data.pagination,
+        totalPages: data.pagination?.pages || data.totalPages || 1,
+        totalCount: data.totalCount || totalCount,
       };
     },
     keepPreviousData: true,
   });
 };
 
-// Fetch materials by mine ID
 export const useFetchMaterialsByMine = (mineId) => {
   return useQuery({
-    queryKey: ["materials", mineId],
+    queryKey: ["materials", "mine", mineId],
     queryFn: async () => {
       const { data } = await api.get(`/material/mine/${mineId}`);
       return data.materials;
@@ -48,7 +55,6 @@ export const useFetchMaterialsByMine = (mineId) => {
   });
 };
 
-// Fetch a single material by ID
 export const useFetchMaterialById = (id) => {
   return useQuery({
     queryKey: ["material", id],
@@ -60,47 +66,21 @@ export const useFetchMaterialById = (id) => {
   });
 };
 
-// Create a new material
-export const useCreateMaterial = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (materialData) => {
-      const { data } = await api.post("/material", materialData);
-      return data.material;
-    },
-    onSuccess: (_, { mine_id }) => {
-      queryClient.invalidateQueries(["materials", mine_id]);
-    },
-    onError: (error) => {
-      console.log("Error creating material:", error);
+export const useFetchAllUnits = () => {
+  return useQuery({
+    queryKey: ['units'],
+    queryFn: async () => {
+      const { data } = await api.get('/material/units/d');
+      return data.units;
     },
   });
 };
-
-// Update a material
-export const useUpdateMaterial = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, ...materialData }) => {
-      const { data } = await api.put(`/material/${id}`, materialData);
-      return data.material;
-    },
-    onSuccess: (_, { id, mine_id }) => {
-      queryClient.invalidateQueries(["material", id]);
-      queryClient.invalidateQueries(["materials", mine_id]);
-    },
-  });
-};
-
-// Delete a material
-export const useDeleteMaterial = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (id) => {
-      await api.delete(`/material/${id}`);
-    },
-    onSuccess: (_, { mine_id }) => {
-      queryClient.invalidateQueries(["materials", mine_id]);
+export const useFetchMyUnits = () => {
+  return useQuery({
+    queryKey: ['my-units'],
+    queryFn: async () => {
+      const { data } = await api.get('/material/units/my-units');
+      return data.units;
     },
   });
 };

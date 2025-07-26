@@ -1,43 +1,95 @@
 import React from "react";
 import { View, Text } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { useMineStore } from "../../store/mineStore";
 import { useMaterialStore } from "../../store/materialStore";
 
 const statsData = [
-  { id: 1, percentage: "+5.2%", title: "Active Mines", icon: "hammer-outline", type: "mine" },
-  { id: 2, percentage: "+3.8%", title: "Available Materials", icon: "cube-outline", type: "material" },
-  { id: 3, title: "Recent Orders", icon: "receipt-outline", value: 25, trend: "+7.1%" },
-  { id: 4, title: "Market Trends", icon: "trending-up-outline", isLink: true },
+  { id: 1, color:"#2563EB", bgColor:"#eff6ff", percentage: "+5.2%", title: "Total Mines", icon: "mountain", type: "mine" },
+  { id: 2, color:"#9333EA", bgColor:"#9333EA10", percentage: "+3.8%", title: "Materials", icon: "cubes", type: "material" },
+  { id: 3, color:"#33AF61", bgColor:"#f0fdf4", title: "Orders", icon: "chart-line", value: 25, trend: "+7.1%" },
+  { id: 4, color:"#ffffff", bgColor:"#9471F1", title: "Reports", icon: "info", isLink: true },
 ];
 
-const StatCard = ({ title, value, trend, icon, isLink, percentage }) => {
+const StatCard = ({ title, value, trend, icon, isLink, percentage, bgColor, color }) => {
+  const cardBg = isLink ? "#664de3" : "#ffffff";
+  const textColor = isLink ? "#ffffff" : "#000000";
+  const subTextColor = isLink ? "#ffffff99" : "#6B7280";
+
   return (
-    <View className="p-4 mx-2 my-2 bg-white shadow-xl rounded-xl w-[45%] h-[120px]">
+    <View
+      className="p-4 mx-2 my-2 border border-slate-100 shadow-sm rounded-xl w-[45%] h-[120px]"
+      style={{ backgroundColor: cardBg }}
+    >
       <View className="flex-row items-start justify-between">
         <View>
-          <Text className="text-sm text-gray-500">{title}</Text>
-            {isLink && <Text className="my-2 text-2xl font-bold text-black">View</Text>}
-          {isLink && <Text className="mt-1 text-sm font-medium text-indigo-600">View Report →</Text>}
-          <Text className="my-2 text-2xl font-bold text-gray-900">{value}</Text>
-          {trend && !isLink && <Text className="mt-2 text-sm text-green-500">{trend}</Text>}
-          <Text className="mt-2 text-sm text-green-500">{percentage}</Text>
+          <Text style={{ fontSize: 16, color: subTextColor, fontWeight:600 }}>{title}</Text>
+
+          {isLink ? (
+            <>
+              <Text style={{ marginTop: 8, fontSize: 24, fontWeight: "bold", color: textColor }}>
+                View
+              </Text>
+              <Text style={{ marginTop: 4, fontSize: 14, fontWeight: "500", color: textColor }}>
+                View Report →
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text className="my-2 text-3xl font-bold text-gray-900">{value}</Text>
+              {trend && (
+                <Text className="mt-2 text-green-500 text-md">{trend}</Text>
+              )}
+              {percentage && (
+                <Text className="mt-2 text-green-500 text-md">{percentage}</Text>
+              )}
+            </>
+          )}
         </View>
-        <View className="p-2 rounded-lg bg-indigo-50">
-          <Ionicons name={icon} size={24} color="#4F46E5" />
-        </View>
+
+        {isLink ? (
+          <View
+            style={{
+              backgroundColor: "#ffffff50",
+              padding: 10,
+              // paddingHorizontal: 12,
+              borderRadius: 12,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                padding: 4,
+                paddingHorizontal: 8,
+                borderRadius: 9999,
+                borderWidth: 1,
+                borderColor: "#ffffff",
+                borderStyle: "dashed",
+              }}
+            >
+              <FontAwesome6 name={icon} size={10} color={color} />
+            </View>
+          </View>
+        ) : (
+          <View style={{ backgroundColor: bgColor, padding: 12, borderRadius: 8 }}>
+            <FontAwesome6 name={icon} size={18} color={color} />
+          </View>
+        )}
       </View>
     </View>
   );
 };
 
+
+
 const StatsSection = () => {
-  const mineCount = useMineStore((state) => state.mines.length);
-  const materialCount = useMaterialStore((state) => state.materials.length);
+  const mineCount = useMineStore((state) => state.totalCount);
+  const materialCount = useMaterialStore((state) => state.totalCount);
 
   return (
-    <View className="w-full">
-      <View className='h-[50px] w-full bg-black absolute'></View>
+    <View className="w-full px-2 mt-6">
+      {/* <View className='h-[50px] w-full absolute'></View> */}
       <View className="flex-row flex-wrap justify-center">
         {statsData.map((stat) => (
           <StatCard
@@ -48,6 +100,8 @@ const StatsSection = () => {
             trend={stat.trend}
             icon={stat.icon}
             isLink={stat.isLink}
+            bgColor={stat.bgColor}
+            color={stat.color}
           />
         ))}
       </View>

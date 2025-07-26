@@ -3,11 +3,12 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { MMKV } from "react-native-mmkv";
 
 const storage = new MMKV();
-
 export const useMaterialStore = create(
   persist(
     (set, get) => ({
       materials: [],
+      totalCount: 0,
+      totalPages: 0,
       material_filters: { 
         page: 1, 
         limit: 10, 
@@ -15,6 +16,7 @@ export const useMaterialStore = create(
         order: "asc", 
       },
       searchTerm: '',
+      setMaterialPagination: ({ totalCount, totalPages }) => set({ totalCount, totalPages }),
       setMaterials: (materials) => set({ materials }),
       appendMaterials: (newMaterials) => set((state) => ({ 
         materials: [...state.materials, ...newMaterials] 
@@ -22,6 +24,8 @@ export const useMaterialStore = create(
       clearMaterials: () => set({ materials: [] }),
       resetStore: () => set({
         materials: [],
+        totalCount: 0,
+        totalPages: 0,
         material_filters: { 
           page: 1, 
           limit: 10, 

@@ -1,93 +1,75 @@
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { View, Text } from "react-native";
+import { FontAwesome6, Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 
-const StatCard = ({ title, value, trend, icon, isLink, percentage, onPress }) => {
+// A general-purpose card for displaying key metrics.
+const StatCard = ({ title, value, icon, color, bgColor }) => {
   return (
-    <View className="p-4 mx-2 my-2 bg-white shadow-xl rounded-xl w-[45%] h-[120px]">
+    <View className="p-4 mx-2 my-2 bg-white border border-slate-100 shadow-sm rounded-2xl w-[45%] h-[120px]">
       <View className="flex-row items-start justify-between">
         <View>
-          <Text className="text-sm text-gray-500">{title}</Text>
-          {isLink ? (
-            <>
-              <Text className="my-2 text-2xl font-bold text-black">Connect</Text>
-              <Text className="mt-1 text-sm font-medium text-indigo-600">Connect Now →</Text>
-            </>
-          ) : (
-            <>
-              <Text className="my-2 text-2xl font-bold text-gray-900">{value}</Text>
-              {trend && <Text className="mt-2 text-sm text-green-500">{trend}</Text>}
-              {percentage && <Text className="mt-2 text-sm text-green-500">{percentage}</Text>}
-            </>
-          )}
+          <Text className="text-base font-semibold text-gray-600">{title}</Text>
+          <Text className="my-2 text-3xl font-bold text-gray-900">{value}</Text>
         </View>
-        <View className="p-2 rounded-lg bg-indigo-50">
-          <Ionicons name={icon} size={24} color="#4F46E5" />
+        <View style={{ backgroundColor: bgColor, padding: 12, borderRadius: 12 }}>
+          <Ionicons name={icon} size={22} color={color} />
         </View>
       </View>
     </View>
   );
 };
 
+// A specialized, professional card for displaying the connection status.
 const ConnectionCard = ({ truckOwner }) => {
-  const navigation = useNavigation();
-  
-  const handlePress = () => {
-    navigation.navigate("Connection");
+    return (
+      <View className="w-[93%] mx-2 my-2 overflow-hidden shadow-sm rounded-2xl">
+          <LinearGradient
+              colors={['#1F2937', '#111827']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="p-5"
+          >
+              <View className="flex-row items-center">
+                  <View className="p-3 rounded-full bg-white/10">
+                       <FontAwesome6 name="link" size={18} color="#34D399" />
+                  </View>
+                  <View className="flex-1 ml-4">
+                      <Text className="text-sm font-semibold text-gray-400">Connected With</Text>
+                      <Text className="text-lg font-bold text-white">
+                          {truckOwner?.name || 'Your Truck Owner'}
+                      </Text>
+                  </View>
+                   <View className="p-2 px-3 rounded-full bg-green-500/20">
+                      <Text className="font-bold text-green-400">Active</Text>
+                   </View>
+              </View>
+          </LinearGradient>
+      </View>
+    );
   };
   
-  return (
-    <TouchableOpacity 
-      onPress={handlePress}
-      className={`p-4 mx-2 my-2 bg-white shadow-xl rounded-xl w-[93%] h-[120px] ${truckOwner ? 'border-2 border-green-100' : ''}`}
-    >
-      <View className="flex-row items-start justify-between">
-        <View>
-          <Text className="text-sm text-gray-500">Connection</Text>
-          {truckOwner ? (
-            <>
-              <Text className="my-2 text-xl font-bold text-gray-900">Connected</Text>
-              <Text className="mt-1 text-sm text-green-600">
-                {truckOwner.name}
-              </Text>
-            </>
-          ) : (
-            <>
-              <Text className="my-2 text-xl font-bold text-black">Not Connected</Text>
-              <Text className="mt-1 text-sm font-medium text-indigo-600">Connect Now →</Text>
-            </>
-          )}
-        </View>
-        <View className="p-2 rounded-lg bg-indigo-50">
-          <Ionicons name={truckOwner ? "checkmark-circle" : "person-add-outline"} size={24} color={truckOwner ? "#10B981" : "#4F46E5"} />
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-};
-
 const StatsSection = ({ truckOwner }) => {
-  // Dummy data - will be replaced with real data later
   const statsData = [
-    { id: 1, value: 15, title: "Trips Completed", icon: "checkmark-circle-outline" },
-    { id: 2, value: 3, title: "Pending Trips", icon: "time-outline" },
+    { id: 1, value: 15, title: "Trips Completed", icon: "checkmark-done-circle-outline", color: "#16A34A", bgColor: "#F0FDF4" },
+    { id: 2, value: 3, title: "Pending Trips", icon: "time-outline", color: "#D97706", bgColor: "#FFFBEB" },
   ];
 
   return (
-    <View className="w-full">
-      <View className='h-[50px] w-full bg-black absolute'></View>
-      <View className="flex-row flex-wrap justify-center">
-        {statsData.map((stat) => (
-          <StatCard
-            key={stat.id}
-            title={stat.title}
-            value={stat.value}
-            icon={stat.icon}
-          />
-        ))}
-        <ConnectionCard truckOwner={truckOwner} />
-      </View>
+    <View className="w-full mt-[-50px]">
+        <View className="flex-row flex-wrap items-center justify-center">
+            <ConnectionCard truckOwner={truckOwner} />
+            {statsData.map((stat) => (
+                <StatCard
+                    key={stat.id}
+                    title={stat.title}
+                    value={stat.value}
+                    icon={stat.icon}
+                    color={stat.color}
+                    bgColor={stat.bgColor}
+                />
+            ))}
+        </View>
     </View>
   );
 };

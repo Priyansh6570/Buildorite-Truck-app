@@ -4,13 +4,15 @@ import { useMineStore } from '../store/mineStore';
 import { useUserMineStore } from '../store/useUserMineStore';
 
 export const useFetchMines = (filters, searchTerm) => {
-  const { appendMines, setMines } = useMineStore();
+  const { appendMines, setMines, setMinePagination } = useMineStore();
   return useQuery({
     queryKey: ['mines', filters, searchTerm],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: String(filters.page || 1),
         limit: String(filters.limit || 10),
+        sortBy: filters.sortBy || 'createdAt',
+        order: filters.order || 'desc',
         ...(searchTerm ? { searchTerm: searchTerm } : {}),
       });
 
@@ -18,7 +20,9 @@ export const useFetchMines = (filters, searchTerm) => {
         ? `/search?model=mine&${params.toString()}`
         : `/mine/mine?${params.toString()}`;
 
-      const { data } = await api.get(endpoint);
+      const { data, totalCount, totalPages } = await api.get(endpoint);
+
+      setMinePagination({ totalCount: data.totalCount, totalPages: data.totalPages });
       
       if (filters.page > 1) {
         appendMines(data.data);
@@ -26,17 +30,17 @@ export const useFetchMines = (filters, searchTerm) => {
         setMines(data.data);
       }
 
+ 
       return {
+        totalCount: data.totalCount,
         data: data.data,
-        totalPages: data.totalPages || 1
+        totalPages: data.totalPages || 1,
       };
     },
     keepPreviousData: true,
   });
 };
 
-
-// Fetch all mines by logged in user
 export const useFetchUserMines = () => {
   const { setUserMines } = useUserMineStore();
 
@@ -54,8 +58,6 @@ export const useFetchUserMines = () => {
   });
 };
 
-
-// Fetch a single mine by ID
 export const useFetchMineById = (id) => {
   return useQuery({
     queryKey: ['mine', id],
@@ -64,50 +66,5 @@ export const useFetchMineById = (id) => {
       return data.mine;
     },
     enabled: !!id,
-  });
-};
-
-// Create a new mine
-export const useCreateMine = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (mineData) => {
-      const { data } = await api.post('/mine/mine', mineData);
-      return data.mine;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['mines']);
-    },
-    onError: (error) => {
-      console.log('Error:', error);
-    }
-  });
-};
-
-// Update a mine
-export const useUpdateMine = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, ...mineData }) => {
-      const { data } = await api.put(`/mine/mine/${id}`, mineData);
-      return data.mine;
-    },
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries(['mine', id]);
-      queryClient.invalidateQueries(['mines']);
-    },
-  });
-};
-
-// Delete a mine
-export const useDeleteMine = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (id) => {
-      await api.delete(`/mine/mine/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['mines']);
-    },
   });
 };

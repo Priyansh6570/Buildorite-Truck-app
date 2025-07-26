@@ -9,6 +9,8 @@ import {
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { LinearGradient } from "expo-linear-gradient";
 import convertToIndianNumberSystem from "../utils/ConvertToIndianSystem";
 import * as Location from "expo-location";
 import { useNavigation } from "@react-navigation/native";
@@ -107,79 +109,135 @@ const MineCard = ({ mine }) => {
     const updatedTime = new Date(timestamp);
     const seconds = Math.floor((now - updatedTime) / 1000);
 
-    if (seconds < 60) return `${seconds} seconds ago`;
+    if (seconds < 60) return `${seconds}s ago`;
     const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes} minutes ago`;
+    if (minutes < 60) return `${minutes}m ago`;
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} hours ago`;
+    if (hours < 24) return `${hours}h ago`;
     const days = Math.floor(hours / 24);
-    if (days < 30) return `${days} days ago`;
+    if (days < 30) return `${days}d ago`;
     const weeks = Math.floor(days / 7);
-    if (weeks < 4) return `${weeks} weeks ago`;
+    if (weeks < 4) return `${weeks}w ago`;
     const months = Math.floor(days / 30);
-    if (months < 12) return `${months} months ago`;
+    if (months < 12) return `${months}mo ago`;
     const years = Math.floor(days / 365);
-    return `${years} years ago`;
+    return `${years}y ago`;
   };
 
-  const handleNavitegate = () => {
+  const handleNavigate = () => {
     navigation.navigate("MineDetail", { mineId: mine._id });
-    setLoadingDistance(false);
-  }
+  };
+  const handleMaterialsPress = (e) => {
+    e.stopPropagation();
+    navigation.navigate("MineDetail", {
+      mineId: mine._id,
+      activeTab: "materials",
+    });
+  };
 
   return (
     <TouchableOpacity
-      className="mx-2 mb-8 bg-white shadow-xl rounded-3xl"
+      className="mx-3 mb-6"
       activeOpacity={1}
-      onPress={handleNavitegate}
+      onPress={handleNavigate}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       style={[{ transform: [{ scale: scaleValue }] }]}
     >
-      {/* Image */}
-      <View className="relative">
+      <View className="relative overflow-hidden bg-white shadow-lg rounded-2xl">
         <Image
           source={{
             uri:
               mine.banner_images[0]?.url ||
               "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png",
           }}
-          className="w-full h-40 rounded-t-xl"
+          className="w-full h-72"
+          style={{ resizeMode: "cover" }}
         />
-        {loadingDistance ? (
-          <View className="absolute flex-row items-center px-2 py-1 bg-black rounded-lg bottom-2 right-2">
-            <ActivityIndicator size="small" color="white" />
-          </View>
-        ) : distance !== null ? (
-          <View className="absolute flex-row items-center px-2 py-1 bg-black rounded-lg bottom-2 right-2">
-            <Text className="ml-1 text-xs text-white">
-              {convertToIndianNumberSystem(distance)} km
-            </Text>
-          </View>
-        ) : null}
-      </View>
-      {/* Details */}
-      <View className="p-4 my-4 mt-4">
-        <View className="flex-row items-center justify-between mx-3 mt-1 text-gray-600">
-          <Text className="mb-4 text-2xl font-bold capitalize ">
-            {mine.name}
-          </Text>
-          <Text className="mb-2 ml-1 text-sm text-gray-500">
+        <View className="absolute flex-row justify-between top-4 left-4 right-4">
+          {/* Distance Badge */}
+          {loadingDistance ? (
+            <View className="flex-row items-center px-3 py-2 rounded-full bg-black/70 backdrop-blur">
+              <ActivityIndicator size="small" color="white" />
+              <Text className="ml-2 text-sm font-medium text-white">
+                Loading...
+              </Text>
+            </View>
+          ) : distance !== null ? (
+            <View className="flex-row items-center px-3 py-2 rounded-full bg-black/70 backdrop-blur">
+              <Ionicons name="location" size={14} color="#10B981" />
+              <Text className="ml-1 text-sm font-semibold text-white">
+                {convertToIndianNumberSystem(distance)} km
+              </Text>
+            </View>
+          ) : (
+            <View />
+          )}
+
+          <View className="flex-row items-center px-3 py-2 rounded-full bg-black/70 backdrop-blur">
             <MaterialCommunityIcons
               name="clock-outline"
-              size={12}
-              color="grey"
-            />{" "}
-            {timeAgo(mine.createdAt)}
-          </Text>
+              size={14}
+              color="#F59E0B"
+            />
+            <Text className="ml-1 text-sm font-medium text-white">
+              {timeAgo(mine.createdAt)}
+            </Text>
+          </View>
         </View>
-        <View className="pt-2 mx-4 mt-3 mb-2 border-t border-gray-200"></View>
-        <View className="flex-row mx-3 mt-1 text-gray-600">
-          <Ionicons name="location-outline" size={16} color="grey" />
-          <Text className="ml-1 text-sm text-gray-500 h-fit">
-            {mine.location?.address}
-          </Text>
-        </View>
+
+        <LinearGradient
+          colors={["transparent", "rgba(0,0,0,0.8)"]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            paddingTop: 20,
+            paddingBottom: 20,
+            paddingHorizontal: 20,
+          }}
+        >
+          {/* Mine Name */}
+          <View className="flex-row justify-between mt-4 space-x-3">
+            <View className="flex-col w-[70%]">
+              <Text
+                className="text-2xl font-bold text-white capitalize"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {mine.name}
+              </Text>
+
+              {/* Location */}
+              <View className="flex-row items-center mt-2">
+                <Ionicons
+                  name="location-outline"
+                  size={16}
+                  color="rgba(255,255,255,0.8)"
+                />
+                <Text
+                  className="ml-1 text-sm text-white/80"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {mine.location?.address?.split(",")[0] || "Mining Location"}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </LinearGradient>
+
+        {mine.isPremium && (
+          <View className="absolute top-4 right-4">
+            <View className="flex-row items-center px-2 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600">
+              <MaterialIcons name="star" size={12} color="white" />
+              <Text className="ml-1 text-xs font-bold text-white">PREMIUM</Text>
+            </View>
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );

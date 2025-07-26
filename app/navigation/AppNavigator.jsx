@@ -21,11 +21,9 @@ import SettingsScreen from "../screens/profile/SettingsScreen";
 import MessagesScreen from "../screens/profile/MessagesScreen";
 import TripsScreen from "../screens/profile/TripsScreen";
 import LegalScreen from "../screens/profile/LegalScreen";
+import TruckOwnerListScreen from "../screens/home/TruckOwnerListScreen";
 
 import ViewMineScreen from "../screens/mine/ViewMineScreen";
-
-import MaterialDetailsScreen from "../screens/material/MaterialDetailsScreen";
-import ViewMaterialsScreen from "../screens/material/ViewMaterialsScreen";
 
 import SearchScreen from "../screens/home/SearchScreen";
 
@@ -34,8 +32,12 @@ import MaterialDetail from "../components/home/MaterialDetail";
 import MineMaterials from "../components/home/MineMaterials";
 
 import AccountScreen from "../screens/settings/AccountScreen";
+import UpdateTruckScreen from "../screens/settings/UpdateTruckScreen";
 import ReportBugScreen from "../screens/settings/ReportBugScreen";
 import FeedbackScreen from "../screens/settings/FeedbackScreen";
+
+import CreateDriverScreen from "../screens/driver/CreateDriverScreen";
+import DriverDetailScreen from "../screens/driver/DriverDetailScreen";
 
 const Stack = createStackNavigator();
 
@@ -62,10 +64,11 @@ const AppNavigator = () => {
 
   return (
     <NavigationContainer ref={navigationRef}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
       <Stack.Navigator initialRouteName={user ? (user.role == "driver"? "DBNav" : "Main") : "Auth"} screenOptions={{
           headerShown: false,
-          detachInactiveScreens: false
+          detachInactiveScreens: false,
+          animationEnabled: true,
+          animation: "slide_from_right",
         }}>
         <Stack.Screen name="Auth" component={AuthScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Main" component={BottomTabsNavigator} options={{ headerShown: false }} />
@@ -82,12 +85,10 @@ const AppNavigator = () => {
         <Stack.Screen name="Messages" component={MessagesScreen} options={{headerShown:false}} />
         <Stack.Screen name="Trips" component={TripsScreen} options={{headerShown:false}} />
         <Stack.Screen name="Legal" component={LegalScreen} options={{headerShown:false}} />
+        <Stack.Screen name="Connection" component={TruckOwnerListScreen} options={{headerShown:false}} />
 
         {/* mine route  */}
         <Stack.Screen name="MyMine" component={ViewMineScreen} options={{headerShown:false}} />
-
-        <Stack.Screen name="MyMaterials" component={ViewMaterialsScreen} options={{headerShown:false}} />
-        <Stack.Screen name="MaterialDetails" component={MaterialDetailsScreen} options={{headerShown:false}} />
 
         <Stack.Screen name="SearchScreen" component={SearchScreen} options={{headerShown:false}} />
 
@@ -97,8 +98,13 @@ const AppNavigator = () => {
 
         {/* Settings */}
         <Stack.Screen name="Account" component={AccountScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="UpdateTruck" component={UpdateTruckScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ReportBug" component={ReportBugScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Feedback" component={FeedbackScreen} options={{ headerShown: false }} />
+
+        {/* Driver Management */}
+        <Stack.Screen name="AddDriver" component={CreateDriverScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="DriverDetail" component={DriverDetailScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
       <Toast config={toastConfig} />
     </NavigationContainer>

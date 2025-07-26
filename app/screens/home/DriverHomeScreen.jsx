@@ -20,11 +20,13 @@ const DriverHomeScreen = () => {
   const { user } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
 
+  console.log("User Data:", user);
+
   const { data: myTruck, isLoading: isFetchingTruck, refetch: refetchTruck } = useFetchMyTruck({ 
     enabled: user?.role === 'driver', 
   });
+console.log("My Truck Data:", myTruck);
 
-  
   const fetchData = useCallback(async () => {
     try {
       await refetchTruck();
@@ -32,25 +34,7 @@ const DriverHomeScreen = () => {
       console.error("Error fetching truck data:", error);
     }
   }, [refetchTruck]);
-  
-  // useFocusEffect(
-  //   React.useCallback(() => {
-  //     StatusBar.setBarStyle("light-content");
-  //     StatusBar.setBackgroundColor("#000000");
-  //   }, [])
-  // );
-  useFocusEffect(
-    useCallback(() => {
-      StatusBar.setBarStyle("light-content");
-      StatusBar.setBackgroundColor("#000000");
-      fetchData();
 
-      return () => {
-        StatusBar.setBarStyle("dark-content");
-        StatusBar.setBackgroundColor("#ffffff");
-      };
-    }, [fetchData])
-  );
 
   useEffect(() => {
     if (user?.role === 'driver' && !isFetchingTruck && !myTruck) {

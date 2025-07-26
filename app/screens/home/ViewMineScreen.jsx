@@ -133,7 +133,7 @@ const ViewMineScreen = ({ route }) => {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      <StatusBar barStyle="dark-content" backgroundColor={"#fff"} />
+      {/* <StatusBar barStyle="dark-content" backgroundColor={"#fff"} /> */}
 
       {/* Header */}
       <View className="flex-row items-center justify-center mb-8">
@@ -349,30 +349,3 @@ const ViewMineScreen = ({ route }) => {
 };
 
 export default ViewMineScreen;
-
-// const deleteImageFromCloudinary = async (publicId) => {
-//   const cloudName = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME;
-//   try {
-//     const response = await fetch(
-//       `https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`,
-//       {
-//         method: 'POST',
-//         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify({
-//           public_id: publicId,
-//           api_key: process.env.EXPO_PUBLIC_CLOUDINARY_API_KEY,
-//           api_secret: process.env.EXPO_PUBLIC_CLOUDINARY_API_SECRET,
-//         }),
-//       }
-//     );
-
-//     const result = await response.json();
-//     if (result.result === 'ok') {
-//       console.log(`Deleted image: ${publicId}`);
-//     } else {
-//       console.error('Failed to delete image:', result);
-//     }
-//   } catch (error) {
-//     console.error('Error deleting image:', error);
-//   }
-// };

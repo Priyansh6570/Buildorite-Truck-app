@@ -9,17 +9,23 @@ import {
   Modal,
   BackHandler,
   StatusBar,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuthStore } from "../../store/authStore";
 import { useUpdateUserProfile } from "../../hooks/useUser";
-import auth from '@react-native-firebase/auth';
-import Toast from 'react-native-toast-message';
+import auth from "@react-native-firebase/auth";
+import Toast from "react-native-toast-message";
+import { LinearGradient } from "expo-linear-gradient";
 
-import AntDesign from '@expo/vector-icons/AntDesign';
-import Fontisto from '@expo/vector-icons/Fontisto';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import Feather from "@expo/vector-icons/Feather";
+import {
+  FontAwesome6,
+  FontAwesome5,
+  Ionicons,
+  MaterialIcons,
+} from "@expo/vector-icons";
 
 const AccountScreen = () => {
   const navigation = useNavigation();
@@ -43,10 +49,17 @@ const AccountScreen = () => {
   const [changesMade, setChangesMade] = useState(false);
   const [phoneUpdateSuccess, setPhoneUpdateSuccess] = useState(false);
   const [submittedUpdate, setSubmittedUpdate] = useState(false);
+  const [phoneVerificationError, setPhoneVerificationError] = useState(false);
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  };
+
+  const formatPhoneForDisplay = (phoneNumber) => {
+    if (!phoneNumber) return "";
+    const cleaned = phoneNumber.replace(/^\+91/, "");
+    return cleaned.replace(/(\d{6})(\d{4})/, "******$2");
   };
 
   useEffect(() => {
@@ -63,7 +76,11 @@ const AccountScreen = () => {
   }, [resendTimer]);
 
   useEffect(() => {
-    if (name !== user?.name || email !== user?.email || (phone !== user?.phone && phoneUpdateSuccess)) {
+    if (
+      name !== user?.name ||
+      email !== user?.email ||
+      (phone !== user?.phone && phoneUpdateSuccess)
+    ) {
       setChangesMade(true);
     } else {
       setChangesMade(false);
@@ -90,9 +107,12 @@ const AccountScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-        return checkForUnsavedChanges();
-      });
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        () => {
+          return checkForUnsavedChanges();
+        }
+      );
       return () => backHandler.remove();
     }, [checkForUnsavedChanges])
   );
@@ -114,12 +134,12 @@ const AccountScreen = () => {
       }
       return;
     }
-    
+
     setSubmittedUpdate(true);
-    const updateData = { 
-      name, 
+    const updateData = {
+      name,
       email,
-      ...(phoneUpdateSuccess && { phone })
+      ...(phoneUpdateSuccess && { phone }),
     };
     updateUserMutation.mutate(updateData);
     navigation.goBack();
@@ -128,17 +148,22 @@ const AccountScreen = () => {
   const handlePhoneUpdate = async () => {
     try {
       setIsSendingOtp(true);
-      const formattedPhoneNumber = newPhone.startsWith("+91") ? newPhone : `+91${newPhone}`;
-      const confirmation = await auth().signInWithPhoneNumber(formattedPhoneNumber);
+      setPhoneVerificationError(false);
+      const formattedPhoneNumber = newPhone.startsWith("+91")
+        ? newPhone
+        : `+91${newPhone}`;
+      const confirmation = await auth().signInWithPhoneNumber(
+        formattedPhoneNumber
+      );
       setConfirm(confirmation);
       setResendTimer(30);
       setCanResend(false);
       setOtpError("");
     } catch (err) {
       Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to send OTP. Please try again.',
+        type: "error",
+        text1: "Error",
+        text2: "Failed to send OTP. Please try again.",
       });
     } finally {
       setIsSendingOtp(false);
@@ -151,17 +176,18 @@ const AccountScreen = () => {
       if (otp.length !== 6) return;
 
       setIsVerifying(true);
+      setPhoneVerificationError(false);
       await confirm.confirm(otp);
-      
+
       setIsVerifying(false);
       setConfirm(null);
       setPhone(newPhone);
-      setNewPhone('');
-      setOtp('');
+      setNewPhone("");
+      setOtp("");
       setPhoneUpdateSuccess(true);
-      
     } catch (err) {
       setOtpError("OTP is Invalid");
+      setPhoneVerificationError(true);
       setIsVerifying(false);
     }
   };
@@ -170,17 +196,21 @@ const AccountScreen = () => {
     if (canResend) {
       try {
         setIsSendingOtp(true);
-        const formattedPhoneNumber = newPhone.startsWith("+91") ? newPhone : `+91${newPhone}`;
-        const confirmation = await auth().signInWithPhoneNumber(formattedPhoneNumber);
+        const formattedPhoneNumber = newPhone.startsWith("+91")
+          ? newPhone
+          : `+91${newPhone}`;
+        const confirmation = await auth().signInWithPhoneNumber(
+          formattedPhoneNumber
+        );
         setConfirm(confirmation);
         setResendTimer(30);
         setCanResend(false);
         setOtpError("");
       } catch (err) {
         Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Failed to resend OTP. Please try again.',
+          type: "error",
+          text1: "Error",
+          text2: "Failed to resend OTP. Please try again.",
         });
       } finally {
         setIsSendingOtp(false);
@@ -189,212 +219,322 @@ const AccountScreen = () => {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar backgroundColor={showModal ? "rgba(0,0,0,0.5)" : "#f3f4f6"} barStyle="dark-content" />
-      
-      <View className="p-4 pb-6 bg-gray-100" style={{ height: "25%" }}>
-        <TouchableOpacity onPress={handleBackPress} className="absolute left-0 z-10 p-6">
-          <Text className="text-4xl font-bold">&#8592;</Text>
-        </TouchableOpacity>
-        
-        <View className="items-center justify-center p-4">
-          <Text className="text-2xl font-bold text-black">Update Account</Text>
-        </View>
-        
-        <View className="px-6 mt-12">
-          <Text className="mb-2 text-lg font-semibold text-black">Update Your Details</Text>
-          <Text className="text-gray-600">
-            You can update any of your personal information below. Update only the fields you want to change.
-          </Text>
-        </View>
-      </View>
+    <View
+      className="flex-1 bg-white"
+    >
+      {/* <StatusBar
+        backgroundColor={showModal ? "rgba(0,0,0,0.5)" : "#111827"}
+        barStyle="light-content"
+      /> */}
 
-      <ScrollView className="flex-1 px-6 pt-6 bg-white" style={{ height: "75%" }}>
-        <Text className="mb-2 text-lg font-bold text-black">Name</Text>
-        <View className="flex-row items-center px-4 py-4 mb-6 bg-white rounded-lg shadow-md">
-          <AntDesign name="user" size={20} color="black" className="mr-3" />
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="Enter your name"
-            placeholderTextColor="#A0A0A0"
-            className="flex-1 ml-2 text-black"
-          />
-        </View>
-
-        {/* Email Field */}
-        <Text className="mb-2 text-lg font-bold text-black">Email</Text>
-        <View className="flex-row items-center px-4 py-4 mb-2 bg-white rounded-lg shadow-md">
-          <Fontisto name="email" size={20} color="black" className="mr-3" />
-          <TextInput
-            value={email}
-            onChangeText={(text) => {
-              setEmail(text);
-              if (emailTouched) {
-                if (!validateEmail(text) && text) {
-                  setEmailError("Please enter a valid email address");
-                } else {
-                  setEmailError("");
-                }
-              }
-            }}
-            onBlur={() => {
-              setEmailTouched(true);
-              if (email && !validateEmail(email)) {
-                setEmailError("Please enter a valid email address");
-              } else {
-                setEmailError("");
-              }
-            }}
-            placeholder="Enter your email"
-            placeholderTextColor="#A0A0A0"
-            className="flex-1 ml-2 text-black"
-            keyboardType="email-address"
-          />
-        </View>
-        
-        {emailError && emailTouched && (
-          <Text className="mb-4 text-sm text-red-500">{emailError}</Text>
-        )}
-        {!emailError && (
-          <View className="mb-4" />
-        )}
-
-        {/* Phone Field */}
-        <Text className="mb-2 text-lg font-bold text-black">Phone Number</Text>
-        
-        {phoneUpdateSuccess ? (
-          <>
-            <View className="flex-row items-center px-4 py-4 mb-2 bg-white rounded-lg shadow-md opacity-70">
-              <Ionicons name="call-outline" size={20} color="black" className="mr-3" />
-              <TextInput
-                value={phone}
-                placeholder="Phone Number"
-                placeholderTextColor="#A0A0A0"
-                className="flex-1 ml-2 text-black"
-                keyboardType="phone-pad"
-                editable={false}
-              />
-            </View>
-            <Text className="mb-6 text-sm text-green-600">
-              Phone number verified successfully.
-            </Text>
-          </>
-        ) : !confirm ? (
-          <>
-            <View className="flex-row items-center px-4 py-4 mb-2 bg-white rounded-lg shadow-md">
-              <Ionicons name="call-outline" size={20} color="black" className="mr-3" />
-              <TextInput
-                value={newPhone || phone}
-                onChangeText={(text) => {
-                  setNewPhone(text);
-                  setOtpError("");
-                  setPhoneUpdateSuccess(false);
-                }}
-                placeholder="Enter your phone number"
-                placeholderTextColor="#A0A0A0"
-                className="flex-1 ml-2 text-black"
-                keyboardType="phone-pad"
-              />
-            </View>
-            
-            {newPhone && newPhone.length === 10 && (
-              <TouchableOpacity
-                onPress={handlePhoneUpdate}
-                className={`p-3 mb-6 mt-4 bg-slate-200 border w-[95%] rounded-lg mx-auto shadow-md ${
-                  isSendingOtp ? "opacity-50" : ""
-                }`}
-                disabled={isSendingOtp}
-              >
-                {isSendingOtp ? (
-                  <ActivityIndicator color="#000" />
-                ) : (
-                  <Text className="font-bold text-center text-black">Send OTP</Text>
-                )}
-              </TouchableOpacity>
-            )}
-          </>
-        ) : (
-          <>
-            <View className="flex-row items-center px-4 py-4 mb-4 bg-white rounded-lg shadow-md opacity-70">
-              <Ionicons name="call-outline" size={20} color="black" className="mr-3" />
-              <TextInput
-                value={newPhone || phone}
-                placeholder="Phone Number"
-                placeholderTextColor="#A0A0A0"
-                className="flex-1 ml-2 text-black"
-                keyboardType="phone-pad"
-                editable={false}
-              />
-            </View>
-            
-            <Text className="mb-2 text-lg font-bold text-black">OTP Verification</Text>
-            <View className="flex-row items-center px-4 py-3 mb-2 bg-white rounded-lg shadow-md">
-              <MaterialIcons name="password" size={20} color="black" className="mr-3" />
-              <TextInput
-                value={otp}
-                onChangeText={(text) => {
-                  setOtp(text);
-                  setOtpError("");
-                }}
-                placeholder="Enter 6-digit OTP"
-                placeholderTextColor="#A0A0A0"
-                className="flex-1 ml-2 text-black"
-                keyboardType="number-pad"
-                maxLength={6}
-              />
-            </View>
-            
-            {otpError && (
-              <Text className="mb-2 text-sm text-red-500">{otpError}</Text>
-            )}
-            
+      {/* Header */}
+      <View className="flex-1">
+        <ScrollView className="flex-1 bg-white">
+          <View className="flex-row items-center justify-center px-8 py-16 bg-gray-900">
             <TouchableOpacity
-              onPress={handleOtpSubmit}
-              className={`p-3 mb-2 bg-slate-200 border w-[95%] rounded-lg mx-auto shadow-md ${
-                otp.length === 6 && !isVerifying ? "" : "opacity-50"
-              }`}
-              disabled={otp.length !== 6 || isVerifying}
+              onPress={handleBackPress}
+              className="absolute left-8 p-3 py-5 bg-[#2C3441] bg-opacity-50 border border-slate-500 rounded-xl"
             >
-              {isVerifying ? (
-                <ActivityIndicator color="#000" />
-              ) : (
-                <Text className="font-bold text-center text-black">Verify OTP</Text>
-              )}
+              <Feather name="arrow-left" size={24} color="white" />
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              onPress={handleResendOtp} 
-              disabled={!canResend || isSendingOtp}
-              className="items-center mb-6"
-            >
-              <Text className={`text-blue-500 ${canResend && !isSendingOtp ? "font-semibold" : "opacity-70"}`}>
-                {isSendingOtp ? (
-                  "Sending OTP..."
-                ) : canResend ? (
-                  "Resend OTP"
-                ) : (
-                  `Resend OTP in ${resendTimer}s`
-                )}
-              </Text>
-            </TouchableOpacity>
-          </>
-        )}
+            <Text className="ml-4 text-3xl font-black text-center text-white">
+              Update Account
+            </Text>
+          </View>
 
+          <View className="px-6">
+            <View className="p-8 -mt-6 bg-white shadow-2xl rounded-2xl">
+              <View className="flex-row items-center justify-between mb-3">
+                <Text className="text-xl font-semibold text-gray-700">
+                  Account Update
+                </Text>
+                <Ionicons name="information-circle" size={24} color="#1F2937" />
+              </View>
+              <Text className="text-sm text-gray-600">
+                You can update any of your account details below. Even updating
+                a single field will save all your changes.
+              </Text>
+            </View>
+
+            <View className="p-8 py-10 mt-6 bg-white border shadow-sm rounded-3xl border-slate-100">
+              <View className="flex-row items-start mb-6">
+                <View className="mr-5 overflow-hidden rounded-2xl">
+                  <LinearGradient
+                    colors={["#fb923c", "#ea580c"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    className="p-4"
+                  >
+                    <FontAwesome6 name="user" solid size={20} color="#ffffff" />
+                  </LinearGradient>
+                </View>
+                <View className="flex-1">
+                  <Text className="text-2xl font-bold text-gray-900">
+                    Account Information
+                  </Text>
+                  <Text className="text-base text-gray-500">
+                    Update your personal details
+                  </Text>
+                </View>
+              </View>
+
+              <Text className="my-2 text-base font-semibold text-gray-700">
+                Full Name
+              </Text>
+              <View className="relative mb-6">
+                <TextInput
+                  className="w-full h-[68px] p-4 px-6 text-gray-700 border border-gray-300 rounded-xl bg-gray-50 text-xl"
+                  placeholder="Enter your full name"
+                  placeholderTextColor="#9CA3AF"
+                  value={name}
+                  onChangeText={setName}
+                />
+                <FontAwesome5
+                  name="edit"
+                  size={18}
+                  color="#9CA3AF"
+                  style={{ position: "absolute", right: 16, top: 24 }}
+                />
+              </View>
+
+              <Text className="mb-2 text-base font-semibold text-gray-700">
+                Email Address
+              </Text>
+              <View className="relative mb-2">
+                <TextInput
+                  className="w-full h-[68px] p-4 px-6 text-gray-700 border border-gray-300 rounded-xl bg-gray-50 text-xl"
+                  placeholder="Enter your email address"
+                  placeholderTextColor="#9CA3AF"
+                  value={email}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    if (emailTouched) {
+                      if (!validateEmail(text) && text) {
+                        setEmailError("Please enter a valid email address");
+                      } else {
+                        setEmailError("");
+                      }
+                    }
+                  }}
+                  onBlur={() => {
+                    setEmailTouched(true);
+                    if (email && !validateEmail(email)) {
+                      setEmailError("Please enter a valid email address");
+                    } else {
+                      setEmailError("");
+                    }
+                  }}
+                  keyboardType="email-address"
+                />
+                <Ionicons
+                  name="mail"
+                  size={20}
+                  color="#9CA3AF"
+                  style={{ position: "absolute", right: 16, top: 24 }}
+                />
+              </View>
+              {emailError && emailTouched && (
+                <Text className="mb-6 text-base text-red-500">
+                  {emailError}
+                </Text>
+              )}
+              {!emailError && <View className="mb-6" />}
+
+              {/* Mobile Number */}
+              <Text className="mb-2 text-base font-semibold text-gray-700">
+                Mobile Number
+              </Text>
+
+              {phoneUpdateSuccess ? (
+                <>
+                  <View className="p-4 mb-6 border border-green-200 bg-green-50 rounded-xl">
+                    <View className="flex-row items-center">
+                      <View className="p-2 mr-3 bg-green-500 rounded-full">
+                        <Ionicons name="checkmark" size={16} color="white" />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-base font-semibold text-gray-900">
+                          Mobile Number Updated Successfully!
+                        </Text>
+                        <Text className="text-sm text-green-600">
+                          Your mobile number has been updated to +91 {phone}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </>
+              ) : !confirm ? (
+                <>
+                  <View className="relative mb-4">
+                    <TextInput
+                      className="w-full h-[68px] p-4 px-6 text-gray-700 border border-gray-300 rounded-xl bg-gray-50 text-xl"
+                      placeholder="Enter your mobile number"
+                      placeholderTextColor="#9CA3AF"
+                      value={newPhone || phone}
+                      onChangeText={(text) => {
+                        setNewPhone(text);
+                        setOtpError("");
+                        setPhoneUpdateSuccess(false);
+                        setPhoneVerificationError(false);
+                      }}
+                      keyboardType="phone-pad"
+                      maxLength={10}
+                    />
+                    <Ionicons
+                      name="call"
+                      size={20}
+                      color="#9CA3AF"
+                      style={{ position: "absolute", right: 16, top: 24 }}
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={handlePhoneUpdate}
+                    className={`h-[56px] justify-center items-center rounded-xl mb-6 ${
+                      newPhone && newPhone.length === 10 && !isSendingOtp
+                        ? "bg-[#1F2937]"
+                        : "bg-gray-400"
+                    }`}
+                    disabled={
+                      !(newPhone && newPhone.length === 10) || isSendingOtp
+                    }
+                  >
+                    {isSendingOtp ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text className="text-lg font-semibold text-white">
+                        Send OTP
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <View className="p-4 mb-4 border border-blue-200 bg-blue-50 rounded-xl">
+                    <View className="flex-row items-center">
+                      <View className="p-2 mr-3 bg-blue-500 rounded-full">
+                        <Ionicons name="information" size={16} color="white" />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-base font-semibold text-blue-700">
+                          OTP Sent Successfully
+                        </Text>
+                        <Text className="text-sm text-blue-600">
+                          We've sent a 6-digit code to +91{" "}
+                          {formatPhoneForDisplay(newPhone || phone)}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                  <View className="relative mb-4">
+                    <TextInput
+                      className="w-full h-[68px] p-4 px-6 pr-14 text-gray-700 border border-gray-300 rounded-xl bg-gray-50 text-xl text-center"
+                      placeholder="Enter 6-digit OTP"
+                      style={{ letterSpacing: 2 }}
+                      placeholderTextColor="#9CA3AF"
+                      value={otp}
+                      onChangeText={(text) => {
+                        setOtp(text);
+                        setOtpError("");
+                        setPhoneVerificationError(false);
+                      }}
+                      keyboardType="number-pad"
+                      maxLength={6}
+                    />
+                    <MaterialIcons
+                      name="security"
+                      size={24}
+                      color="#9CA3AF"
+                      style={{ position: "absolute", right: 16, top: 22 }}
+                    />
+                  </View>
+
+                  {phoneVerificationError && (
+                    <View className="p-4 mb-4 border border-red-200 bg-red-50 rounded-xl">
+                      <View className="flex-row items-center">
+                        <View className="p-2 mr-3 bg-red-500 rounded-full">
+                          <Ionicons name="close" size={16} color="white" />
+                        </View>
+                        <View className="flex-1">
+                          <Text className="text-base font-semibold text-red-700">
+                            Verification Failed
+                          </Text>
+                          <Text className="text-sm text-red-600">
+                            {otpError || "Please check your OTP and try again"}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  )}
+
+                  <TouchableOpacity
+                    onPress={handleOtpSubmit}
+                    className={`h-[56px] justify-center items-center rounded-xl mb-4 ${
+                      otp.length === 6 && !isVerifying
+                        ? "bg-[#1F2937]"
+                        : "bg-gray-400"
+                    }`}
+                    disabled={otp.length !== 6 || isVerifying}
+                  >
+                    {isVerifying ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text className="text-lg font-semibold text-white">
+                        Verify OTP
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+
+                  <View className="flex-row items-center justify-center mb-6">
+                    <Text className="mr-2 text-sm text-gray-600">
+                      Didn't receive code?
+                    </Text>
+                    <TouchableOpacity
+                      onPress={handleResendOtp}
+                      disabled={!canResend || isSendingOtp}
+                    >
+                      <Text
+                        className={`text-sm font-semibold ${
+                          canResend && !isSendingOtp
+                            ? "text-blue-600"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        {isSendingOtp
+                          ? "Sending..."
+                          : canResend
+                          ? "Resend OTP"
+                          : `Resend in ${resendTimer}s`}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+            </View>
+          </View>
+      <View className="px-6 py-4 bg-white border-t border-gray-200">
         <TouchableOpacity
           onPress={handleUpdate}
-          className={`p-4 mt-4 mb-8 rounded-lg shadow-md ${
-            isFormValid() ? "bg-black" : "bg-gray-400"
+          className={`h-[56px] justify-center items-center rounded-xl mb-2 ${
+            isFormValid() ? "bg-[#1F2937]" : "bg-gray-400"
           }`}
           disabled={!isFormValid() || updateUserMutation.isLoading}
         >
-          {updateUserMutation.isLoading ? 
-            <ActivityIndicator color="#fff" /> : 
-            <Text className="font-bold text-center text-white">Update Details</Text>
-          }
+          {updateUserMutation.isLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text className="text-lg font-semibold text-white">
+              Save Changes
+            </Text>
+          )}
         </TouchableOpacity>
-      </ScrollView>
-
+        <Text className="text-sm text-center text-gray-500">
+          Changes will be saved to your account
+        </Text>
+      </View>
+        </ScrollView>
+      </View>
+      
       <Modal
         animationType="fade"
         transparent={true}
@@ -402,32 +542,45 @@ const AccountScreen = () => {
         onRequestClose={() => setShowModal(false)}
       >
         <View className="flex-1 items-center justify-center bg-[rgba(0,0,0,0.5)]">
-          <View className="w-[90%] p-8 bg-white rounded-xl shadow-lg">
-            <Text className="mb-4 text-2xl font-bold text-black">Unsaved Changes</Text>
-            <Text className="mb-8 text-lg text-gray-700">You have unsaved changes. Do you want to leave without saving?</Text>
-            
-            <View className="flex-row justify-between gap-2 space-x-4">
-              <TouchableOpacity 
-                onPress={() => { 
-                  setShowModal(false); 
+          <View className="w-[90%] p-8 bg-white rounded-2xl shadow-2xl">
+            <View className="items-center mb-6">
+              <View className="p-4 mb-4 bg-orange-100 rounded-full">
+                <MaterialIcons name="warning" size={32} color="#ea580c" />
+              </View>
+              <Text className="mb-2 text-2xl font-bold text-gray-900">
+                Unsaved Changes
+              </Text>
+              <Text className="text-lg text-center text-gray-600">
+                You have unsaved changes. Are you sure you want to leave without
+                saving?
+              </Text>
+            </View>
+
+            <View className="flex-row gap-4">
+              <TouchableOpacity
+                onPress={() => {
+                  setShowModal(false);
                   setSubmittedUpdate(true);
-                  navigation.goBack(); 
-                }} 
-                className="w-1/2 p-3 border rounded-lg shadow-md bg-slate-200"
+                  navigation.goBack();
+                }}
+                className="flex-1 h-[56px] justify-center items-center border-2 border-gray-300 rounded-xl"
               >
-                <Text className="font-bold text-center text-black">Leave</Text>
+                <Text className="text-lg font-semibold text-gray-700">
+                  Leave
+                </Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
-                onPress={() => setShowModal(false)} 
-                className="w-1/2 p-4 bg-black rounded-lg shadow-md"
+
+              <TouchableOpacity
+                onPress={() => setShowModal(false)}
+                className="flex-1 h-[56px] justify-center items-center bg-[#1F2937] rounded-xl"
               >
-                <Text className="font-bold text-center text-white">Stay</Text>
+                <Text className="text-lg font-semibold text-white">Stay</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
+      
     </View>
   );
 };

@@ -1,152 +1,404 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   Image,
   ScrollView,
-  Modal,
-  Pressable,
   StatusBar,
-  ActivityIndicator
-} from 'react-native';
-import { useAuthStore } from '../../store/authStore';
-import { useNavigation } from '@react-navigation/native';
-import { useLogoutUser } from '../../hooks/useAuth';
+  ActivityIndicator,
+  SafeAreaView,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  FontAwesome6,
+  Ionicons,
+  Octicons,
+  FontAwesome,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
+import { useAuthStore } from "../../store/authStore";
+import { useNavigation } from "@react-navigation/native";
+import { useLogoutUser } from "../../hooks/useAuth";
+import ReusableBottomSheet from "../../components/Ui/ReusableBottomSheet";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const ProfileScreen = () => {
   const { user } = useAuthStore();
   const navigation = useNavigation();
   const logoutUser = useLogoutUser();
-  const [modalVisible, setModalVisible] = useState(false);
+  const [pressedAction, setPressedAction] = useState(null);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const signOutBottomSheetRef = useRef(null);
+  const insets = useSafeAreaInsets();
 
   const handleLogout = () => {
+    setIsSigningOut(true);
     logoutUser.mutate(null, {
       onSuccess: () => {
-        setModalVisible(false);
+        signOutBottomSheetRef.current?.close();
         navigation.reset({
           index: 0,
-          routes: [{ name: 'Auth' }],
+          routes: [{ name: "Auth" }],
         });
+        setIsSigningOut(false);
       },
     });
   };
 
-  const closeModal = () => {
-    setModalVisible(false);
+  const handleSignOutPress = () => {
+    signOutBottomSheetRef.current?.snapToIndex(0);
   };
 
+  const handleSignOutCancel = () => {
+    signOutBottomSheetRef.current?.close();
+  };
+
+  const getRoleDisplayName = (role) => {
+    switch (role) {
+      case 'truck_owner':
+        return 'Truck Owner';
+      case 'driver':
+        return 'Driver';
+      case 'admin':
+        return 'Administrator';
+      default:
+        return 'User';
+    }
+  };
+
+
   return (
-    <ScrollView className="flex-1 p-4 bg-white">
-      <StatusBar barStyle="dark-content" backgroundColor={'#fff'} />
-      {/* User Name and Role */}
-      <View className="flex-row justify-between">
-      <View className="flex justify-start b-6 w-[80%] rounded-lg">
-        <Text className="text-4xl font-bold uppercase">{ user?.name || 'User Name'}</Text>
-        <Text className="px-3 py-1 text-sm rounded-full w-[90px] bg-slate-50">{user?.role}</Text>
+    <SafeAreaView className="flex-1 bg-white">
+      <View className="flex-1">
+        <ScrollView className="flex-1">
+          {/* Header Section */}
+          <View className="pt-14 pb-14 bg-[#151E2C]" style={{ paddingTop: insets.top }}>
+            <View className="flex-row items-center justify-between px-8 pt-4 pb-2">
+              <View className="flex-row items-center">
+                <View className="relative overflow-hidden border border-slate-500 rounded-xl">
+                  <Image
+                    source={require("../../../assets/icons/profile.png")}
+                    className="w-16 h-16 scale-[1.4]"
+                  />
+                  <View className="absolute bottom-0 right-0 w-5 h-5 bg-green-500 border-2 border-white rounded-full" />
+                </View>
+                <View className="ml-4">
+                  <Text className="text-2xl font-bold text-white text-ellipsis">
+                    {user?.name || "User Name"}
+                  </Text>
+                  <View className="mr-auto px-4 py-1 mt-1 bg-[#263c43] border border-[#266b68] rounded-full bg-opacity-20 border-opacity-60">
+                    <Text className="text-sm font-bold text-cyan-400">
+                      {getRoleDisplayName(user?.role)}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => navigation.navigate("Notifications")}
+                className="p-3 bg-[#2C3441] bg-opacity-50 border border-slate-500 rounded-xl"
+              >
+                <FontAwesome6 name="bell" size={20} color="#ffffff" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Stats Cards for Truck App */}
+            <View className="flex-row justify-between px-6 mt-6">
+              <View className="flex-1 p-4 py-6 mx-2 bg-[#2C3441] bg-opacity-50 border border-slate-500 rounded-xl">
+                <Text className="text-3xl font-bold text-center text-white">
+                  {/* Replace with actual data */}
+                  8
+                </Text>
+                <Text className="font-semibold text-center text-gray-300 text-md">
+                  Active Trucks
+                </Text>
+              </View>
+              <View className="flex-1 p-4 py-6 mx-2 bg-[#2C3441] bg-opacity-50 border border-slate-500 rounded-xl">
+                <Text className="text-3xl font-bold text-center text-white">
+                  {/* Replace with actual data */}
+                  21
+                </Text>
+                <Text className="font-semibold text-center text-gray-300 text-md">
+                  Completed Trips
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View className="px-6">
+            {/* Quick Actions Card */}
+            <View className="z-10 p-6 py-8 -mt-6 bg-white shadow-2xl rounded-3xl elevation-20">
+              <Text className="mb-6 text-2xl font-bold text-gray-800">
+                Quick Actions
+              </Text>
+              <View className="flex-row justify-between gap-4">
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("Help")}
+                  onPressIn={() => setPressedAction("help")}
+                  activeOpacity={1}
+                  onPressOut={() => setPressedAction(null)}
+                  className={`items-center ${
+                    pressedAction === "help" ? "bg-blue-100" : "bg-blue-50"
+                  } p-4 rounded-xl py-6 flex-1 mx-1`}
+                >
+                  <View className="p-3 mb-2 bg-blue-500 rounded-xl">
+                    <FontAwesome6 name="headset" size={20} color="#ffffff" />
+                  </View>
+                  <Text className="text-sm font-semibold text-gray-700">
+                    Help
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("Wallet")}
+                  onPressIn={() => setPressedAction("wallet")}
+                  onPressOut={() => setPressedAction(null)}
+                  activeOpacity={1}
+                  className={`items-center ${
+                    pressedAction === "wallet" ? "bg-green-100" : "bg-green-50"
+                  } p-4 py-6 rounded-xl flex-1 mx-1`}
+                >
+                  <View className="p-3 mb-2 bg-green-500 rounded-xl">
+                    <Ionicons name="wallet" size={20} color="#ffffff" />
+                  </View>
+                  <Text className="text-sm font-semibold text-gray-700">
+                    Wallet
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("Notifications")}
+                  onPressIn={() => setPressedAction("activity")}
+                  onPressOut={() => setPressedAction(null)}
+                  activeOpacity={1}
+                  className={`items-center ${
+                    pressedAction === "activity"
+                      ? "bg-purple-100"
+                      : "bg-purple-50"
+                  } p-4 py-6 rounded-xl flex-1 mx-1`}
+                >
+                  <View className="p-3 mb-2 bg-purple-500 rounded-xl">
+                    <Octicons name="graph" size={20} color="#ffffff" />
+                  </View>
+                  <Text className="text-sm font-semibold text-gray-700">
+                    Activity
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Main Menu Items */}
+            <View className="flex gap-4 mt-8 space-y-4">
+              <TouchableOpacity
+                onPress={() => navigation.navigate("Truck")}
+                activeOpacity={1}
+                className="flex-row items-center justify-between p-8 py-10 bg-white border shadow-sm border-slate-100 rounded-xl elevation-2 active:bg-gray-50"
+              >
+                <View className="flex-row items-center">
+                  <View className="overflow-hidden rounded-xl">
+                    <LinearGradient
+                      colors={["#60a5fa", "#2563eb"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      className="p-3 py-5 rounded-xl"
+                    >
+                      <FontAwesome6 name="truck" size={24} color="#ffffff" />
+                    </LinearGradient>
+                  </View>
+                  <View className="ml-5">
+                    <Text className="text-xl font-bold text-gray-800">
+                      My Drivers
+                    </Text>
+                    <Text className="text-md w-[90%] font-medium text-gray-500">
+                      Manage your trucks and drivers
+                    </Text>
+                  </View>
+                </View>
+                <FontAwesome6 name="chevron-right" size={16} color="#4B5563" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => navigation.navigate("Requests")}
+                activeOpacity={1}
+                className="flex-row items-center justify-between p-8 py-10 bg-white border shadow-sm border-slate-100 rounded-xl elevation-2 active:bg-gray-50"
+              >
+                <View className="flex-row items-center">
+                  <View className="overflow-hidden rounded-xl">
+                    <LinearGradient
+                      colors={["#2dd4bf", "#0d9488"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      className="p-5 py-5 rounded-xl"
+                    >
+                      <FontAwesome6
+                        name="clipboard-list"
+                        size={24}
+                        color="#ffffff"
+                      />
+                    </LinearGradient>
+                  </View>
+                  <View className="ml-5">
+                    <Text className="text-xl font-bold text-gray-800">
+                      Requests
+                    </Text>
+                    <Text className="text-md w-[100%] font-medium text-gray-500">
+                      View your requests
+                    </Text>
+                  </View>
+                </View>
+                <FontAwesome6 name="chevron-right" size={16} color="#4B5563" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Account & Settings */}
+            <View className="mt-8 mb-6">
+              <Text className="mb-6 text-2xl font-bold text-gray-800">
+                Account & Settings
+              </Text>
+              <View className="overflow-hidden bg-white border shadow-xs border-slate-100 rounded-xl elevation-2">
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("Settings")}
+                  activeOpacity={1}
+                  className="flex-row items-center justify-between p-4 border-b border-slate-100 active:bg-gray-50"
+                >
+                  <View className="flex-row items-center">
+                    <View className="p-3 bg-gray-100 rounded-xl">
+                      <FontAwesome6 name="gear" size={20} color="#6B7280" />
+                    </View>
+                    <Text className="ml-4 font-semibold text-gray-800 text-md">
+                      Settings
+                    </Text>
+                  </View>
+                  <FontAwesome6 name="chevron-right" size={16} color="#4B5563" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("Messages")}
+                  activeOpacity={1}
+                  className="flex-row items-center justify-between p-4 border-b border-slate-100 active:bg-gray-50"
+                >
+                  <View className="flex-row items-center">
+                    <View className="p-3 bg-gray-100 rounded-xl">
+                      <Ionicons name="mail" size={20} color="#6B7280" />
+                    </View>
+                    <Text className="ml-4 font-semibold text-gray-800">
+                      Messages
+                    </Text>
+                  </View>
+                  <FontAwesome6 name="chevron-right" size={16} color="#4B5563" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("Trips")}
+                  activeOpacity={1}
+                  className="flex-row items-center justify-between p-4 border-b border-slate-100 active:bg-gray-50"
+                >
+                  <View className="flex-row items-center">
+                    <View className="p-3 bg-gray-100 rounded-xl">
+                      <MaterialCommunityIcons
+                        name="map-marker-distance"
+                        size={20}
+                        color="#6B7280"
+                      />
+                    </View>
+                    <Text className="ml-4 font-semibold text-gray-800">
+                      View Trips
+                    </Text>
+                  </View>
+                  <FontAwesome6 name="chevron-right" size={16} color="#4B5563" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("Legal")}
+                  activeOpacity={1}
+                  className="flex-row items-center justify-between p-4 border-b border-slate-100 active:bg-gray-50"
+                >
+                  <View className="flex-row items-center">
+                    <View className="p-3 bg-gray-100 rounded-xl">
+                      <FontAwesome name="legal" size={20} color="#6B7280" />
+                    </View>
+                    <Text className="ml-4 font-semibold text-gray-800">
+                      Legal
+                    </Text>
+                  </View>
+                  <FontAwesome6 name="chevron-right" size={16} color="#4B5563" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleSignOutPress}
+                  activeOpacity={1}
+                  className="flex-row items-center justify-between p-4 active:bg-red-50"
+                >
+                  <View className="flex-row items-center">
+                    <View className="p-3 rounded-xl bg-[#FEE2E2]">
+                      <FontAwesome name="sign-out" size={20} color="#EF4444" />
+                    </View>
+                    <Text className="ml-4 font-semibold text-red-500">
+                      Sign Out
+                    </Text>
+                  </View>
+                  <FontAwesome6 name="chevron-right" size={16} color="#4B5563" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
       </View>
-      <Image source={require('../../../assets/icons/profile.png')} className="w-[65px] h-[65px]" />
-      </View>
-
-      {/* Horizontal Boxes */}
-      <View className="flex-row justify-between mt-6 mb-6">
-        <TouchableOpacity onPress={() => navigation.navigate('Help')} className="items-center w-[30%] p-6 mx-1 bg-gray-100 rounded-lg">
-          <Image source={require('../../../assets/icons/help.png')} className="w-6 h-6 mb-2" />
-          <Text>Help</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => navigation.navigate('Wallet')} className="items-center w-[30%] p-6 mx-1 bg-gray-100 rounded-lg">
-          <Image source={require('../../../assets/icons/wallet.png')} className="w-6 h-6 mb-2" />
-          <Text>Wallet</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => navigation.navigate('Notifications')} className="items-center w-[30%] p-6 mx-1 bg-gray-100 rounded-lg">
-          <Image source={require('../../../assets/icons/activity-black.png')} className="w-6 h-6 mb-2 mr-2" />
-          <Text>Activity</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Vertical Boxes */}
-      {/* <TouchableOpacity onPress={() => navigation.navigate('Mine')} className="flex-row items-center justify-between p-8 mb-4 overflow-hidden bg-gray-100 border-2 border-gray-100 rounded-lg">
-        <View>
-          <Text className="text-lg">Mines</Text>
-          <Text className="text-slate-500 text-md">Manage your Mines and materials</Text>
-        </View>
-        <Image source={require('../../../assets/icons/mine.png')} className="w-12 h-12 scale-[2] relative top-4" />
-      </TouchableOpacity> */}
-
-      <TouchableOpacity onPress={() => navigation.navigate('Truck')} className="flex-row items-center justify-between p-8 mb-4 overflow-hidden bg-gray-100 border-2 border-gray-100 rounded-lg">
-        <View>
-          <Text className="text-lg">My Trucks</Text>
-          <Text className="text-slate-500 text-md">Manage your Trucks/Drivers</Text>
-        </View>
-        <Image source={require('../../../assets/icons/truck.jpg')} className="w-12 h-12 scale-[3] relative rounded-full" />
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => navigation.navigate('Requests')} className="flex-row items-center justify-between p-8 mb-4 overflow-hidden bg-gray-100 border-2 border-gray-100 rounded-lg">
-        <View>
-          <Text className="text-lg">Requests</Text>
-          <Text className="text-slate-500 text-md">View Your Requests</Text>
-        </View>
-        <Image source={require('../../../assets/icons/requests.png')} className="w-12 h-12 scale-[2.5] relative top-4" />
-      </TouchableOpacity>
-
-      {/* Horizontal Rule */}
-      <View className="h-1 my-2 bg-gray-100" />
-
-      {/* Common Services */}
-      <View className="p-2 mt-4">
-      <TouchableOpacity onPress={() => navigation.navigate('Settings')} className="flex-row items-center mb-8">
-        <Image source={require('../../../assets/icons/settings.png')} className="w-4 h-4 mr-3" />
-        <Text className="text-lg font-medium">Settings</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => navigation.navigate('Messages')} className="flex-row items-center mb-8">
-        <Image source={require('../../../assets/icons/messages.png')} className="w-4 h-4 mr-3" />
-        <Text className="text-lg font-medium">Messages</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => navigation.navigate('Trips')} className="flex-row items-center mb-8">
-        <Image source={require('../../../assets/icons/trip.png')} className="w-4 h-4 mr-3" />
-        <Text className="text-lg font-medium">View Trips</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => navigation.navigate('Legal')} className="flex-row items-center mb-8">
-        <Image source={require('../../../assets/icons/legal.png')} className="w-4 h-4 mr-3" />
-        <Text className="text-lg font-medium">Legal</Text>
-      </TouchableOpacity>
-
-       <TouchableOpacity onPress={() => setModalVisible(true)} className="flex-row items-center mb-8">
-          <Image source={require('../../../assets/icons/signout.png')} className="w-4 h-4 mr-3" />
-          <Text className="text-lg font-medium text-red-600">Sign Out</Text>
-        </TouchableOpacity>
-      </View>
-      {/* Logout Confirmation Modal */}
-      <Modal
-        animationType="fade"
-        statusBarTranslucent={true}
-        navigationBarTranslucent={true}
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={closeModal}
+      <ReusableBottomSheet
+        ref={signOutBottomSheetRef}
+        snapPoints={['45%']}
+        enablePanDownToClose={true}
+        backgroundStyle={{ backgroundColor: "#fff" }}
+        handleIndicatorStyle={{ backgroundColor: "#d1d5db" }}
       >
-        {/* <StatusBar barStyle="dark-content" backgroundColor={'#00000090'} /> */}
-        <Pressable onPress={closeModal} className="items-center justify-center flex-1 bg-[00000060] bg-opacity-50">
-          <View className="w-4/5 p-6 bg-white rounded-lg">
-            <Text className="mb-4 text-lg font-bold text-center">Do you want to sign out?</Text>
+        <View className="flex-1 p-6">
+          <View className="items-center mb-8">
+            <View className="p-4 mb-6 bg-red-100 rounded-full">
+              <FontAwesome name="sign-out" size={28} color="#EF4444" />
+            </View>
+            <Text className="mb-3 text-2xl font-bold text-center text-gray-900">
+              Sign Out
+            </Text>
+            <Text className="text-center text-gray-600 text-md">
+              Are you sure you want to sign out of your account?
+            </Text>
+            <Text className="mt-2 text-sm text-center text-gray-500">
+              You'll need to sign in again to access your account.
+            </Text>
+          </View>
 
+          <View className="gap-4 mt-auto">
             <TouchableOpacity
               onPress={handleLogout}
-              className="w-full py-3 mt-4 bg-red-500 rounded-lg shadow-lg shadow-red-400"
+              disabled={logoutUser.isLoading}
+              className="flex-row items-center justify-center p-4 bg-red-500 rounded-2xl"
             >
-              <Text className="font-semibold text-center text-white">
-                {logoutUser.isLoading ? <ActivityIndicator color='#fff' /> : 'Sign Out'}
+              {isSigningOut ? (
+                <ActivityIndicator color="#ffffff" size="small" />
+              ) : (
+                <>
+                  <FontAwesome name="sign-out" size={18} color="#ffffff" />
+                  <Text className="ml-2 text-lg font-bold text-white">
+                    Sign Out
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleSignOutCancel}
+              className="p-4 bg-gray-100 rounded-2xl"
+              disabled={logoutUser.isLoading}
+            >
+              <Text className="text-lg font-bold text-center text-gray-700">
+                Cancel
               </Text>
             </TouchableOpacity>
           </View>
-        </Pressable>
-      </Modal>
-    </ScrollView>
+        </View>
+      </ReusableBottomSheet>
+    </SafeAreaView>
   );
 };
 
