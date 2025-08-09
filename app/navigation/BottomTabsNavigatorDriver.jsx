@@ -10,15 +10,28 @@ import Entypo from '@expo/vector-icons/Entypo';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../store/authStore';
 import { ActivityIndicator, View } from 'react-native';
+import { useCheckUser } from "../hooks/useAuth.js";
+import { useNotification } from '../context/NotificationContext.jsx';
+import { useUpdatePushToken } from '../hooks/useUser.js';
 
 const Tab = createBottomTabNavigator();
 
 const BottomTabsNavigator = () => {
   const navigation = useNavigation();
   const { user } = useAuthStore();
+  const { expoPushToken } = useNotification();
+  const { mutate: updatePushToken } = useUpdatePushToken();
+  const checkUserMutation = useCheckUser();
 
   useEffect(() => {
-    if (!user) {
+    if (expoPushToken && user && user.email) {
+      updatePushToken({pushToken : expoPushToken});
+    }
+  }, [expoPushToken, user]);
+
+  useEffect(() => {
+    if (!user || !user.email) {
+      console.warn("User is not authenticated or email is missing.", user);
       navigation.reset({
         index: 0,
         routes: [{ name: 'Auth' }],

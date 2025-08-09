@@ -39,6 +39,12 @@ import FeedbackScreen from "../screens/settings/FeedbackScreen";
 import CreateDriverScreen from "../screens/driver/CreateDriverScreen";
 import DriverDetailScreen from "../screens/driver/DriverDetailScreen";
 
+import CreateRequestScreen from "../screens/requests/CreateRequestScreen";
+import RequestDetailScreen from "../screens/requests/RequestDetailScreen";
+import CounterRequestScreen from "../screens/requests/CounterRequestScreen";
+
+import TripDetailScreen from "../screens/trips/TripDetailScreen";
+
 const Stack = createStackNavigator();
 
 const AppNavigator = () => {
@@ -105,6 +111,16 @@ const AppNavigator = () => {
         {/* Driver Management */}
         <Stack.Screen name="AddDriver" component={CreateDriverScreen} options={{ headerShown: false }} />
         <Stack.Screen name="DriverDetail" component={DriverDetailScreen} options={{ headerShown: false }} />
+
+        {/* Request Management */}
+        <Stack.Screen name="RequestMaterial" component={CreateRequestScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="RequestDetailScreen" component={RequestDetailScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="CounterRequest" component={CounterRequestScreen} options={{ headerShown: false }} />
+
+        {/* Trip Management */}
+        <Stack.Screen name="TripDetail" component={TripDetailScreen} options={{ headerShown: false }} />
+
+        {/* Other Routes */}
       </Stack.Navigator>
       <Toast config={toastConfig} />
     </NavigationContainer>

@@ -79,13 +79,13 @@ const DriverCard = ({ driver, onContactPress }) => {
             numberOfLines={1}
             ellipsizeMode="tail"
           >
-            {driver.truck_id.name}
+            {driver.truck.name}
           </Text>
         </View>
         <View className="items-end">
           <Text className="text-sm font-medium text-gray-600">REG. NUMBER</Text>
           <Text className="text-lg font-bold text-black">
-            {driver.truck_id.registration_number}
+            {driver.truck.reg}
           </Text>
         </View>
       </View>
@@ -200,7 +200,7 @@ const DriverCard = ({ driver, onContactPress }) => {
     if (!driver.isRegistered) {
       return renderPendingCard();
     }
-    if (driver.isRegistered && !driver.truck_id) {
+    if (driver.isRegistered && !driver.truck._id) {
       return renderNoTruckCard();
     }
     return renderCompleteCard();

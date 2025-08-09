@@ -4,19 +4,23 @@ import api from '../api/axiosInstance';
 
 export const useAddTruck = () => {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (truckData) => {
       const { data } = await api.post('/truck/create-truck', truckData);
       return data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['myTruck']);
+      setTimeout(() => {
+        queryClient.invalidateQueries(['myTruck']);
+      }, 500);
     },
     onError: (error) => {
       console.error('Error adding truck:', error);
     },
   });
 };
+
 
 export const useFetchMyDrivers = () => {
   return useQuery({

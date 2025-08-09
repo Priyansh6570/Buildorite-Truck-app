@@ -30,11 +30,10 @@ const RegisterScreen = ({ route }) => {
 
   const navigation = useNavigation();
   const registerMutation = useRegisterUser();
-  const { setUser } = useAuthStore();
+  const { setUser, clearUser, user } = useAuthStore();
 
   useFocusEffect(
     React.useCallback(() => {
-      // Prevent user from going back to the OTP screen
       const onBackPress = () => true;
       const backHandler = BackHandler.addEventListener(
         "hardwareBackPress",
@@ -47,7 +46,6 @@ const RegisterScreen = ({ route }) => {
   // --- LOGIC ---
   const handleRegister = () => {
     const userRole = role || "truck_owner";
-    console.log("Registering user with role:", userRole);
 
     if (!name.trim() || !email.trim()) {
       Toast.show({
@@ -72,16 +70,15 @@ const RegisterScreen = ({ route }) => {
       { name, email, phone: phoneNumber, role: userRole },
       {
         onSuccess: (data) => {
-          // IMPORTANT: Save the user and token to the store
-          setUser(data.user, data.accessToken);
-
+          clearUser();
+          setUser({name, email, phone: phoneNumber, role: userRole}, data.accessToken);
+          console.log("User registered successfully:", email);
           Toast.show({
             type: "success",
             text1: "Registration Successful",
             text2: "Welcome to Buildorite!",
           });
 
-          // Navigate based on the determined role
           if (userRole === "driver") {
             navigation.reset({ index: 0, routes: [{ name: "AddTruck" }] });
           } else {

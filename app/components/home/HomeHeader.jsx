@@ -22,6 +22,7 @@ const HomeHeader = ({ user }) => {
           <View className="flex-row items-center">
             
             <Text className="text-2xl font-bold text-white">BuildoRite</Text>
+            
           </View>
           <TouchableOpacity
             onPress={() => navigation.navigate("Profile")}

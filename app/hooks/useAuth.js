@@ -2,6 +2,51 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../api/axiosInstance";
 import { useAuthStore } from "../store/authStore";
 
+export const useVerifyPhone = () => {
+  return useMutation({
+    mutationFn: async (phone) => {
+      const { data } = await api.post("/auth/verify-phone", { phone });
+      return data;
+    },
+    onSuccess: (data) => {
+      console.log("Phone verification successful:", data);
+    },
+    onError: (err) => {
+      console.error("Phone verification error:", err.response?.data?.message || err.message);
+    },
+  });
+};
+
+export const useVerifyOtp = () => {
+  return useMutation({
+    mutationFn: async ({ phone, otp }) => {
+      const { data } = await api.post("/auth/verify-otp", { phone, otp });
+      return data;
+    },
+    onSuccess: (data) => {
+      console.log("OTP verification successful:", data);
+    },
+    onError: (err) => {
+      console.error("OTP verification error:", err.response?.data?.message || err.message);
+    },
+  });
+};
+
+export const useResendOtp = () => {
+  return useMutation({
+    mutationFn: async (phone) => {
+      const { data } = await api.post("/auth/verify-phone", { phone });
+      return data;
+    },
+    onSuccess: (data) => {
+      console.log("OTP resent successfully:", data);
+    },
+    onError: (err) => {
+      console.error("Resend OTP error:", err.response?.data?.message || err.message);
+    },
+  });
+};
+
 export const useCheckUser = () => {
   return useMutation({
     mutationFn: async (phone) => {

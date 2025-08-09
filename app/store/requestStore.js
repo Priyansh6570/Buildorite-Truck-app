@@ -4,63 +4,36 @@ import { MMKV } from 'react-native-mmkv';
 
 const storage = new MMKV();
 
+const zustandStorage = {
+  setItem: (name, value) => storage.set(name, value),
+  getItem: (name) => {
+    const value = storage.getString(name);
+    return value ?? null;
+  },
+  removeItem: (name) => storage.delete(name),
+};
+
 export const useRequestStore = create(
   persist(
     (set, get) => ({
-      requests: [],
       myRequests: [],
-      
-      // Set all requests
-      setRequests: (requests) => set({ requests }),
-      
-      // Set user's requests
       setMyRequests: (requests) => set({ myRequests: requests }),
-      
-      // Add a new request
-      addRequest: (request) => set((state) => ({
-        requests: [request, ...state.requests],
-        myRequests: [request, ...state.myRequests]
-      })),
-      
-      // Update request status
       updateRequest: (requestId, updates) => set((state) => ({
-        requests: state.requests.map(req => 
+        myRequests: state.myRequests.map(req =>
           req._id === requestId ? { ...req, ...updates } : req
         ),
-        myRequests: state.myRequests.map(req => 
-          req._id === requestId ? { ...req, ...updates } : req
-        )
       })),
-      
-      // Remove request
-      removeRequest: (requestId) => set((state) => ({
-        requests: state.requests.filter(req => req._id !== requestId),
-        myRequests: state.myRequests.filter(req => req._id !== requestId)
-      })),
-      
-      // Get request by ID
       getRequestById: (requestId) => {
-        const state = get();
-        return state.requests.find(req => req._id === requestId) || 
-               state.myRequests.find(req => req._id === requestId);
+        return get().myRequests.find(req => req._id === requestId);
       },
-      
-      // Get requests by status
       getRequestsByStatus: (status) => {
-        const state = get();
-        return state.myRequests.filter(req => req.status === status);
+        return get().myRequests.filter(req => req.status === status);
       },
-      
-      // Clear all requests
-      clearRequests: () => set({ requests: [], myRequests: [] }),
+      clearRequests: () => set({ myRequests: [] }),
     }),
     {
       name: 'request-storage',
-      storage: createJSONStorage(() => ({
-        setItem: (name, value) => storage.set(name, value),
-        getItem: (name) => storage.getString(name) || null,
-        removeItem: (name) => storage.delete(name),
-      })),
+      storage: createJSONStorage(() => zustandStorage),
     }
   )
 );

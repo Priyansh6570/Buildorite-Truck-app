@@ -32,6 +32,7 @@ const AddTruckScreen = () => {
     const [locationErrorMsg, setLocationErrorMsg] = useState(null);
     const [isLocationLoading, setIsLocationLoading] = useState(true);
     const [isRequestingPermission, setIsRequestingPermission] = useState(false);
+    const [isAdding, setIsAdding] = useState(false);
     
     // Input focus and error state
     const [isNameFocused, setIsNameFocused] = useState(false);
@@ -113,7 +114,9 @@ const AddTruckScreen = () => {
     const isButtonDisabled = isAddingTruck || !name.trim() || !registrationNumber.trim() || !location || !!validateRegistrationNumber(registrationNumber);
 
     const handleAddTruck = () => {
+        if(isAddingTruck) return;
         if (isButtonDisabled) return;
+        setIsAdding(true);
 
         const current_location = {
             lat: location.latitude,
@@ -137,6 +140,9 @@ const AddTruckScreen = () => {
                         text1: 'Error',
                         text2: err?.response?.data?.message || 'Failed to add truck.',
                     });
+                },
+                onSettled: () => {
+                    setIsAdding(false);
                 },
             }
         );
@@ -306,7 +312,7 @@ const AddTruckScreen = () => {
 
                         {/* Add Truck Button */}
                         <TouchableOpacity onPress={handleAddTruck} disabled={isButtonDisabled} className={`mt-8 p-5 rounded-2xl items-center justify-center ${isButtonDisabled ? 'bg-gray-400' : 'bg-[#1C2533]'}`} style={{ elevation: 3, shadowColor: "#000" }}>
-                            {isAddingTruck ? <ActivityIndicator color="#fff" /> : <Text className="text-xl font-bold text-white">Add Truck</Text>}
+                            {isAdding ? <ActivityIndicator color="#fff" /> : <Text className="text-xl font-bold text-white">Add Truck</Text>}
                         </TouchableOpacity>
                     </View>
                     

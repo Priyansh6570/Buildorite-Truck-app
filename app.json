@@ -19,13 +19,26 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.buildorite.truckApp",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
+      ],
       "googleServicesFile": "./google-services.json",
       "package": "com.buildorite.truckApp"
     },
@@ -41,6 +54,7 @@
     "plugins": [
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
+      "@maplibre/maplibre-react-native",
       [
         "expo-build-properties",
         {
@@ -49,7 +63,35 @@
           }
         }
       ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "This app needs access to location to track deliveries.",
+          "locationAlwaysPermission": "This app needs access to location even when closed to track deliveries.",
+          "locationWhenInUsePermission": "This app needs access to location to track deliveries.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-task-manager",
+        {
+          "tasks": [
+            {
+              "name": "background-location-task",
+              "isHeadless": true
+            }
+          ]
+        }
+      ],
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "088ee8df-5b26-4ab8-920d-33da431290f4"
+      }
+    },
+    "owner": "priyanshmishra"
   }
 }

@@ -116,7 +116,7 @@ const HomeScreen = () => {
           selectedTab === "mines" ? (
             <MineCard mine={item} />
           ) : (
-            <MaterialCard material={item} />
+            <MaterialCard material={item} routeNav={"MaterialDetail"} />
           )
         }
         ListEmptyComponent={

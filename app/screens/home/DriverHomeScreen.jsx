@@ -14,18 +14,22 @@ import HomeHeader from "../../components/DriverHome/HomeHeader";
 import StatsSection from "../../components/DriverHome/StatsSection";
 import TruckDetailCard from "../../components/DriverHome/TruckDetailCard";
 import { useNavigation } from "@react-navigation/native";
+import { useNotification } from "../../context/NotificationContext";
 
 const DriverHomeScreen = () => {
+  const { expoPushToken, notification, error } = useNotification();
+  console.log("Expo Push Token:", expoPushToken);
+  if (error) {
+    console.error("Notification Error:", error);
+  }
+  console.log(JSON.stringify(notification, null, 2));
   const navigation = useNavigation();
   const { user } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
 
-  console.log("User Data:", user);
-
   const { data: myTruck, isLoading: isFetchingTruck, refetch: refetchTruck } = useFetchMyTruck({ 
     enabled: user?.role === 'driver', 
   });
-console.log("My Truck Data:", myTruck);
 
   const fetchData = useCallback(async () => {
     try {

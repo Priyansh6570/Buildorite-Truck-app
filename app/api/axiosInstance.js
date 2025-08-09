@@ -3,9 +3,9 @@ import { useAuthStore } from "../store/authStore";
 import { reset } from "../navigation/navigationRef";
 
 const api = axios.create({
-  baseURL: 'https://buildorite-backend.onrender.com/api/v1',
+  // baseURL: 'https://buildorite-backend.onrender.com/api/v1',
   // baseURL: 'http://192.168.19.243:3000/api/v1',
-  // baseURL: 'https://r7dh1jlv-3000.inc1.devtunnels.ms/api/v1',
+  baseURL: 'https://r7dh1jlv-3000.inc1.devtunnels.ms/api/v1',
   withCredentials: true,
 });
 

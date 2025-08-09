@@ -14,48 +14,85 @@ import auth from "@react-native-firebase/auth";
 import Toast from "react-native-toast-message";
 import { LinearGradient } from "expo-linear-gradient";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { useCheckUser, useLoginUser } from "../../hooks/useAuth";
+import { useCheckUser, useLoginUser, useVerifyPhone, useVerifyOtp } from "../../hooks/useAuth";
 import { useAuthStore } from "../../store/authStore";
 
 const AuthScreen = ({ navigation }) => {
   // --- STATE MANAGEMENT ---
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
-  const [confirm, setConfirm] = useState(null);
+  const [confirm, setConfirm] = useState(false);
   const [userData, setUserData] = useState(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [loadingUserData, setLoadingUserData] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
   const { setUser } = useAuthStore();
   const checkUserMutation = useCheckUser();
+  const verifyPhoneMutation = useVerifyPhone();
+  const verifyOtpMutation = useVerifyOtp();
   const loginMutation = useLoginUser();
 
   // --- LOGIC ---
   const handlePhoneNumberSubmit = async () => {
     if (phoneNumber.length !== 10) return;
+    
     setIsSubmitting(true);
-    setLoadingUserData(true);
+    setIsLoading(true);
 
     try {
-      const formattedPhoneNumber = `+91${phoneNumber}`;
-      const confirmation = await auth().signInWithPhoneNumber(formattedPhoneNumber);
-      setConfirm(confirmation);
-
-      checkUserMutation.mutate(phoneNumber, {
-        onSuccess: (data) => setUserData(data),
-        onError: () => setUserData(null),
-        onSettled: () => setLoadingUserData(false),
+      // First send OTP
+      verifyPhoneMutation.mutate(phoneNumber, {
+        onSuccess: () => {
+          console.log("OTP sent successfully");
+          Toast.show({ type: "success", text1: "OTP Sent Successfully" });
+          
+          // Only after OTP is sent successfully, check user and show OTP screen
+          setLoadingUserData(true);
+          checkUserMutation.mutate(phoneNumber, {
+            onSuccess: (data) => {
+              setUserData(data);
+              setConfirm(true); // Show OTP screen only after successful OTP send and user check
+              setIsSubmitting(false);
+              setIsLoading(false);
+              setLoadingUserData(false);
+            },
+            onError: () => {
+              setUserData(null);
+              setConfirm(true); // Still show OTP screen even if user doesn't exist
+              setIsSubmitting(false);
+              setIsLoading(false);
+              setLoadingUserData(false);
+            },
+          });
+        },
+        onError: (error) => {
+          console.error("Failed to send OTP:", error);
+          Toast.show({ type: "error", text1: "Failed to send OTP. Please try again." });
+          
+          // Reset states and clear phone number on OTP send failure
+          setConfirm(false);
+          setIsLoading(false);
+          setIsSubmitting(false);
+          setLoadingUserData(false);
+          setPhoneNumber(""); // Clear phone input on error
+          setOtp("");
+          setUserData(null);
+        },
       });
+      
     } catch (err) {
-      Toast.show({ type: "error", text1: "Failed to send OTP." });
-      setLoadingUserData(false);
-    } finally {
+      console.error("Error in handlePhoneNumberSubmit:", err);
+      setIsLoading(false);
       setIsSubmitting(false);
+      setLoadingUserData(false);
+      Toast.show({ type: "error", text1: "Failed to send OTP." });
+      setPhoneNumber(""); // Clear phone input on error
     }
   };
 
@@ -64,50 +101,80 @@ const AuthScreen = ({ navigation }) => {
     setIsVerifying(true);
 
     try {
-      await confirm.confirm(otp);
-      if (userData?.userExists && (userData.role === "truck_owner" || userData.role === "driver" || userData.role === "admin") && userData.email !== null) {
-        loginMutation.mutate(phoneNumber, {
-          onSuccess: (loginData) => {
-            setUser(loginData.user, loginData.accessToken);
-            if (loginData.user.role === "driver") {
-              navigation.reset({
-                index: 0,
-                routes: [{ name: "DBNav" }],
-              });
-            } else {
-              navigation.reset({
-                index: 0,
-                routes: [{ name: "Main" }],
-              });
-            }
-          },
-          onError: () => Toast.show({ type: "error", text1: "Login failed." }),
-          onSettled: () => setIsVerifying(false),
-        });
-      } else if (userData?.userExists && userData.role === "mine_owner") {
-        Toast.show({ type: "error", text1: "Authorization Failed", text2: "You are not authorized to use this app." });
-        setIsVerifying(false);
-      } else {
-        console.log("dadfad : ", userData);
-        navigation.reset({ index: 0, routes: [{ name: "Register", params: { phoneNumber, role: userData.role } }] });
-        setIsVerifying(false);
-      }
+      verifyOtpMutation.mutate({ phone: phoneNumber, otp }, {
+        onSuccess: (data) => {
+          console.log("OTP verified successfully");
+          Toast.show({ type: "success", text1: "OTP Verified Successfully" });
+          
+          // Only proceed with navigation/login after successful OTP verification
+          if (userData?.userExists && (userData.role === "truck_owner" || userData.role === "driver" || userData.role === "admin") && userData.email !== null && userData.email !== undefined) {
+            console.log(userData.email, userData);
+            
+            loginMutation.mutate(phoneNumber, {
+              onSuccess: (loginData) => {
+                setUser({ ...loginData.user, email: userData.email }, loginData.accessToken);
+                if (loginData.user.role === "driver") {
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: "DBNav" }],
+                  });
+                } else {
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: "Main" }],
+                  });
+                }
+              },
+              onError: () => {
+                Toast.show({ type: "error", text1: "Login failed." });
+                setIsVerifying(false);
+              },
+            });
+          } else if (userData?.userExists && userData.role === "mine_owner") {
+            Toast.show({ type: "error", text1: "Authorization Failed", text2: "You are not authorized to use this app." });
+            setIsVerifying(false);
+          } else {
+            // New user - go to registration
+            navigation.reset({ index: 0, routes: [{ name: "Register", params: { phoneNumber, role: userData?.role } }] });
+          }
+        },
+        onError: (err) => {
+          console.error("OTP verification error:", err);
+          Toast.show({ type: "error", text1: "Invalid OTP", text2: "The code you entered is incorrect." });
+          
+          // Stay on OTP screen, clear OTP, don't set user data
+          setIsVerifying(false);
+          setOtp(""); // Clear OTP input on verification failure
+          // Don't clear userData or setConfirm(false) - stay on OTP screen
+        },
+      });
+      
     } catch (err) {
+      console.error("Error in handleOtpSubmit:", err);
       Toast.show({ type: "error", text1: "Invalid OTP", text2: "The code you entered is incorrect." });
       setIsVerifying(false);
+      setOtp(""); // Clear OTP input on error
     }
   };
 
   const handleResendOtp = async () => {
     setIsResending(true);
     try {
-      const formattedPhoneNumber = `+91${phoneNumber}`;
-      const confirmation = await auth().signInWithPhoneNumber(formattedPhoneNumber);
-      setConfirm(confirmation);
-      Toast.show({ type: "success", text1: "OTP Resent Successfully" });
+      // Use your Twilio resend instead of Firebase
+      verifyPhoneMutation.mutate(phoneNumber, {
+        onSuccess: () => {
+          Toast.show({ type: "success", text1: "OTP Resent Successfully" });
+          setIsResending(false);
+        },
+        onError: (error) => {
+          console.error("Failed to resend OTP:", error);
+          Toast.show({ type: "error", text1: "Failed to resend OTP" });
+          setIsResending(false);
+        },
+      });
     } catch (err) {
+      console.error("Error in handleResendOtp:", err);
       Toast.show({ type: "error", text1: "Failed to resend OTP" });
-    } finally {
       setIsResending(false);
     }
   };
@@ -152,16 +219,17 @@ const AuthScreen = ({ navigation }) => {
             onBlur={() => setIsFocused(false)}
             returnKeyType="done"
             onSubmitEditing={handlePhoneNumberSubmit}
+            editable={!isLoading} // Disable input while loading
           />
         </View>
 
         <TouchableOpacity
           onPress={handlePhoneNumberSubmit}
-          disabled={phoneNumber.length !== 10 || isSubmitting}
-          className={`mt-6 p-5 rounded-2xl items-center justify-center ${phoneNumber.length !== 10 || isSubmitting ? 'bg-gray-400' : 'bg-[#1C2533]'}`}
+          disabled={phoneNumber.length !== 10 || isLoading || isSubmitting}
+          className={`mt-6 p-5 rounded-2xl items-center justify-center ${phoneNumber.length !== 10 || isLoading || isSubmitting ? 'bg-gray-400' : 'bg-[#1C2533]'}`}
           style={{ elevation: 3, shadowColor: '#000' }}
         >
-          {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text className="text-xl font-bold text-white">Continue</Text>}
+          {isLoading || isSubmitting ? <ActivityIndicator color="#fff" /> : <Text className="text-xl font-bold text-white">Continue</Text>}
         </TouchableOpacity>
       </View>
       <SecureAuthSection />
@@ -198,6 +266,7 @@ const AuthScreen = ({ navigation }) => {
           maxLength={6}
           returnKeyType="done"
           onSubmitEditing={handleOtpSubmit}
+          editable={!isVerifying} // Disable input while verifying
         />
 
         <TouchableOpacity
@@ -235,6 +304,7 @@ const AuthScreen = ({ navigation }) => {
           ) : loadingUserData ? (
             <View className="items-center justify-center flex-1">
               <ActivityIndicator size="large" color="#1C2533" />
+              <Text className="mt-4 text-lg font-semibold text-gray-600">Verifying your number...</Text>
             </View>
           ) : (
             renderOtpInputView()
