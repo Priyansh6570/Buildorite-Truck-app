@@ -38,7 +38,6 @@ const AuthScreen = ({ navigation }) => {
   const verifyOtpMutation = useVerifyOtp();
   const loginMutation = useLoginUser();
 
-  // --- LOGIC ---
   const handlePhoneNumberSubmit = async () => {
     if (phoneNumber.length !== 10) return;
     
@@ -46,25 +45,23 @@ const AuthScreen = ({ navigation }) => {
     setIsLoading(true);
 
     try {
-      // First send OTP
       verifyPhoneMutation.mutate(phoneNumber, {
         onSuccess: () => {
           console.log("OTP sent successfully");
           Toast.show({ type: "success", text1: "OTP Sent Successfully" });
           
-          // Only after OTP is sent successfully, check user and show OTP screen
           setLoadingUserData(true);
           checkUserMutation.mutate(phoneNumber, {
             onSuccess: (data) => {
               setUserData(data);
-              setConfirm(true); // Show OTP screen only after successful OTP send and user check
+              setConfirm(true);
               setIsSubmitting(false);
               setIsLoading(false);
               setLoadingUserData(false);
             },
             onError: () => {
               setUserData(null);
-              setConfirm(true); // Still show OTP screen even if user doesn't exist
+              setConfirm(true);
               setIsSubmitting(false);
               setIsLoading(false);
               setLoadingUserData(false);
@@ -131,6 +128,7 @@ const AuthScreen = ({ navigation }) => {
               },
             });
           } else if (userData?.userExists && userData.role === "mine_owner") {
+            console.log(userData);
             Toast.show({ type: "error", text1: "Authorization Failed", text2: "You are not authorized to use this app." });
             setIsVerifying(false);
           } else {

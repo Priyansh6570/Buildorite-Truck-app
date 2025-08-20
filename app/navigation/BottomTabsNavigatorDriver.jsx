@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import NotificationsScreen from '../screens/home/NotificationsScreen';
-import ProfileScreen from '../screens/home/ProfileScreen';
+import DriverProfileScreen from '../screens/home/DriverProfileScreen';
 import DriverHomeScreen from '../screens/home/DriverHomeScreen.jsx';
 import TripsScreen from '../screens/profile/TripsScreen.jsx';
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -78,7 +78,7 @@ const BottomTabsNavigator = () => {
       <Tab.Screen name="Home" component={DriverHomeScreen} />
       <Tab.Screen name="Trips" component={TripsScreen} />
       <Tab.Screen name="Activity" component={NotificationsScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Profile" component={DriverProfileScreen} />
     </Tab.Navigator>
   );
 };

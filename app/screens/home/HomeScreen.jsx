@@ -12,6 +12,8 @@ import {
 } from "react-native";
 import { useFetchMines } from "../../hooks/useMine";
 import { useFetchMaterials } from "../../hooks/useMaterial";
+import { useUpdatePushToken } from "../../hooks/useUser";
+import { useNotification } from "../../context/NotificationContext";
 import { useAuthStore } from "../../store/authStore";
 import { useMineStore } from "../../store/mineStore";
 import { useMaterialStore } from "../../store/materialStore";
@@ -25,6 +27,20 @@ import { useNavigation } from "@react-navigation/native";
 
 const HomeScreen = () => {
   const navigation = useNavigation();
+  const { notification, expoPushToken, error } = useNotification();
+
+  const updatePushToken = useUpdatePushToken();
+  
+  useEffect(() => {
+    if (expoPushToken) {
+      console.log("Expo Push Token:", expoPushToken);
+      updatePushToken.mutate({ pushToken: expoPushToken });
+    }
+    if (error) {
+      console.error("Error registering for push notifications:", error);
+    }
+  }
+  , []);
 
   const {
     filters: mineFilters,

@@ -290,7 +290,7 @@ const ProfileScreen = () => {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  onPress={() => navigation.navigate("Trips")}
+                  onPress={() => navigation.navigate("TruckTrip")}
                   activeOpacity={1}
                   className="flex-row items-center justify-between p-4 border-b border-slate-100 active:bg-gray-50"
                 >

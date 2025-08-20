@@ -9,7 +9,6 @@ import { TabView, TabBar } from 'react-native-tab-view';
 
 const getScheduleDate = (trip) => trip?.request_id?.finalized_agreement?.schedule?.date;
 
-// --- NEW: Helper to get milestone details ---
 const getMilestoneInfo = (trip) => {
     if (!trip || !trip.milestone_history || trip.milestone_history.length === 0) {
         return { label: 'Scheduled', color: 'bg-gray-200', text: 'text-gray-800' };

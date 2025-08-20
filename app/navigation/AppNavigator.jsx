@@ -20,8 +20,10 @@ import TruckScreen from "../screens/profile/TruckScreen";
 import SettingsScreen from "../screens/profile/SettingsScreen";
 import MessagesScreen from "../screens/profile/MessagesScreen";
 import TripsScreen from "../screens/profile/TripsScreen";
+import TruckTripScreen from "../screens/profile/TruckTripScreen";
 import LegalScreen from "../screens/profile/LegalScreen";
 import TruckOwnerListScreen from "../screens/home/TruckOwnerListScreen";
+import TruckOwnerTripDetailScreen from "../screens/trips/TruckOwnerTripDetailScreen"
 
 import ViewMineScreen from "../screens/mine/ViewMineScreen";
 
@@ -90,8 +92,10 @@ const AppNavigator = () => {
         <Stack.Screen name="Settings" component={SettingsScreen} options={{headerShown:false}} />
         <Stack.Screen name="Messages" component={MessagesScreen} options={{headerShown:false}} />
         <Stack.Screen name="Trips" component={TripsScreen} options={{headerShown:false}} />
+        <Stack.Screen name="TruckTrip" component={TruckTripScreen} options={{headerShown:false}} />
         <Stack.Screen name="Legal" component={LegalScreen} options={{headerShown:false}} />
         <Stack.Screen name="Connection" component={TruckOwnerListScreen} options={{headerShown:false}} />
+        <Stack.Screen name="TruckOwnerTripDetail" component={TruckOwnerTripDetailScreen} options={{headerShown:false}} />
 
         {/* mine route  */}
         <Stack.Screen name="MyMine" component={ViewMineScreen} options={{headerShown:false}} />

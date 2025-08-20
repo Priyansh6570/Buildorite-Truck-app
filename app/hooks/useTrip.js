@@ -76,28 +76,20 @@ export const useVerifyMilestone = () => {
     });
 };
 
-/**
- * Hook for a driver to update their live location during a trip.
- * This is often called periodically in the background.
- */
 export const useUpdateLiveLocation = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async ({ tripId, coordinates }) => {
-            const { data } = await api.patch(`/trips/${tripId}/location`, { coordinates });
-            return data.data;
-        },
-        onSuccess: (updatedTrip) => {
-            // Optionally update the specific trip query in the cache for real-time maps
-            queryClient.setQueryData(['trip', updatedTrip._id], (oldData) => 
-                oldData ? { ...oldData, ...updatedTrip } : oldData
-            );
-        },
-        onError: (error) => {
-            // Don't log every time, as this might be called frequently
-            console.log('Live location update failed:', error.message);
-        }
-    });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ driverId, coordinates }) => {
+      const { data } = await api.patch(`/trips/location/live`, { driverId, coordinates });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trips'] });
+    },
+    onError: (error) => {
+      console.error('Live location update failed:', error.message);
+    }
+  });
 };
 
 /**

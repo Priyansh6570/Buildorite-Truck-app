@@ -35,20 +35,21 @@ import {
 } from "@expo-google-fonts/montserrat";
 import * as TaskManager from "expo-task-manager";
 import { useTripStore } from "./app/store/useTripStore";
-import socketService from "./app/api/socket";
+import socketService from "./app/api/driverSocket";
 import Toast from "react-native-toast-message";
 
+// Enhanced notification handler to support both tracking and regular push notifications
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] 🔔 PUSH NOTIFICATION HANDLER TRIGGERED`);
 
-    const { action, tripId } = notification.request.content.data;
-    console.log(`[${timestamp}] Notification data:`, { action, tripId });
+    const { action, tripId, type, payload } = notification.request.content.data;
+    console.log(`[${timestamp}] Notification data:`, { action, tripId, type, payload });
 
+    // Handle driver location tracking notifications
     if (action === "START_TRACKING" && tripId) {
       console.log(`[${timestamp}] 🎯 Silent tracking push for trip ${tripId} - preparing for background execution`);
-
       return {
         shouldShowAlert: true,
         shouldPlaySound: true,
@@ -57,6 +58,16 @@ Notifications.setNotificationHandler({
       };
     }
 
+    // Handle regular push notifications for truck owners and drivers
+    if (type && payload) {
+      console.log(`[${timestamp}] 🔔 Regular push notification received:`, { type, payload });
+      return {
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        priority: Notifications.AndroidNotificationPriority.DEFAULT,
+      };
+    }
     return {
       shouldShowAlert: true,
       shouldPlaySound: true,
@@ -74,7 +85,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, ({ data, error }) => {
     console.error(`[${timestamp}] [Task Manager] ❌ Error:`, error.message);
 
     if (error.message.includes("permission") || error.message.includes("location")) {
-      console.error(`[${timestamp}] [Task Manager] 🔒 Location permission error detected`);
+      console.error(`[${timestamp}] [Task Manager] 🔐 Location permission error detected`);
 
       const activeTripId = useTripStore.getState().activeTripId;
       if (activeTripId) {
@@ -91,7 +102,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, ({ data, error }) => {
         }
       }
     } else if (error.message.includes("location service")) {
-      console.error(`[${timestamp}] [Task Manager] 📍 Location service error`);
+      console.error(`[${timestamp}] [Task Manager] 🌐 Location service error`);
 
       const activeTripId = useTripStore.getState().activeTripId;
       if (activeTripId) {
@@ -129,24 +140,34 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, ({ data, error }) => {
     const activeTripId = useTripStore.getState().activeTripId;
     const userId = useAuthStore.getState().user?.id;
 
-    if (!activeTripId) {
-      console.warn(`[${timestamp}] [Task Manager] ⚠️ No active trip ID found, skipping location update`);
-      return;
-    }
-
     if (!userId) {
       console.warn(`[${timestamp}] [Task Manager] ⚠️ No user ID found, skipping location update`);
       return;
     }
 
-    const payload = {
-      tripId: activeTripId,
+    // NEW: Always send location update for periodic tracking (even without active trip)
+    const locationData = {
+      driverId: userId,
       coordinates: [currentLocation.coords.longitude, currentLocation.coords.latitude],
       accuracy: currentLocation.coords.accuracy,
       timestamp: currentLocation.timestamp,
+      source: 'background_task'
     };
 
-    console.log(`[${timestamp}] [Task Manager] 📦 Prepared payload for trip ${activeTripId}:`, payload);
+    console.log(`[${timestamp}] [Task Manager] 📦 Prepared location data:`, locationData);
+
+    // If there's an active trip, also send trip-specific update
+    if (activeTripId) {
+      const tripLocationData = {
+        tripId: activeTripId,
+        driverId: userId,
+        coordinates: [currentLocation.coords.longitude, currentLocation.coords.latitude],
+        accuracy: currentLocation.coords.accuracy,
+        timestamp: currentLocation.timestamp,
+        source: 'background_trip_task'
+      };
+      console.log(`[${timestamp}] [Task Manager] 🎯 Also sending trip-specific data for trip: ${activeTripId}`);
+    }
 
     const sendLocationWithRetry = async (retryCount = 0) => {
       const maxRetries = 3;
@@ -188,10 +209,27 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, ({ data, error }) => {
           });
         }
 
-        console.log(`[${retryTimestamp}] [Task Manager] 🔐 Authenticating user and sending location...`);
+        console.log(`[${retryTimestamp}] [Task Manager] 🔍 Authenticating user and sending location...`);
         socketService.emit("authenticate", { userId });
-        socketService.emit("updateLocation", payload);
-        console.log(`[${retryTimestamp}] [Task Manager] ✅ ✨✨✨✨✨ Successfully sent location for trip ${activeTripId}`);
+        
+        // NEW: Send periodic location update
+        socketService.emit("driverLocationUpdate", locationData);
+        
+        // If active trip, also send trip-specific update
+        if (activeTripId) {
+          const tripLocationData = {
+            tripId: activeTripId,
+            driverId: userId,
+            coordinates: locationData.coordinates,
+            accuracy: locationData.accuracy,
+            timestamp: locationData.timestamp,
+            source: 'background_trip_tracking'
+          };
+          socketService.emit("driverTrackingLocationUpdate", tripLocationData);
+          console.log(`[${retryTimestamp}] [Task Manager] 🎯 Sent trip-specific location for trip ${activeTripId}`);
+        }
+        
+        console.log(`[${retryTimestamp}] [Task Manager] ✅ ✨✨✨✨✨ Successfully sent periodic location update`);
       } catch (error) {
         console.error(`[${retryTimestamp}] [Task Manager] ❌ Failed to send location (attempt ${retryCount + 1}):`, error);
 
@@ -205,14 +243,14 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, ({ data, error }) => {
           console.error(`[${retryTimestamp}] [Task Manager] 💥 Max retry attempts reached. Location update failed.`);
 
           try {
-            socketService.emit("trackingError", {
-              tripId: activeTripId,
+            socketService.emit("driverLocationError", {
+              driverId: userId,
               error: "location_send_failed",
               message: `Failed to send location after ${maxRetries} attempts`,
               timestamp: new Date().toISOString(),
             });
           } catch (emitError) {
-            console.error(`[${retryTimestamp}] [Task Manager] ❌ Failed to emit tracking error:`, emitError);
+            console.error(`[${retryTimestamp}] [Task Manager] ❌ Failed to emit location error:`, emitError);
           }
         }
       }
@@ -241,12 +279,13 @@ const AppContent = () => {
 
       Toast.show({
         type: "info",
-        text1: "Location Refreshed",
-        text2: "Shared your latest location with the trip organizer.",
+        text1: "Location Tracking Active",
+        text2: "Sharing your location for the current trip.",
       });
       setToastHasBeenShown();
     }
   }, [activeTripId, hasShownToast]);
+
   const insets = useSafeAreaInsets();
   const [fontsLoaded] = useFonts({
     "Montserrat-Thin": Montserrat_100Thin,

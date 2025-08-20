@@ -17,23 +17,23 @@ export const useLocationPermissionMonitor = () => {
 
   const shouldMonitor = useCallback(() => {
     const should = user?.role === 'driver' && user?.email;
-    console.log('[PermissionMonitor] Should monitor:', should, 'User role:', user?.role, 'Has email:', !!user?.email);
+    // console.log('[PermissionMonitor] Should monitor:', should, 'User role:', user?.role, 'Has email:', !!user?.email);
     return should;
   }, [user]);
 
   const showPermissionModal = useCallback((type) => {
-    console.log('[PermissionMonitor] Showing modal for type:', type);
+    // console.log('[PermissionMonitor] Showing modal for type:', type);
     setModalState({ visible: true, type });
   }, []);
 
   const hidePermissionModal = useCallback(() => {
-    console.log('[PermissionMonitor] Hiding permission modal');
+    // console.log('[PermissionMonitor] Hiding permission modal');
     setModalState({ visible: false, type: null });
   }, []);
 
   const checkCurrentStatus = useCallback(async () => {
     if (!shouldMonitor()) {
-      console.log('[PermissionMonitor] Not monitoring - user not eligible');
+      // console.log('[PermissionMonitor] Not monitoring - user not eligible');
       return { 
         foregroundGranted: true, 
         backgroundGranted: true, 
@@ -42,11 +42,11 @@ export const useLocationPermissionMonitor = () => {
     }
 
     try {
-      console.log('[PermissionMonitor] Checking current status...');
+      // console.log('[PermissionMonitor] Checking current status...');
       
       const providerStatus = await Location.getProviderStatusAsync();
       const locationServicesEnabled = providerStatus.locationServicesEnabled;
-      console.log('[PermissionMonitor] Location services enabled:', locationServicesEnabled);
+      // console.log('[PermissionMonitor] Location services enabled:', locationServicesEnabled);
 
       const { status: foregroundStatus } = await Location.getForegroundPermissionsAsync();
       const { status: backgroundStatus } = await Location.getBackgroundPermissionsAsync();
@@ -54,7 +54,7 @@ export const useLocationPermissionMonitor = () => {
       const foregroundGranted = foregroundStatus === 'granted';
       const backgroundGranted = backgroundStatus === 'granted';
       
-      console.log('[PermissionMonitor] Permissions - Foreground:', foregroundGranted, 'Background:', backgroundGranted);
+      // console.log('[PermissionMonitor] Permissions - Foreground:', foregroundGranted, 'Background:', backgroundGranted);
 
       return {
         foregroundGranted,
@@ -62,7 +62,7 @@ export const useLocationPermissionMonitor = () => {
         locationServicesEnabled
       };
     } catch (error) {
-      console.error('[PermissionMonitor] Error checking status:', error);
+      // console.error('[PermissionMonitor] Error checking status:', error);
       return { 
         foregroundGranted: false, 
         backgroundGranted: false, 
@@ -75,16 +75,16 @@ export const useLocationPermissionMonitor = () => {
     const currentStatus = await checkCurrentStatus();
     
     if (!shouldMonitor()) {
-      console.log('[PermissionMonitor] Not monitoring, skipping permission change handler');
+      // console.log('[PermissionMonitor] Not monitoring, skipping permission change handler');
       return;
     }
 
     const appState = AppState.currentState;
-    console.log('[PermissionMonitor] Handling permission change, app state:', appState);
+    // console.log('[PermissionMonitor] Handling permission change, app state:', appState);
     
     if (!currentStatus.locationServicesEnabled) {
       if (lastLocationServiceState.current !== false) {
-        console.log('[PermissionMonitor] Location services disabled - showing modal');
+        // console.log('[PermissionMonitor] Location services disabled - showing modal');
         lastLocationServiceState.current = false;
         
         if (appState === 'active') {
@@ -98,7 +98,7 @@ export const useLocationPermissionMonitor = () => {
 
     if (!currentStatus.foregroundGranted) {
       if (lastPermissionState.current?.foreground !== false) {
-        console.log('[PermissionMonitor] Foreground permission denied - showing modal');
+        // console.log('[PermissionMonitor] Foreground permission denied - showing modal');
         lastPermissionState.current = { 
           ...lastPermissionState.current, 
           foreground: false 
@@ -113,7 +113,7 @@ export const useLocationPermissionMonitor = () => {
 
     if (!currentStatus.backgroundGranted) {
       if (lastPermissionState.current?.background !== false) {
-        console.log('[PermissionMonitor] Background permission denied - showing modal');
+        // console.log('[PermissionMonitor] Background permission denied - showing modal');
         lastPermissionState.current = { 
           ...lastPermissionState.current, 
           background: false 
@@ -129,7 +129,7 @@ export const useLocationPermissionMonitor = () => {
     if (lastPermissionState.current?.foreground === false || 
         lastPermissionState.current?.background === false ||
         lastLocationServiceState.current === false) {
-      console.log('[PermissionMonitor] All permissions granted - hiding modal');
+      // console.log('[PermissionMonitor] All permissions granted - hiding modal');
       lastPermissionState.current = { 
         foreground: true, 
         background: true 
@@ -141,11 +141,11 @@ export const useLocationPermissionMonitor = () => {
 
   const startMonitoring = useCallback(() => {
     if (isMonitoringRef.current || !shouldMonitor()) {
-      console.log('[PermissionMonitor] Not starting monitoring - already monitoring or not eligible');
+      // console.log('[PermissionMonitor] Not starting monitoring - already monitoring or not eligible');
       return;
     }
 
-    console.log('[PermissionMonitor] Starting location permission monitoring');
+    // console.log('[PermissionMonitor] Starting location permission monitoring');
     isMonitoringRef.current = true;
 
     handlePermissionChange();
@@ -155,25 +155,25 @@ export const useLocationPermissionMonitor = () => {
     }, 3000);
 
     const appStateSubscription = AppState.addEventListener('change', (nextAppState) => {
-      console.log('[PermissionMonitor] App state changed:', nextAppState);
+      // console.log('[PermissionMonitor] App state changed:', nextAppState);
       if (nextAppState === 'active') {
         setTimeout(handlePermissionChange, 500);
       }
     });
 
     return () => {
-      console.log('[PermissionMonitor] Cleaning up app state subscription');
+      // console.log('[PermissionMonitor] Cleaning up app state subscription');
       appStateSubscription?.remove();
     };
   }, [shouldMonitor, handlePermissionChange]);
 
   const stopMonitoring = useCallback(() => {
     if (!isMonitoringRef.current) {
-      console.log('[PermissionMonitor] Already not monitoring');
+      // console.log('[PermissionMonitor] Already not monitoring');
       return;
     }
 
-    console.log('[PermissionMonitor] Stopping location permission monitoring');
+    // console.log('[PermissionMonitor] Stopping location permission monitoring');
     isMonitoringRef.current = false;
 
     if (permissionCheckInterval.current) {
@@ -185,7 +185,7 @@ export const useLocationPermissionMonitor = () => {
   }, [hidePermissionModal]);
 
   useEffect(() => {
-    console.log('[PermissionMonitor] User state changed, should monitor:', shouldMonitor());
+    // console.log('[PermissionMonitor] User state changed, should monitor:', shouldMonitor());
     
     if (shouldMonitor()) {
       startMonitoring();
@@ -194,7 +194,7 @@ export const useLocationPermissionMonitor = () => {
     }
 
     return () => {
-      console.log('[PermissionMonitor] Cleanup - stopping monitoring');
+      // console.log('[PermissionMonitor] Cleanup - stopping monitoring');
       stopMonitoring();
     };
   }, [shouldMonitor, startMonitoring, stopMonitoring]);
@@ -207,7 +207,7 @@ export const useLocationPermissionMonitor = () => {
     modalState,
     hidePermissionModal,
     handlePermissionGranted: () => {
-      console.log('[PermissionMonitor] Permission granted callback triggered');
+      // console.log('[PermissionMonitor] Permission granted callback triggered');
       hidePermissionModal();
       setTimeout(handlePermissionChange, 1000);
     }

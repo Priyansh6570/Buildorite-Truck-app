@@ -4,9 +4,10 @@ import * as Notifications from "expo-notifications";
 import { registerForPushNotificationsAsync } from "../utils/registerForPushNotificationsAsync";
 import { useLocationTracking } from "../hooks/useLocationTracking";
 import { useLocationPermissionMonitor } from "../hooks/useLocationPermissionMonitor";
-import socketService from "../api/socket";
+import socketService from "../api/driverSocket";
 import { useTripStore } from "../store/useTripStore";
 import { useAuthStore } from "../store/authStore";
+import { handleNotificationNavigation } from "../notification/notificationHandler";
 
 const NotificationContext = createContext(undefined);
 
@@ -50,12 +51,48 @@ export const NotificationProvider = ({ children }) => {
 
   // Store pending tracking requests when app is in background
   const pendingTrackingRequest = useRef(null);
-  const socketAcknowledgmentSent = useRef(new Set()); // Track which trips we've acked
+  const socketAcknowledgmentSent = useRef(new Set());
 
   // Enhanced logging for debugging
   const logWithTimestamp = useCallback((message, ...args) => {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] ${message}`, ...args);
+  }, []);
+
+  // NEW: Handle immediate location requests from server
+  const handleLocationRequest = useCallback(async ({ tripId, source = 'server_request' }) => {
+    logWithTimestamp(`🔍 IMMEDIATE LOCATION REQUEST for trip: ${tripId} from ${source}`);
+    
+    try {
+      // Send fresh location immediately
+      const success = await socketService.sendLocationForTracking(tripId);
+      
+      if (success) {
+        logWithTimestamp(`✅ Successfully sent immediate location for trip: ${tripId}`);
+        // Send acknowledgment
+        socketService.emit('trackingRequestResponse', { 
+          tripId, 
+          status: 'location_sent',
+          message: 'Driver location sent successfully'
+        });
+      } else {
+        logWithTimestamp(`❌ Failed to send immediate location for trip: ${tripId}`);
+        socketService.emit('trackingRequestResponse', { 
+          tripId, 
+          status: 'location_failed',
+          reason: 'location_unavailable',
+          message: 'Unable to get current location'
+        });
+      }
+    } catch (error) {
+      logWithTimestamp(`💥 Error handling location request:`, error);
+      socketService.emit('trackingRequestResponse', { 
+        tripId, 
+        status: 'location_failed',
+        reason: 'technical_error',
+        message: error.message
+      });
+    }
   }, []);
 
   const handleStartTrackingRequest = useCallback(
@@ -374,7 +411,7 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     logWithTimestamp(`🔧 Setting up NotificationProvider - User: ${user ? `${user.role} (${user.email})` : 'not authenticated'}`);
     
-    // 1. Register for push notifications
+    // 1. Register for push notifications (FOR ALL USERS)
     registerForPushNotificationsAsync()
       .then((token) => {
         if (token) {
@@ -384,59 +421,90 @@ export const NotificationProvider = ({ children }) => {
       })
       .catch((err) => logWithTimestamp("❌ Failed to get push token:", err));
 
-    // 2. Listen for push notifications when app is in foreground
+    // 2. Listen for push notifications when app is in foreground (FOR ALL USERS)
     notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
-      const { action, tripId, permissionType } = notification.request.content.data;
+      const notificationData = notification.request.content.data;
+      const { action, tripId, permissionType, type, payload } = notificationData;
+      
       logWithTimestamp(`🔔 Notification received in foreground:`, { 
         action, 
         tripId, 
-        permissionType, 
+        permissionType,
+        type,
+        payload,
         appState: appStateRef.current 
       });
       
       setNotification(notification);
       
-      if (action === "START_TRACKING" && tripId) {
-        logWithTimestamp("🎯 Start tracking notification - processing");
-        handleStartTrackingRequest(tripId, 'foreground_notification');
-      } else if (action === "BRING_TO_FOREGROUND") {
-        logWithTimestamp("📱 Bring to foreground notification - app already active");
-        // App is already active, process immediately if pending
-        if (pendingTrackingRequest.current?.tripId === tripId) {
-          handleStartTrackingRequest(tripId, 'foreground_bring_up');
+      // Handle driver-specific tracking notifications
+      if (user?.role === 'driver') {
+        if (action === "START_TRACKING" && tripId) {
+          logWithTimestamp("🎯 Start tracking notification - processing");
+          handleStartTrackingRequest(tripId, 'foreground_notification');
+        } else if (action === "BRING_TO_FOREGROUND") {
+          logWithTimestamp("📱 Bring to foreground notification - app already active");
+          // App is already active, process immediately if pending
+          if (pendingTrackingRequest.current?.tripId === tripId) {
+            handleStartTrackingRequest(tripId, 'foreground_bring_up');
+          }
+        } else if (action === "PERMISSION_REQUIRED" && permissionType) {
+          logWithTimestamp("🔐 Permission required notification received");
+          // Just show the notification, user will tap to handle
         }
-      } else if (action === "PERMISSION_REQUIRED" && permissionType) {
-        logWithTimestamp("🔒 Permission required notification received");
-        // Just show the notification, user will tap to handle
       }
-    });
-
-    // 3. Listen for notification taps (when app is in background/killed)
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(async (response) => {
-      const { action, tripId, permissionType } = response.notification.request.content.data;
-      logWithTimestamp(`👆 Notification tapped:`, { action, tripId, permissionType, appState: appStateRef.current });
       
-      if (action === "BRING_TO_FOREGROUND" && tripId) {
-        logWithTimestamp(`📱 Setting pending tracking request for trip: ${tripId}`);
-        pendingTrackingRequest.current = { tripId, timestamp: Date.now(), source: 'notification_tap' };
-      } else if (action === "START_TRACKING" && tripId) {
-        logWithTimestamp(`🎯 Direct start tracking from notification tap for trip: ${tripId}`);
-        // Handle immediately if app becomes active, or store as pending
-        if (appStateRef.current === 'active') {
-          handleStartTrackingRequest(tripId, 'notification_tap_active');
-        } else {
-          pendingTrackingRequest.current = { tripId, timestamp: Date.now(), source: 'notification_tap_background' };
-        }
-      } else if (action === "PERMISSION_REQUIRED" && permissionType) {
-        logWithTimestamp(`🔒 Opening settings for permission: ${permissionType}`);
-        handlePermissionNotification(permissionType);
-      } else if (action === "BRING_TO_FOREGROUND_ERROR" && tripId) {
-        logWithTimestamp(`🔄 Retrying tracking after foreground error for trip: ${tripId}`);
-        pendingTrackingRequest.current = { tripId, timestamp: Date.now(), source: 'error_retry' };
+      // Handle regular push notifications for all users (truck owners & drivers)
+      if (type && payload) {
+        logWithTimestamp("🔔 Regular push notification received:", { type, payload });
+        // Just show the notification in foreground - navigation will be handled on tap
       }
     });
 
-    // 4. Socket setup if user is authenticated driver
+    // 3. Listen for notification taps (when app is in background/killed) (FOR ALL USERS)
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(async (response) => {
+      const notificationData = response.notification.request.content.data;
+      const { action, tripId, permissionType, type, payload } = notificationData;
+      
+      logWithTimestamp(`👆 Notification tapped:`, { 
+        action, 
+        tripId, 
+        permissionType, 
+        type, 
+        payload,
+        appState: appStateRef.current 
+      });
+      
+      // Handle driver-specific tracking notification taps
+      if (user?.role === 'driver') {
+        if (action === "BRING_TO_FOREGROUND" && tripId) {
+          logWithTimestamp(`📱 Setting pending tracking request for trip: ${tripId}`);
+          pendingTrackingRequest.current = { tripId, timestamp: Date.now(), source: 'notification_tap' };
+        } else if (action === "START_TRACKING" && tripId) {
+          logWithTimestamp(`🎯 Direct start tracking from notification tap for trip: ${tripId}`);
+          // Handle immediately if app becomes active, or store as pending
+          if (appStateRef.current === 'active') {
+            handleStartTrackingRequest(tripId, 'notification_tap_active');
+          } else {
+            pendingTrackingRequest.current = { tripId, timestamp: Date.now(), source: 'notification_tap_background' };
+          }
+        } else if (action === "PERMISSION_REQUIRED" && permissionType) {
+          logWithTimestamp(`🔐 Opening settings for permission: ${permissionType}`);
+          handlePermissionNotification(permissionType);
+        } else if (action === "BRING_TO_FOREGROUND_ERROR" && tripId) {
+          logWithTimestamp(`🔄 Retrying tracking after foreground error for trip: ${tripId}`);
+          pendingTrackingRequest.current = { tripId, timestamp: Date.now(), source: 'error_retry' };
+        }
+      }
+      
+      // Handle regular push notification taps for all users (truck owners & drivers)
+      if (type && payload) {
+        logWithTimestamp("👆 Regular notification tapped - navigating:", { type, payload });
+        handleNotificationNavigation({ type, payload });
+      }
+    });
+
+    // 4. Socket setup ONLY for authenticated drivers
     if (user?.role === 'driver' && user?.email) {
       logWithTimestamp(`🔌 Authenticated driver detected, setting up socket...`);
       
@@ -444,6 +512,12 @@ export const NotificationProvider = ({ children }) => {
       const handleSocketStart = ({ tripId }) => {
         logWithTimestamp(`🎯🎯🎯 SOCKET EVENT: requestLocationUpdates for trip: ${tripId} 🎯🎯🎯`);
         handleStartTrackingRequest(tripId, 'socket_request');
+      };
+
+      // Handle immediate location requests
+      const handleSocketLocationRequest = ({ tripId }) => {
+        logWithTimestamp(`🔍🎯 SOCKET EVENT: requestImmediateLocation for trip: ${tripId}`);
+        handleLocationRequest({ tripId, source: 'socket_location_request' });
       };
       
       const handleSocketStop = ({ tripId }) => {
@@ -469,8 +543,9 @@ export const NotificationProvider = ({ children }) => {
       };
 
       // Register socket listeners BEFORE connecting
-      logWithTimestamp(`📝 Registering socket event listeners...`);
+      logWithTimestamp(`🔐 Registering socket event listeners...`);
       socketService.on("requestLocationUpdates", handleSocketStart);
+      socketService.on("requestImmediateLocation", handleSocketLocationRequest);
       socketService.on("stopLocationUpdates", handleSocketStop);
       socketService.on("connect", handleSocketConnect);
       socketService.on("disconnect", handleSocketDisconnect);
@@ -501,6 +576,7 @@ export const NotificationProvider = ({ children }) => {
         
         // Remove socket listeners
         socketService.off("requestLocationUpdates", handleSocketStart);
+        socketService.off("requestImmediateLocation", handleSocketLocationRequest);
         socketService.off("stopLocationUpdates", handleSocketStop);
         socketService.off("connect", handleSocketConnect);
         socketService.off("disconnect", handleSocketDisconnect);
@@ -511,7 +587,7 @@ export const NotificationProvider = ({ children }) => {
       };
     }
 
-    // Cleanup for non-driver users
+    // Cleanup for non-driver users (truck owners)
     return () => {
       logWithTimestamp(`🧹 Cleaning up NotificationProvider for non-driver user`);
       
@@ -526,7 +602,7 @@ export const NotificationProvider = ({ children }) => {
         Notifications.removeNotificationSubscription(responseListener.current);
       }
     };
-  }, [user, handleStartTrackingRequest, handleStopTrackingRequest, handlePermissionNotification]);
+  }, [user, handleStartTrackingRequest, handleStopTrackingRequest, handlePermissionNotification, handleLocationRequest]);
 
   // Expose comprehensive tracking state through context
   const contextValue = {

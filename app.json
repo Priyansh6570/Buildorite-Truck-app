@@ -29,6 +29,11 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "config": {
+        "googleMaps": {
+          "apiKey": "${EXPO_PUBLIC_GOOGLE_API_KEY}"
+        }
+      },
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
@@ -52,6 +57,13 @@
       "bundler": "metro"
     },
     "plugins": [
+       [
+        "react-native-maps",
+        {
+          "iosGoogleMapsApiKey": "${EXPO_PUBLIC_GOOGLE_API_KEY}",
+          "androidGoogleMapsApiKey": "${EXPO_PUBLIC_GOOGLE_API_KEY}"
+        }
+      ],
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       "@maplibre/maplibre-react-native",

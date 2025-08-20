@@ -12,13 +12,24 @@ import { useAuthStore } from "../../store/authStore";
 import { useFetchMyTruck } from "../../hooks/useTruck";
 import HomeHeader from "../../components/DriverHome/HomeHeader";
 import StatsSection from "../../components/DriverHome/StatsSection";
+import { useUpdatePushToken } from "../../hooks/useUser";
 import TruckDetailCard from "../../components/DriverHome/TruckDetailCard";
 import { useNavigation } from "@react-navigation/native";
 import { useNotification } from "../../context/NotificationContext";
 
 const DriverHomeScreen = () => {
   const { expoPushToken, notification, error } = useNotification();
-  console.log("Expo Push Token:", expoPushToken);
+  const updatePushToken = useUpdatePushToken();
+  useEffect(() => {
+    if (expoPushToken) {
+      console.log("Expo Push Token:", expoPushToken);
+      updatePushToken.mutate({ pushToken: expoPushToken });
+    }
+    if (error) {
+      console.error("Error registering for push notifications:", error);
+    }
+  }, []);
+  
   if (error) {
     console.error("Notification Error:", error);
   }
