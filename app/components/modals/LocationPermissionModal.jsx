@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Modal, TouchableOpacity, StyleSheet, Alert, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const LocationPermissionModal = ({ visible, onPermissionGranted, permissionType = 'location_off' }) => {
   console.log('[LocationPermissionModal] Rendered with type:', permissionType);
@@ -46,12 +47,10 @@ const LocationPermissionModal = ({ visible, onPermissionGranted, permissionType 
   const handleEnableLocation = async () => {
     console.log('[LocationPermissionModal] Attempting to enable location services');
     try {
-      // First check if we have permission
       const { status } = await Location.getForegroundPermissionsAsync();
       
       if (status !== 'granted') {
         console.log('[LocationPermissionModal] No permission, requesting first');
-        // If no permission, request it - this might also trigger location services
         const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
         
         if (newStatus !== 'granted') {
@@ -72,36 +71,25 @@ const LocationPermissionModal = ({ visible, onPermissionGranted, permissionType 
           return;
         }
       }
-
-      // Now we have permission, check if location services are enabled
       const providerStatus = await Location.getProviderStatusAsync();
       if (!providerStatus.locationServicesEnabled) {
         console.log('[LocationPermissionModal] Location services still disabled, trying to get current position to trigger native dialog');
         
         try {
-          // Try to get current position - this should trigger the native location services dialog
           await Location.getCurrentPositionAsync({
             accuracy: Location.Accuracy.Balanced,
             timeout: 15000,
           });
-          
-          // If we get here, location services were enabled
           console.log('[LocationPermissionModal] Location services enabled successfully via native dialog');
           onPermissionGranted();
           
         } catch (locationError) {
           console.log('[LocationPermissionModal] Location request failed, probably still disabled:', locationError);
           
-          // If getting position fails, it might be because:
-          // 1. User denied the native location services dialog
-          // 2. Location services are still disabled
-          // 3. Other error
-          
           if (locationError.code === 'E_LOCATION_SERVICES_DISABLED' || 
               locationError.message?.includes('location') || 
               locationError.message?.includes('disabled')) {
             
-            // Check again after the attempt
             const newProviderStatus = await Location.getProviderStatusAsync();
             if (!newProviderStatus.locationServicesEnabled) {
               Alert.alert(
@@ -119,17 +107,14 @@ const LocationPermissionModal = ({ visible, onPermissionGranted, permissionType 
                 ]
               );
             } else {
-              // Location services are now enabled
               console.log('[LocationPermissionModal] Location services enabled after retry');
               onPermissionGranted();
             }
           } else {
-            // Some other error occurred
             Alert.alert("Error", "Failed to access location services. Please try again.");
           }
         }
       } else {
-        // Location services are already enabled
         console.log('[LocationPermissionModal] Location services already enabled');
         onPermissionGranted();
       }
@@ -200,12 +185,12 @@ const LocationPermissionModal = ({ visible, onPermissionGranted, permissionType 
   const content = getModalContent();
 
   return (
-    <Modal
-      visible={visible}
-      animationType="fade"
-      transparent={true}
-      onRequestClose={() => {
-        // Prevent closing by back button - modal only closes when permission is granted
+    <SafeAreaView className="-mb-12">
+      <Modal
+        visible={visible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => {
         console.log('[LocationPermissionModal] Back button pressed - blocking close');
       }}
     >
@@ -230,6 +215,7 @@ const LocationPermissionModal = ({ visible, onPermissionGranted, permissionType 
         </View>
       </View>
     </Modal>
+    </SafeAreaView>
   );
 };
 

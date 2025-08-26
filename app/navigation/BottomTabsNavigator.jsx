@@ -11,10 +11,11 @@ import { ActivityIndicator, View, Animated, TouchableOpacity, Text } from 'react
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import { useUnreadCount } from '../hooks/useNotification';
 
 const Tab = createBottomTabNavigator();
 
-const CustomTabBar = ({ state, descriptors, navigation }) => {
+const CustomTabBar = ({ state, descriptors, navigation, unreadCount }) => {
   return (
     <View style={{
       backgroundColor: 'white',
@@ -59,6 +60,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
             isFocused={isFocused}
             routeName={route.name}
             label={label}
+            unreadCount={route.name === "Activity" ? unreadCount : 0}
           />
         );
       })}
@@ -67,7 +69,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
 };
 
 // Animated Tab Button Component
-const AnimatedTabButton = ({ onPress, isFocused, routeName, label }) => {
+const AnimatedTabButton = ({ onPress, isFocused, routeName, label, unreadCount }) => {
   const scaleValue = useRef(new Animated.Value(1)).current;
   const opacityValue = useRef(new Animated.Value(1)).current;
   const iconScaleValue = useRef(new Animated.Value(isFocused ? 1 : 0.9)).current;
@@ -200,6 +202,26 @@ const AnimatedTabButton = ({ onPress, isFocused, routeName, label }) => {
             color={isFocused ? '#000' : '#9ca3af'}
           />
         </Animated.View>
+        {routeName === "Activity" && unreadCount > 0 && (
+  <View
+    style={{
+      position: "absolute",
+      top: -6,
+      right: -6,
+      backgroundColor: "red",
+      borderRadius: 10,
+      paddingHorizontal: 5,
+      minWidth: 18,
+      height: 18,
+      justifyContent: "center",
+      alignItems: "center",
+    }}
+  >
+    <Text style={{ color: "white", fontSize: 11, fontWeight: "bold" }}>
+      {unreadCount}
+    </Text>
+  </View>
+)}
       </Animated.View>
     );
   };
@@ -241,6 +263,7 @@ const AnimatedTabButton = ({ onPress, isFocused, routeName, label }) => {
 const BottomTabsNavigator = () => {
   const navigation = useNavigation();
   const { user } = useAuthStore();
+  const { data: unreadCount } = useUnreadCount();
 
   useEffect(() => {
     if (!user) {
@@ -259,10 +282,11 @@ const BottomTabsNavigator = () => {
     );
   }
 
+
   return (
     <>
       <Tab.Navigator
-        tabBar={props => <CustomTabBar {...props} />}
+        tabBar={props => <CustomTabBar {...props} unreadCount={unreadCount} />}
         screenOptions={{
           headerShown: false,
         }}

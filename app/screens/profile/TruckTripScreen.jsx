@@ -190,7 +190,6 @@ const FilterSection = ({ title, children }) => (
 const TruckTripScreen = () => {
     const route = useRoute();
     const { data: allTrips, isLoading, isError } = useFetchMyTrips();
-    console.log("All Trips:", allTrips);
 
     const [activeTab, setActiveTab] = useState('Active Trips');
     const filterBottomSheetRef = useRef(null);
@@ -257,13 +256,15 @@ const TruckTripScreen = () => {
         if (filteredAndSortedTrips.length === 0) return <Text className="mt-16 text-center text-gray-500">No trips found.</Text>;
 
         return (
-            <FlatList
-                data={filteredAndSortedTrips}
-                keyExtractor={(item) => item._id}
-                renderItem={({ item }) => <TripCard trip={item} />}
-                contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
+            <View className="flex-1">
+                <FlatList
+                    data={filteredAndSortedTrips}
+                    keyExtractor={(item) => item._id}
+                    renderItem={({ item }) => <TripCard trip={item} />}
+                    contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
                 showsVerticalScrollIndicator={false}
             />
+            </View>
         );
     };
     
@@ -285,9 +286,11 @@ const TruckTripScreen = () => {
                 ))}
             </View>
 
-            {renderContent()}
+            <View className="flex-1">
+                {renderContent()}
+            </View>
 
-            <ReusableBottomSheet ref={filterBottomSheetRef} snapPoints={["85%"]}>
+            <ReusableBottomSheet ref={filterBottomSheetRef}>
                 <View className="flex-1 p-6 bg-gray-50">
                     <View className="flex-row items-center justify-between">
                         <Text className="text-2xl font-bold text-gray-900">Sort & Filter</Text>

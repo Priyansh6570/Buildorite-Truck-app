@@ -4,7 +4,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusBar } from "expo-status-bar";
 
 const HomeHeader = ({ user }) => {
   const navigation = useNavigation();

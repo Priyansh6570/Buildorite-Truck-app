@@ -1,7 +1,11 @@
 import { navigationRef } from "../navigation/navigationRef";
+import { queryClient } from "../utils/queryClient";
 
 export const handleNotificationNavigation = (data) => {
   if (!navigationRef.isReady() || !data?.payload) return;
+
+  queryClient.invalidateQueries(["notifications"]);
+  queryClient.invalidateQueries(["notifications-unread-count"]);
 
   const { requestId, tripId } = data.payload;
 
@@ -13,7 +17,7 @@ export const handleNotificationNavigation = (data) => {
     case "request_canceled":
       navigationRef.navigate("RequestDetailScreen", {
         requestId,
-        userType: "seller",
+        userType: "buyer",
       });
       break;
 

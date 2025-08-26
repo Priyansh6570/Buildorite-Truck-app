@@ -68,3 +68,14 @@ export const useFetchMineById = (id) => {
     enabled: !!id,
   });
 };
+
+// Fetch global mine and material count
+export const useFetchGlobalMineAndMaterialCount = () => {
+  return useQuery({
+    queryKey: ['globalMineAndMaterialCount'],
+    queryFn: async () => {
+      const { data } = await api.get('/mine/global-count');
+      return data;
+    },
+  });
+};

@@ -66,3 +66,17 @@ export const useUpdateTruck = () => {
     },
   });
 };
+
+export const useFetchDriverDetails = (driverId) => {
+  return useQuery({
+    queryKey: ['driverDetails', driverId],
+    queryFn: async () => {
+      const { data } = await api.get(`/truck/driver/${driverId}`);
+      return data;
+    },
+    enabled: !!driverId,
+    onError: (error) => {
+      console.error('Error fetching driver details:', error);
+    },
+  });
+};

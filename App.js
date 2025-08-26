@@ -335,13 +335,21 @@ const AppContent = () => {
     cleanupOnStartup();
   }, []);
 
+  React.useEffect(() => {
+    const sub = Notifications.addNotificationReceivedListener(() => {
+      queryClient.invalidateQueries(["notifications"]);
+      queryClient.invalidateQueries(["notifications-unread-count"]);
+    });
+    return () => sub.remove();
+  }, []);
+
   if (!fontsLoaded) return null;
 
   return (
     <QueryClientProvider client={queryClient}>
       <NotificationProvider>
         <SafeAreaView style={{ flex: 1, backgroundColor: "#000", paddingTop: -insets.top }}>
-          <StatusBar backgroundColor="transparent" style="light" translucent={true} />
+          <StatusBar backgroundColor="transparent" style="light" />
           <BlurView
             intensity={100}
             tint="dark"

@@ -118,3 +118,12 @@ export const useMarkAsCompleted = () => {
     }
   });
 };
+export const useFetchRequestCount = () => {
+  return useQuery({
+    queryKey: ['requests', 'count'],
+    queryFn: async () => {
+      const { data } = await api.get('/requests/count');
+      return data.count;
+    },
+  });
+};

@@ -84,3 +84,16 @@ export const useFetchMyUnits = () => {
     },
   });
 };
+
+export const useAddMaterialView = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (materialId) => {
+      await api.post(`/material/${materialId}/view`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['materials'] });
+    },
+  });
+};

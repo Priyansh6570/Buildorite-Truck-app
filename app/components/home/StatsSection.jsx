@@ -1,8 +1,9 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { FontAwesome6, Ionicons } from "@expo/vector-icons";
-import { useMineStore } from "../../store/mineStore";
-import { useMaterialStore } from "../../store/materialStore";
+import { useFetchGlobalMineAndMaterialCount } from "../../hooks/useMine";
+import { useFetchRequestCount } from "../../hooks/useRequest";
+import { useNavigation } from "@react-navigation/native";
 
 const statsData = [
   { id: 1, color:"#2563EB", bgColor:"#eff6ff", percentage: "+5.2%", title: "Total Mines", icon: "mountain", type: "mine" },
@@ -15,6 +16,7 @@ const StatCard = ({ title, value, trend, icon, isLink, percentage, bgColor, colo
   const cardBg = isLink ? "#664de3" : "#ffffff";
   const textColor = isLink ? "#ffffff" : "#000000";
   const subTextColor = isLink ? "#ffffff99" : "#6B7280";
+  const navigation = useNavigation();
 
   return (
     <View
@@ -27,12 +29,14 @@ const StatCard = ({ title, value, trend, icon, isLink, percentage, bgColor, colo
 
           {isLink ? (
             <>
-              <Text style={{ marginTop: 8, fontSize: 24, fontWeight: "bold", color: textColor }}>
-                View
-              </Text>
-              <Text style={{ marginTop: 4, fontSize: 14, fontWeight: "500", color: textColor }}>
-                View Report →
-              </Text>
+              <TouchableOpacity onPress={() => navigation.navigate("Analytics")} activeOpacity={0.8}>
+                <Text style={{ marginTop: 8, fontSize: 24, fontWeight: "bold", color: textColor }}>
+                  View
+                </Text>
+                <Text style={{ marginTop: 4, fontSize: 14, fontWeight: "500", color: textColor }}>
+                  View Report →
+                </Text>
+              </TouchableOpacity>
             </>
           ) : (
             <>
@@ -84,8 +88,11 @@ const StatCard = ({ title, value, trend, icon, isLink, percentage, bgColor, colo
 
 
 const StatsSection = () => {
-  const mineCount = useMineStore((state) => state.totalCount);
-  const materialCount = useMaterialStore((state) => state.totalCount);
+  const { data: globalMineAndMaterialCount } = useFetchGlobalMineAndMaterialCount();
+  const { data: requestCount } = useFetchRequestCount();
+
+  const mineCount = globalMineAndMaterialCount?.mineCount || 0;
+  const materialCount = globalMineAndMaterialCount?.materialCount || 0;
 
   return (
     <View className="w-full px-2 mt-6">

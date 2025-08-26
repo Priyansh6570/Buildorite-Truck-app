@@ -53,6 +53,24 @@ export const useUpdateUserProfile = () => {
   });
 };
 
+export const usePopulateOwnerId = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.get("/user/me/populate-owner");
+      return data;
+    },
+    onSuccess: (data) => {
+      console.log("Owner information populated:", data);
+      queryClient.invalidateQueries(["user"]);
+    },
+    onError: (err) => {
+      console.error("Failed to populate owner information:", err);
+    },
+  });
+};
+
 export const useFetchTruckOwners = (filters, searchTerm) => {
   const { appendUsers, setUsers } = useUserStore();
 

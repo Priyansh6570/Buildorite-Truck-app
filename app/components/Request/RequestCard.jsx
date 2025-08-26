@@ -5,24 +5,69 @@ import { FontAwesome6 } from '@expo/vector-icons';
 import { formatDistanceToNow } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const AnimatedIndicator = ({ color }) => {
-    const opacityAnim = useRef(new Animated.Value(0.3)).current;
+const PulseIndicator = ({ color }) => {
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+    const opacityAnim = useRef(new Animated.Value(1)).current;
+    
     useEffect(() => {
         Animated.loop(
             Animated.sequence([
-                Animated.timing(opacityAnim, { toValue: 1, duration: 1000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-                Animated.timing(opacityAnim, { toValue: 0.3, duration: 1000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+                Animated.timing(scaleAnim, { 
+                    toValue: 1.2, 
+                    duration: 800, 
+                    easing: Easing.out(Easing.ease), 
+                    useNativeDriver: true 
+                }),
+                Animated.timing(scaleAnim, { 
+                    toValue: 1, 
+                    duration: 800, 
+                    easing: Easing.out(Easing.ease), 
+                    useNativeDriver: true 
+                }),
             ])
         ).start();
-    }, [opacityAnim]);
-    return <Animated.View style={{ opacity: opacityAnim }} className={`w-3 h-3 ${color} rounded-full mr-2`} />;
+        
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(opacityAnim, { 
+                    toValue: 0.6, 
+                    duration: 800, 
+                    easing: Easing.inOut(Easing.ease), 
+                    useNativeDriver: true 
+                }),
+                Animated.timing(opacityAnim, { 
+                    toValue: 1, 
+                    duration: 800, 
+                    easing: Easing.inOut(Easing.ease), 
+                    useNativeDriver: true 
+                }),
+            ])
+        ).start();
+    }, [scaleAnim, opacityAnim]);
+    
+    return (
+        <Animated.View 
+            style={{ 
+                transform: [{ scale: scaleAnim }],
+                opacity: opacityAnim 
+            }} 
+            className={`w-2.5 h-2.5 ${color} rounded-full mr-3`} 
+        />
+    );
 };
 
-const ActionBadge = ({ colors, icon, text }) => (
-    <View className="overflow-hidden rounded-full">
-        <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} className="flex-row items-center px-4 py-2">
-            <FontAwesome6 name={icon} size={12} color="white" solid />
-            <Text className="ml-1 font-extrabold text-white text-md">{text}</Text>
+const StatusChip = ({ colors, icon, text, textColor = "text-white" }) => (
+    <View className="overflow-hidden shadow-sm rounded-xl">
+        <LinearGradient 
+            colors={colors} 
+            start={{ x: 0, y: 0 }} 
+            end={{ x: 1, y: 0 }} 
+            className="flex-row items-center px-3 py-2"
+        >
+            <FontAwesome6 name={icon} size={11} color="white" solid />
+            <Text className={`ml-2 font-bold text-xs uppercase tracking-wide ${textColor}`}>
+                {text}
+            </Text>
         </LinearGradient>
     </View>
 );
@@ -32,149 +77,268 @@ const RequestCard = ({ request, userType }) => {
     const isArchived = ['completed', 'rejected', 'canceled'].includes(request.status);
     const isPickup = request.current_proposal.delivery_method === 'pickup';
 
-    // **CHANGE**: Determine if it's the current user's turn to take action
-    const isMyTurn = (userType === 'seller' && request.last_updated_by === 'buyer') ||
-                   (userType === 'buyer' && request.last_updated_by === 'seller');
+    const isMyTurn = (userType === 'buyer' && request.last_updated_by === 'seller') ||
+                   (userType === 'seller' && request.last_updated_by === 'buyer');
 
-    const topSectionStyle = {
-        bgColor: isPickup ? 'bg-blue-50' : 'bg-green-50',
-        gradientColors: isPickup ? ['#3F75F2', '#4B53E9'] : ['#1BB961', '#0A9E67'],
-        iconName: isPickup ? 'truck' : 'truck-fast',
-        iconSize: isPickup ? 12 : 13,
-        text: isPickup ? 'PICKUP' : 'DELIVERY',
-        textColor: isPickup ? 'text-blue-700' : 'text-green-700'
+    // Theme configurations
+    const deliveryTheme = {
+        gradient: isPickup ? ['#6366f1', '#8b5cf6'] : ['#10b981', '#059669'],
+        bgColor: isPickup ? 'bg-indigo-50' : 'bg-emerald-50',
+        accentColor: isPickup ? 'bg-indigo-100' : 'bg-emerald-100',
+        textColor: isPickup ? 'text-indigo-700' : 'text-emerald-700',
+        icon: isPickup ? 'truck-fast' : 'truck-fast',
+        label: isPickup ? 'PICKUP' : 'DELIVERY'
     };
 
-    const weightIconGradientColors = isArchived
-        ? ['#d1d5db', '#9ca3af']
-        : isPickup
-            ? ['#38BDF8', '#3F75F2']
-            : ['#86EFAC', '#22C55E'];
-
-    // **CHANGE**: Render status footer based on perspective
-    const renderStatusFooter = () => {
+    const getStatusConfig = () => {
         switch (request.status) {
             case 'pending':
+                return {
+                    colors: ['#f59e0b', '#d97706'],
+                    icon: 'clock',
+                    text: 'PENDING',
+                    showPulse: isMyTurn,
+                    pulseColor: 'bg-amber-400'
+                };
             case 'countered':
-                if (isMyTurn) {
+                return {
+                    colors: ['#3b82f6', '#2563eb'],
+                    icon: 'arrows-rotate',
+                    text: 'COUNTERED',
+                    showPulse: isMyTurn,
+                    pulseColor: 'bg-blue-400'
+                };
+            case 'accepted':
+                return {
+                    colors: ['#10b981', '#059669'],
+                    icon: 'check-double',
+                    text: 'ACCEPTED'
+                };
+            case 'in_progress':
+                return {
+                    colors: ['#f97316', '#ea580c'],
+                    icon: 'location-dot',
+                    text: 'IN TRANSIT',
+                    showPulse: true,
+                    pulseColor: 'bg-orange-400'
+                };
+            case 'completed':
+                return {
+                    colors: ['#6b7280', '#4b5563'],
+                    icon: 'circle-check',
+                    text: 'COMPLETED'
+                };
+            case 'rejected':
+                return {
+                    colors: ['#ef4444', '#dc2626'],
+                    icon: 'circle-xmark',
+                    text: 'REJECTED'
+                };
+            case 'canceled':
+                return {
+                    colors: ['#ef4444', '#dc2626'],
+                    icon: 'ban',
+                    text: 'CANCELED'
+                };
+            default:
+                return {
+                    colors: ['#6b7280', '#4b5563'],
+                    icon: 'question',
+                    text: 'UNKNOWN'
+                };
+        }
+    };
+
+    const statusConfig = getStatusConfig();
+
+const renderActionSection = () => {
+    if (isArchived) {
+        return (
+            <View className="flex-row items-center justify-between">
+                <Text className="text-xs font-medium tracking-wide text-gray-400 uppercase">
+                    {formatDistanceToNow(new Date(request.updatedAt), { addSuffix: true })}
+                </Text>
+                <StatusChip {...statusConfig} />
+            </View>
+        );
+    }
+
+    if (isMyTurn) {
+        switch (request.status) {
+            case 'pending':
+                return (
+                    <View className="flex-row items-center justify-between">
+                        <Text className="text-xs font-medium tracking-wide text-gray-400 uppercase">
+                            {formatDistanceToNow(new Date(request.updatedAt), { addSuffix: true })}
+                        </Text>
+                        <StatusChip {...statusConfig} />
+                    </View>
+                );
+            case 'countered':
+                return (
+                    <View className="flex-row items-center justify-between">
+                        <View className="flex-row items-center">
+                            <PulseIndicator color={statusConfig.pulseColor} />
+                            <Text className="text-sm font-semibold text-gray-700">
+                                New Response
+                            </Text>
+                        </View>
+                        <StatusChip 
+                            colors={['#10b981', '#059669']} 
+                            icon="arrow-right" 
+                            text="VIEW" 
+                        />
+                    </View>
+                );
+            case 'accepted':
+                if (isPickup) {
                     return (
-                        <View className="flex-row items-center justify-between flex-1 p-1">
+                        <View className="flex-row items-center justify-between">
                             <View className="flex-row items-center">
-                                <AnimatedIndicator color="bg-green-500" />
-                                <Text className="font-semibold text-gray-600 text-md">
-                                    {request.status === 'pending' ? 'New Request' : 'New Response'}
+                                <PulseIndicator color="bg-emerald-400" />
+                                <Text className="text-sm font-semibold text-gray-700">
+                                    Action Required
                                 </Text>
                             </View>
-                            <ActionBadge colors={['#1EBE60', '#069869']} icon="eye" text="View" />
+                            <StatusChip {...statusConfig} />
                         </View>
                     );
                 } else {
                     return (
-                        <View className="flex-row items-center p-2">
-                            <View className="w-3 h-3 mr-2 bg-blue-500 rounded-full" />
-                            <Text className="font-semibold text-gray-600 text-md">Awaiting Response</Text>
+                        <View className="flex-row items-center justify-between">
+                            <Text className="text-xs font-medium tracking-wide text-gray-400 uppercase">
+                                {formatDistanceToNow(new Date(request.updatedAt), { addSuffix: true })}
+                            </Text>
+                            <StatusChip {...statusConfig} />
                         </View>
                     );
                 }
-            
-            case 'accepted':
-                 return (
-                    <View className="flex-row items-center justify-between flex-1 p-1">
-                        <View className="flex-row items-center">
-                            <FontAwesome6 name="check-double" size={14} color="#16a34a" />
-                            <Text className="ml-2 font-semibold text-gray-600 text-md">Agreement Finalized</Text>
-                        </View>
-                        <ActionBadge colors={['#1EBE60', '#069869']} icon="eye" text="View" />
-                    </View>
-                );
-
             case 'in_progress':
                 return (
-                    <View className="flex-row items-center justify-between flex-1 p-1">
-                        <View className="flex-row items-center">
-                             <AnimatedIndicator color="bg-orange-500" />
-                            <Text className="font-semibold text-gray-600 text-md">En Route</Text>
-                        </View>
-                        <ActionBadge colors={['#F76D17', '#DD2925']} icon="location-dot" text="Track" />
-                    </View>
-                );
-            case 'completed':
-                return (
-                    <View className="flex-row items-center self-start px-4 py-3 bg-gray-100 rounded-full">
-                        <FontAwesome6 name="circle-check" size={14} color="#52525b" />
-                        <Text className="ml-2 text-sm font-medium text-zinc-600">Completed</Text>
-                    </View>
-                );
-            case 'rejected':
-                return (
-                    <View className="flex-row items-center self-start px-4 py-3 bg-red-100 rounded-full">
-                        <FontAwesome6 name="circle-xmark" size={14} color="#dc2626" />
-                        <Text className="ml-2 text-sm font-medium text-red-600">Rejected</Text>
-                    </View>
-                );
-            case 'canceled':
-               return (
-                    <View className="flex-row items-center self-start px-4 py-3 bg-red-100 rounded-full">
-                        <FontAwesome6 name="ban" size={14} color="#dc2626" />
-                        <Text className="ml-2 text-sm font-medium text-red-600">Canceled</Text>
+                    <View className="flex-row items-center justify-between">
+                        <Text className="text-xs font-medium tracking-wide text-gray-400 uppercase">
+                            {formatDistanceToNow(new Date(request.updatedAt), { addSuffix: true })}
+                        </Text>
+                        <StatusChip {...statusConfig} />
                     </View>
                 );
             default:
-                return null;
+                return (
+                    <View className="flex-row items-center justify-between">
+                        <Text className="text-xs font-medium tracking-wide text-gray-400 uppercase">
+                            {formatDistanceToNow(new Date(request.updatedAt), { addSuffix: true })}
+                        </Text>
+                        <StatusChip {...statusConfig} />
+                    </View>
+                );
         }
-    };
+    } else {
+        if (request.status === 'countered') {
+            return (
+                <View className="flex-row items-center justify-between">
+                    <Text className="text-xs font-medium tracking-wide text-gray-400 uppercase">
+                        {formatDistanceToNow(new Date(request.updatedAt), { addSuffix: true })}
+                    </Text>
+                    <StatusChip {...statusConfig} />
+                </View>
+            );
+        }
+    }
+
+    return (
+        <View className="flex-row items-center justify-between">
+            <Text className="text-xs font-medium tracking-wide text-gray-400 uppercase">
+                {formatDistanceToNow(new Date(request.updatedAt), { addSuffix: true })}
+            </Text>
+            <StatusChip {...statusConfig} />
+        </View>
+    );
+};
 
     return (
         <TouchableOpacity
-            activeOpacity={0.85}
+            activeOpacity={0.92}
             onPress={() => navigation.navigate('RequestDetailScreen', { requestId: request._id, userType: userType })}
-            className="mb-6 bg-white border shadow-sm rounded-3xl border-slate-200"
+            className={`mb-4 bg-white rounded-2xl shadow-sm border ${isArchived ? 'border-gray-200' : 'border-gray-100'} ${isMyTurn && !isArchived ? 'shadow-md' : ''}`}
+            style={{
+                shadowColor: isMyTurn && !isArchived ? deliveryTheme.gradient[0] : '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: isMyTurn && !isArchived ? 0.1 : 0.05,
+                shadowRadius: 8,
+                elevation: isMyTurn && !isArchived ? 3 : 1,
+            }}
         >
-            {/* --- Top Section --- */}
-            <View className={`flex-row items-center justify-between p-4 ${topSectionStyle.bgColor} rounded-t-2xl`}>
-                <View className="flex-row items-center">
-                    <View className="overflow-hidden rounded-full">
-                        <LinearGradient colors={topSectionStyle.gradientColors} className="items-center justify-center p-2.5">
-                            <FontAwesome6 name={topSectionStyle.iconName} size={topSectionStyle.iconSize} color="white" />
-                        </LinearGradient>
+            {/* Header Section */}
+            <View className="p-5 pb-4">
+                <View className="flex-row items-center justify-between mb-4">
+                    <View className="flex-row items-center">
+                        <View className="mr-3 overflow-hidden rounded-xl">
+                            <LinearGradient 
+                                colors={deliveryTheme.gradient} 
+                                start={{ x: 0, y: 0 }} 
+                                end={{ x: 1, y: 1 }} 
+                                className="items-center justify-center p-2.5"
+                            >
+                                <FontAwesome6 
+                                    name={deliveryTheme.icon} 
+                                    size={14} 
+                                    color="white" 
+                                />
+                            </LinearGradient>
+                        </View>
+                        <Text className={`font-bold text-xs uppercase tracking-wider ${deliveryTheme.textColor}`}>
+                            {deliveryTheme.label}
+                        </Text>
                     </View>
-                    <Text className={`ml-3 text-md font-bold tracking-wider uppercase ${topSectionStyle.textColor}`}>
-                        {topSectionStyle.text}
+                    {isMyTurn && !isArchived && (
+                        <View className="w-3 h-3 bg-red-400 rounded-full" />
+                    )}
+                </View>
+
+                {/* Main Info */}
+                <View className="mb-4">
+                    <Text className="mb-1 text-xl font-bold text-gray-900" numberOfLines={1}>
+                        {request.truck_owner_id.name}
+                    </Text>
+                    <Text className="text-base font-medium text-gray-600" numberOfLines={1}>
+                        {request.material_id.name}
                     </Text>
                 </View>
-                <Text className="text-sm font-semibold text-gray-500">
-                    {formatDistanceToNow(new Date(request.updatedAt), { addSuffix: true })}
-                </Text>
-            </View>
 
-            {/* --- Main Content --- */}
-            <View className="p-6">
-                <View>
-                    {/* **CHANGE**: Show Truck Owner's name for the Mine Owner's view */}
-                    <Text className="text-xl font-bold text-gray-900 capitalize" numberOfLines={1}>{request.mine_id.name}</Text>
-                    <Text className="text-lg font-semibold text-gray-600" numberOfLines={1}>{request.material_id.name}</Text>
-                </View>
-
-                <View className="flex-row items-center mt-4">
-                    <View className="overflow-hidden rounded-2xl">
-                         <LinearGradient colors={weightIconGradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} className="items-center justify-center p-4">
-                            <FontAwesome6 name="weight-hanging" size={20} color="white" />
-                        </LinearGradient>
+                {/* Quantity & Price */}
+                <View className="flex-row items-center justify-between">
+                    <View className="flex-row items-center">
+                        <View className={`p-3 rounded-xl ${deliveryTheme.accentColor} mr-3`}>
+                            <FontAwesome6 
+                                name="weight-hanging" 
+                                size={16} 
+                                color={deliveryTheme.gradient[0]} 
+                            />
+                        </View>
+                        <View>
+                            <Text className="text-lg font-bold text-gray-800">
+                                {request.current_proposal.quantity} {request.current_proposal.unit.name}
+                            </Text>
+                            <Text className="text-xs font-medium tracking-wide text-gray-500 uppercase">
+                                Quantity
+                            </Text>
+                        </View>
                     </View>
-                    <View className="ml-4">
-                        <Text className="text-2xl font-bold text-gray-800">
-                            {request.current_proposal.quantity} {request.current_proposal.unit.name}
-                        </Text>
-                        <Text className={`text-xl ml-1 font-semibold ${isArchived ? 'text-gray-500' : 'text-green-600'}`}>
+                    
+                    <View className="items-end">
+                        <Text className={`text-xl font-bold ${isArchived ? 'text-gray-500' : 'text-emerald-600'}`}>
                             ₹{request.current_proposal.price.toLocaleString('en-IN')}
                         </Text>
+                        <Text className="text-xs font-medium tracking-wide text-gray-500 uppercase">
+                            Price
+                        </Text>
                     </View>
                 </View>
             </View>
 
-            {/* --- Footer Status --- */}
-            <View className="px-4 py-4 mt-2 border-t border-slate-100">
-                {renderStatusFooter()}
+            {/* Footer Action Section */}
+            <View className="px-5 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+                {renderActionSection()}
             </View>
         </TouchableOpacity>
     );

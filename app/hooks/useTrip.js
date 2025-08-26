@@ -21,6 +21,19 @@ export const useFetchMyTrips = () => {
     });
 };
 
+export const useFetchUserTripCounts = () => {
+    return useQuery({
+        queryKey: ['stats', 'trip-count'],
+        queryFn: async () => {
+            const { data } = await api.get('/trips/stats/trip-count');
+            return data.data;
+        },
+        onError: (error) => {
+            console.error('Failed to fetch trip counts:', error);
+        },
+    });
+};
+
 /**
  * Fetches a single trip by its ID, including populated details.
  * @param {string} tripId - The ID of the trip to fetch.
@@ -110,4 +123,25 @@ export const useReportIssue = () => {
             console.error('Error reporting issue:', error.response?.data || error.message);
         }
     });
+};
+
+export const useFetchTruckStat = () => {
+  return useQuery({
+    queryKey: ['statsData'],
+    queryFn: async () => {
+      const { data } = await api.get('/mine/truckstats');
+      return data;
+    },
+  });
+};
+
+export const useFetchTruckOwnerAnalytics = (startDate, endDate) => {
+  return useQuery({
+    queryKey: ['analytics', 'truck', startDate, endDate],
+    queryFn: async () => {
+      const { data } = await api.post('/trips/analytics/truck', { startDate, endDate });
+      return data;
+    },
+    enabled: !!startDate && !!endDate,
+  });
 };

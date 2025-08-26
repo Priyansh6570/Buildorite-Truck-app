@@ -20,9 +20,7 @@ const StatusBadge = ({ status }) => {
 
   return (
     <View className={`px-3 py-1 rounded-full ${statusColor.split(" ")[0]}`}>
-      <Text className={`text-xs font-medium ${statusColor.split(" ")[1]}`}>
-        {statusText}
-      </Text>
+      <Text className={`text-xs font-medium ${statusColor.split(" ")[1]}`}>{statusText}</Text>
     </View>
   );
 };
@@ -34,19 +32,12 @@ const formatRegNumber = (regNumber) => {
   // Handle common Indian registration formats like "AB12CD1234" or "23BH1234AA"
   if (regNumber.length === 10) {
     // Format like "AB 12 CD 1234"
-    return `${regNumber.slice(0, 2)} ${regNumber.slice(2, 4)} ${regNumber.slice(
-      4,
-      6
-    )} ${regNumber.slice(6)}`;
+    return `${regNumber.slice(0, 2)} ${regNumber.slice(2, 4)} ${regNumber.slice(4, 6)} ${regNumber.slice(6)}`;
   } else if (regNumber.length === 9) {
     // Format like "23 BH 1234 AA"
-    return `${regNumber.slice(0, 2)} ${regNumber.slice(2, 4)} ${regNumber.slice(
-      4,
-      8
-    )} ${regNumber.slice(8)}`;
+    return `${regNumber.slice(0, 2)} ${regNumber.slice(2, 4)} ${regNumber.slice(4, 8)} ${regNumber.slice(8)}`;
   }
 
-  // For other formats, add a space every 2-3 characters
   let formatted = "";
   for (let i = 0; i < regNumber.length; i++) {
     formatted += regNumber[i];
@@ -63,17 +54,10 @@ const TruckDetailCard = ({ truck }) => {
   if (!truck) {
     return (
       <View className="m-4">
-        <Text className="px-2 mb-2 text-xl font-bold text-gray-800">
-          Truck Details
-        </Text>
+        <Text className="px-2 mb-2 text-xl font-bold text-gray-800">Truck Details</Text>
         <View className="items-center p-6 bg-white shadow-lg rounded-xl">
-          <Text className="text-lg text-gray-500">
-            No truck information available
-          </Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate("AddTruck")}
-            className="px-6 py-3 mt-4 bg-black rounded-lg"
-          >
+          <Text className="text-lg text-gray-500">No truck information available</Text>
+          <TouchableOpacity onPress={() => navigation.navigate("AddTruck")} className="px-6 py-3 mt-4 bg-black rounded-lg">
             <Text className="font-semibold text-white">Add Truck Details</Text>
           </TouchableOpacity>
         </View>
@@ -83,20 +67,14 @@ const TruckDetailCard = ({ truck }) => {
 
   return (
     <View className="m-4">
-      <Text className="px-2 mb-2 text-xl font-bold text-gray-800">
-        Truck Details
-      </Text>
+      <Text className="px-2 mb-2 text-xl font-bold text-gray-800">Truck Details</Text>
       <View className="p-6 bg-white shadow-lg rounded-xl">
         <View className="flex-row justify-end mb-2">
           <StatusBadge status={truck.status} />
         </View>
 
         <View className="items-center mb-4">
-          <Image
-            source={require("../../../assets/icons/truckHomeCard.png")}
-            className="w-[130px] h-[130px]"
-            resizeMode="contain"
-          />
+          <Image source={require("../../../assets/icons/truckHomeCard.png")} className="w-[130px] h-[130px]" resizeMode="contain" />
         </View>
 
         <View className="items-center mb-4">
@@ -106,10 +84,7 @@ const TruckDetailCard = ({ truck }) => {
         <Text className="mb-2 text-sm text-gray-500">Registration Number</Text>
 
         <View className="p-3 mb-4 bg-gray-200 rounded-lg">
-          <Text
-            className="text-lg font-bold tracking-widest text-center"
-            style={{ fontFamily: "monospace" }}
-          >
+          <Text className="text-lg font-bold tracking-widest text-center" style={{ fontFamily: "monospace" }}>
             {formatRegNumber(truck.registration_number)}
           </Text>
         </View>
@@ -124,9 +99,7 @@ const TruckDetailCard = ({ truck }) => {
             }
           >
             <Ionicons name="navigate-circle-outline" size={22} color="white" />
-            <Text className="ml-2 text-base font-semibold text-white">
-              View Current Trip
-            </Text>
+            <Text className="ml-2 text-base font-semibold text-white">View Current Trip</Text>
           </TouchableOpacity>
         ) : (
           <View className="items-center w-full px-4 py-4 mt-2 bg-gray-100 rounded-lg">

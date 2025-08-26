@@ -24,6 +24,8 @@ import TruckTripScreen from "../screens/profile/TruckTripScreen";
 import LegalScreen from "../screens/profile/LegalScreen";
 import TruckOwnerListScreen from "../screens/home/TruckOwnerListScreen";
 import TruckOwnerTripDetailScreen from "../screens/trips/TruckOwnerTripDetailScreen"
+import Analytics from "../screens/home/Analytics";
+import TruckOwnerHelpScreen from "../screens/home/TruckOwnerHelpScreen";
 
 import ViewMineScreen from "../screens/mine/ViewMineScreen";
 
@@ -37,6 +39,7 @@ import AccountScreen from "../screens/settings/AccountScreen";
 import UpdateTruckScreen from "../screens/settings/UpdateTruckScreen";
 import ReportBugScreen from "../screens/settings/ReportBugScreen";
 import FeedbackScreen from "../screens/settings/FeedbackScreen";
+import VehicleSettingsScreen from "../screens/settings/VehicleSettingsScreen";
 
 import CreateDriverScreen from "../screens/driver/CreateDriverScreen";
 import DriverDetailScreen from "../screens/driver/DriverDetailScreen";
@@ -44,10 +47,50 @@ import DriverDetailScreen from "../screens/driver/DriverDetailScreen";
 import CreateRequestScreen from "../screens/requests/CreateRequestScreen";
 import RequestDetailScreen from "../screens/requests/RequestDetailScreen";
 import CounterRequestScreen from "../screens/requests/CounterRequestScreen";
+import TripSchedule from "../screens/trips/TripSchedule";
 
 import TripDetailScreen from "../screens/trips/TripDetailScreen";
 
 const Stack = createStackNavigator();
+
+const linking = {
+  prefixes: [
+    'buildorite-truck://',
+    'https://buildorite.com',
+    'http://buildorite.com'
+  ],
+  config: {
+    screens: {
+      Main: {
+        screens: {
+          Home: {
+            screens: {
+              HomeScreen: '',
+            }
+          }
+        }
+      },
+      MineDetail: {
+        path: '/mine/:mineId',
+        parse: {
+          mineId: (mineId) => mineId,
+        },
+      },
+      MaterialDetail: {
+        path: '/material/:materialId',
+        parse: {
+          materialId: (materialId) => materialId,
+        },
+      },
+      MineMaterials: {
+        path: '/mine/:mineId/materials',
+        parse: {
+          mineId: (mineId) => mineId,
+        },
+      },
+    },
+  },
+};
 
 const AppNavigator = () => {
   const { user, accessToken } = useAuthStore();
@@ -71,7 +114,7 @@ const AppNavigator = () => {
   
 
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer ref={navigationRef} linking={linking}>
       <Stack.Navigator initialRouteName={user ? (user.role == "driver"? "DBNav" : "Main") : "Auth"} screenOptions={{
           headerShown: false,
           detachInactiveScreens: false,
@@ -85,7 +128,7 @@ const AppNavigator = () => {
         <Stack.Screen name="AddTruck" component={AddTruckScreen} options={{ headerShown: false }} />
 
         {/* Profile Routes */}
-        <Stack.Screen name="Help" component={HelpScreen} options={{headerShown:false}} />
+        <Stack.Screen name="DriverHelp" component={HelpScreen} options={{headerShown:false}} />
         <Stack.Screen name="Wallet" component={WalletScreen} options={{headerShown:false}} />
         <Stack.Screen name="Notifications" component={NotificationsScreen} options={{headerShown:false}} />
         <Stack.Screen name="Truck" component={TruckScreen} options={{headerShown:false}} />
@@ -95,7 +138,8 @@ const AppNavigator = () => {
         <Stack.Screen name="TruckTrip" component={TruckTripScreen} options={{headerShown:false}} />
         <Stack.Screen name="Legal" component={LegalScreen} options={{headerShown:false}} />
         <Stack.Screen name="Connection" component={TruckOwnerListScreen} options={{headerShown:false}} />
-        <Stack.Screen name="TruckOwnerTripDetail" component={TruckOwnerTripDetailScreen} options={{headerShown:false}} />
+        <Stack.Screen name="Analytics" component={Analytics} options={{headerShown:false}} />
+        <Stack.Screen name="TruckOwnerHelp" component={TruckOwnerHelpScreen} options={{headerShown:false}} />
 
         {/* mine route  */}
         <Stack.Screen name="MyMine" component={ViewMineScreen} options={{headerShown:false}} />
@@ -111,6 +155,7 @@ const AppNavigator = () => {
         <Stack.Screen name="UpdateTruck" component={UpdateTruckScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ReportBug" component={ReportBugScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Feedback" component={FeedbackScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Vehicle" component={VehicleSettingsScreen} options={{ headerShown: false }} />
 
         {/* Driver Management */}
         <Stack.Screen name="AddDriver" component={CreateDriverScreen} options={{ headerShown: false }} />
@@ -122,7 +167,9 @@ const AppNavigator = () => {
         <Stack.Screen name="CounterRequest" component={CounterRequestScreen} options={{ headerShown: false }} />
 
         {/* Trip Management */}
+        <Stack.Screen name="TruckOwnerTripDetail" component={TruckOwnerTripDetailScreen} options={{headerShown:false}} />
         <Stack.Screen name="TripDetail" component={TripDetailScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="TripSchedule" component={TripSchedule} options={{ headerShown: false }} />
 
         {/* Other Routes */}
       </Stack.Navigator>

@@ -1,306 +1,672 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, FlatList, Dimensions, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useFetchMyTrips } from '../../hooks/useTrip';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, ScrollView, Animated } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFetchMyTrips } from '../../hooks/useTrip'; 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome6, Feather } from '@expo/vector-icons';
-import { format, isBefore, startOfToday } from 'date-fns';
-import { TabView, TabBar } from 'react-native-tab-view';
+import { format, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
+import { LinearGradient } from 'expo-linear-gradient';
+import ReusableBottomSheet from '../../components/Ui/ReusableBottomSheet';
 
+// --- Constants ---
+const SORT_OPTIONS = { NEWEST: "Newest First", OLDEST: "Oldest First" };
+const TRIP_STATUSES = { active: 'Active', issue_reported: 'Issue Reported', completed: 'Completed', canceled: 'Canceled' };
+const MILESTONE_STATUSES = { 
+    trip_assigned: 'Awaiting Start', 
+    trip_started: 'En Route to Mine', 
+    arrived_at_pickup: 'At Mine', 
+    loading_complete: 'Loading Complete', 
+    pickup_verified: 'Pickup Verified', 
+    en_route_to_delivery: 'En Route to Delivery', 
+    arrived_at_delivery: 'At Delivery', 
+    delivery_complete: 'Delivery Complete',
+    delivery_verified: 'Trip Complete'
+};
+
+const ACTIVE_STATUSES = ['trip_started', 'arrived_at_pickup', 'loading_complete', 'pickup_verified', 'en_route_to_delivery', 'arrived_at_delivery', 'delivery_complete'];
+const SCHEDULE_STATUSES = ['trip_assigned'];
+const HISTORY_TRIP_STATUSES = ['completed', 'canceled', 'issue_reported'];
+
+// --- Helper Functions ---
 const getScheduleDate = (trip) => trip?.request_id?.finalized_agreement?.schedule?.date;
 
-const getMilestoneInfo = (trip) => {
+const getLatestMilestone = (trip) => {
     if (!trip || !trip.milestone_history || trip.milestone_history.length === 0) {
-        return { label: 'Scheduled', color: 'bg-gray-200', text: 'text-gray-800' };
+        return { key: 'N/A', label: 'Not Available', timestamp: null };
     }
-    const lastMilestone = trip.milestone_history[trip.milestone_history.length - 1].status;
+    const lastMilestone = trip.milestone_history[trip.milestone_history.length - 1];
+    return {
+        key: lastMilestone.status,
+        label: MILESTONE_STATUSES[lastMilestone.status] || 'In Progress',
+        timestamp: lastMilestone.timestamp
+    };
+};
 
-    switch (lastMilestone) {
-        case 'trip_assigned':
-            return { label: 'New Trip', color: 'bg-blue-100', text: 'text-blue-800' };
-        case 'trip_started':
-        case 'en_route_to_delivery':
-            return { label: 'En Route', color: 'bg-yellow-100', text: 'text-yellow-800' };
-        case 'arrived_at_pickup':
-            return { label: 'At Pickup Location', color: 'bg-indigo-100', text: 'text-indigo-800' };
-        case 'loading_complete':
-        case 'pickup_verified':
-            return { label: 'Loaded', color: 'bg-purple-100', text: 'text-purple-800' };
-        case 'arrived_at_delivery':
-            return { label: 'At Delivery Location', color: 'bg-pink-100', text: 'text-pink-800' };
-        case 'delivery_complete':
-            return { label: 'Awaiting Verification', color: 'bg-teal-100', text: 'text-teal-800' };
-        default:
-            return { label: 'Scheduled', color: 'bg-gray-200', text: 'text-gray-800' };
+const getTripStartedTimestamp = (trip) => {
+    const tripStartedMilestone = trip?.milestone_history?.find(m => m.status === 'trip_started');
+    return tripStartedMilestone?.timestamp;
+};
+
+const getDeliveryVerifiedTimestamp = (trip) => {
+    const deliveryVerifiedMilestone = trip?.milestone_history?.find(m => m.status === 'delivery_verified');
+    return deliveryVerifiedMilestone?.timestamp;
+};
+
+const formatTimeElapsed = (startTime) => {
+    if (!startTime) return 'N/A';
+    const now = new Date();
+    const start = new Date(startTime);
+    const totalMinutes = differenceInMinutes(now, start);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+};
+
+const formatDaysRemaining = (scheduleDate) => {
+    if (!scheduleDate) return { text: 'N/A', isOverdue: false };
+    const now = new Date();
+    const schedule = new Date(scheduleDate);
+    const daysDiff = differenceInDays(schedule, now);
+    
+    if (daysDiff > 0) {
+        return { text: `${daysDiff} days`, isOverdue: false };
+    } else if (daysDiff === 0) {
+        const hoursDiff = differenceInHours(schedule, now);
+        if (hoursDiff > 0) {
+            return { text: `${hoursDiff} hours`, isOverdue: false };
+        } else {
+            const minutesDiff = differenceInMinutes(schedule, now);
+            if (minutesDiff > 0) {
+                return { text: `${minutesDiff} min`, isOverdue: false };
+            } else {
+                return { text: 'Due now', isOverdue: true };
+            }
+        }
+    } else {
+        const absDays = Math.abs(daysDiff);
+        if (absDays === 0) {
+            const absHours = Math.abs(differenceInHours(schedule, now));
+            return { text: `${absHours}h overdue`, isOverdue: true };
+        }
+        return { text: `${absDays}d overdue`, isOverdue: true };
     }
 };
 
-// --- UPDATED: Redesigned ActionCard ---
-const ActionCard = ({ trip }) => {
+const formatTripDuration = (startTime, endTime) => {
+    if (!startTime || !endTime) return 'N/A';
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const totalMinutes = differenceInMinutes(end, start);
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const minutes = totalMinutes % 60;
+    
+    if (days > 0) {
+        return `${days}d ${hours}h`;
+    } else if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+};
+
+// --- Sub-components ---
+const ScreenHeader = ({ onFilterPress }) => {
     const navigation = useNavigation();
-    const scheduleDate = getScheduleDate(trip);
-    const isOverdue = scheduleDate && isBefore(new Date(scheduleDate), startOfToday());
-    const milestoneInfo = getMilestoneInfo(trip);
-
+    const insets = useSafeAreaInsets();
     return (
-        <View className="p-6 m-4 bg-white border border-gray-200 shadow-sm rounded-3xl">
-            <View className="flex-row items-center justify-between">
-                <View className={`px-3 py-1 rounded-full ${milestoneInfo.color}`}>
-                    <Text className={`font-bold ${milestoneInfo.text}`}>{milestoneInfo.label}</Text>
-                </View>
-                {isOverdue && (
-                    <View className="px-3 py-1 bg-red-100 rounded-full">
-                        <Text className="font-bold text-red-600">Overdue</Text>
-                    </View>
-                )}
-            </View>
-
-            <Text className="mt-4 text-3xl font-bold text-gray-900">{trip.request_id?.material_id?.name}</Text>
-            <Text className="text-lg text-gray-600">
-                {trip.request_id?.finalized_agreement?.quantity} {trip.request_id?.finalized_agreement?.unit?.name || 'units'}
-            </Text>
-
-            {scheduleDate && (
-                <Text className={`mt-1 text-base font-semibold ${isOverdue ? 'text-red-600' : 'text-gray-800'}`}>
-                    {format(new Date(scheduleDate), "eee, MMM d, yyyy")}
+        <View style={{ paddingTop: insets.top }} className="bg-white">
+            <View className="flex-row items-center justify-between p-6 pb-4">
+                <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => navigation.goBack()}
+                    className="p-3 bg-gray-100 border border-slate-200 rounded-xl"
+                >
+                    <Feather name="arrow-left" size={24} color="#1f2937" />
+                </TouchableOpacity>
+                <Text className="text-2xl font-extrabold text-center text-gray-900">
+                    My Trips
                 </Text>
-            )}
-
-            <View className="my-6 border-t border-gray-200 border-dashed" />
-
-            <View className="space-y-4">
-                <View>
-                    <Text className="mb-1 text-sm font-semibold text-gray-500">Pickup From:</Text>
-                    <View className="flex-row items-center">
-                        <FontAwesome6 name="truck-pickup" size={16} color="#4B5563" />
-                        <Text className="flex-1 ml-4 text-base font-bold text-gray-800" numberOfLines={1}>{trip.mine_id?.name}</Text>
-                    </View>
-                </View>
-                <View>
-                    <Text className="mb-1 text-sm font-semibold text-gray-500">Deliver To:</Text>
-                    <View className="flex-row items-center">
-                        <FontAwesome6 name="map-marker-alt" size={16} color="#4B5563" />
-                        <Text className="flex-1 ml-4 text-base font-bold text-gray-800" numberOfLines={1}>{trip.destination?.address}</Text>
-                    </View>
-                </View>
-                <View>
-                    <Text className="mb-1 text-sm font-semibold text-gray-500">Vehicle:</Text>
-                    <View className="flex-row items-center">
-                        <FontAwesome6 name="truck" size={16} color="#4B5563" />
-                        <Text className="flex-1 ml-4 text-base font-bold text-gray-800">{trip.truck_id?.name} ({trip.truck_id?.registration_number})</Text>
-                    </View>
-                </View>
+                <TouchableOpacity
+                    onPress={onFilterPress}
+                    activeOpacity={0.8}
+                    className="overflow-hidden rounded-xl"
+                >
+                    <LinearGradient
+                        colors={["#212B39", "#4A5462"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        className="p-3"
+                    >
+                        <FontAwesome6 name="filter" size={16} color="white" />
+                    </LinearGradient>
+                </TouchableOpacity>
             </View>
-
-            <TouchableOpacity
-                onPress={() => navigation.navigate('TripDetail', { tripId: trip._id })}
-                className="flex-row items-center justify-center w-full py-4 mt-8 bg-gray-800 rounded-2xl"
-            >
-                <Feather name="eye" size={18} color="white" />
-                <Text className="ml-3 text-lg font-bold text-white">View Details</Text>
-            </TouchableOpacity>
         </View>
     );
 };
 
-// --- UPDATED: Redesigned TripCard ---
-const TripCard = ({ trip, isHorizontal }) => {
-    const navigation = useNavigation();
-    const cardWidth = isHorizontal ? 'w-80' : 'w-full'; // Increased width
-    const scheduleDate = getScheduleDate(trip);
+const StatusBadge = ({ status, tab }) => {
+    let displayStatus = status;
+    let styles = {};
     
-    const getStatusStyle = (status) => {
-        switch (status) {
-            case 'completed': return { bg: 'bg-green-100', text: 'text-green-800' };
-            case 'canceled': return { bg: 'bg-red-100', text: 'text-red-800' };
-            default: return { bg: 'bg-blue-100', text: 'text-blue-800' };
-        }
-    };
-    const statusStyle = getStatusStyle(trip.status);
+    if (tab === 'Active') {
+        displayStatus = 'active';
+        styles = { dot: 'bg-green-500', bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-100' };
+    } else if (tab === 'Schedule') {
+        displayStatus = 'pending';
+        styles = { dot: 'bg-yellow-500', bg: 'bg-yellow-50', text: 'text-yellow-500', border: 'border-yellow-100' };
+    } else {
+        // History tab - use actual status
+        const statusStyles = {
+            completed: { dot: 'bg-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-100' },
+            canceled: { dot: 'bg-red-500', bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-100' },
+            issue_reported: { dot: 'bg-orange-500', bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-100' },
+        };
+        styles = statusStyles[status] || statusStyles.completed;
+        displayStatus = status === 'issue_reported' ? 'issue reported' : status;
+    }
 
     return (
-        <TouchableOpacity 
-            onPress={() => navigation.navigate('TripDetail', { tripId: trip._id })}
-            className={`p-5 bg-white border border-gray-200 rounded-2xl ${isHorizontal ? 'mr-4' : 'mb-4'} ${cardWidth}`}
-        >
-            <View className="flex-row justify-between">
-                <Text className="flex-1 text-lg font-bold text-gray-800" numberOfLines={1}>{trip.request_id?.material_id?.name}</Text>
-                <View className={`px-3 py-1 ml-2 rounded-full ${statusStyle.bg}`}>
-                    <Text className={`text-sm font-bold capitalize ${statusStyle.text}`}>{trip.status}</Text>
-                </View>
-            </View>
-            
-            {scheduleDate && (
-                <Text className="mt-1 text-base font-medium text-gray-600">{format(new Date(scheduleDate), "eee, MMM d, yyyy")}</Text>
-            )}
-
-            <View className="my-4 border-t border-gray-100" />
-            
-            <View className="space-y-2">
-                <View className="flex-row items-center">
-                    <FontAwesome6 name="truck-pickup" size={14} color="#6B7280" />
-                    <Text className="flex-1 ml-3 text-sm text-gray-700" numberOfLines={1}>{trip.mine_id?.name}</Text>
-                </View>
-                <View className="flex-row items-center">
-                    <FontAwesome6 name="map-marker-alt" size={14} color="#6B7280" />
-                    <Text className="flex-1 ml-3 text-sm text-gray-700" numberOfLines={1}>{trip.destination?.address}</Text>
-                </View>
-            </View>
-        </TouchableOpacity>
+        <View className={`flex-row items-center self-start px-3 py-1 mt-1 border rounded-full ${styles.bg} ${styles.border}`}>
+            <View className={`w-2 h-2 mr-1.5 rounded-full ${styles.dot}`} />
+            <Text className={`text-sm font-bold capitalize ${styles.text}`}>{displayStatus}</Text>
+        </View>
     );
 };
 
-const EmptyState = ({ message }) => (
-    <View className="items-center justify-center flex-1 p-8 mt-10">
-        <FontAwesome6 name="road-circle-xmark" size={48} color="#D1D5DB" />
-        <Text className="mt-4 text-lg font-bold text-gray-600">No Trips Found</Text>
-        <Text className="text-base text-center text-gray-500">{message}</Text>
-    </View>
-);
+const InfoBox = ({ icon, iconColor, title, value, isAnimated = false, isOverdue = false, accentColor = null }) => {
+    const animValue = useRef(new Animated.Value(0)).current;
 
-// --- Main Screen Component ---
-const TripsScreen = () => {
-    const insets = useSafeAreaInsets();
-    const { data: trips, isLoading, isError } = useFetchMyTrips();
-    const [tabIndex, setTabIndex] = useState(0);
-    const [routes] = useState([
-        { key: 'scheduled', title: 'Scheduled' },
-        { key: 'history', title: 'History' },
-    ]);
-
-    // --- UPDATED: Memoized trips with time-based categorization ---
-    const categorizedTrips = useMemo(() => {
-        if (!trips) return { currentTrip: null, upNext: [], scheduled: [], history: [] };
-
-        const now = new Date();
-        const sevenDaysFromNow = new Date(now.setDate(now.getDate() + 7));
-
-        const active = trips
-            .filter(t => t.status === 'active' && getScheduleDate(t))
-            .sort((a, b) => new Date(getScheduleDate(a)) - new Date(getScheduleDate(b)));
-            
-        const past = trips
-            .filter(t => (t.status === 'completed' || t.status === 'canceled') && getScheduleDate(t))
-            .sort((a, b) => new Date(getScheduleDate(b)) - new Date(getScheduleDate(a)));
-
-        const currentTrip = active.length > 0 ? active[0] : null;
-        
-        // The remaining active trips to be categorized
-        const remainingActive = currentTrip ? active.filter(t => t._id !== currentTrip._id) : active;
-
-        const upNext = remainingActive.filter(t => new Date(getScheduleDate(t)) <= sevenDaysFromNow);
-        const scheduled = remainingActive.filter(t => new Date(getScheduleDate(t)) > sevenDaysFromNow);
-
-        return { currentTrip, upNext, scheduled, history: past };
-    }, [trips]);
-
-    if (isLoading) {
-        return <View style={styles.container}><ActivityIndicator size="large" color="#1f2937" /></View>;
-    }
-
-    if (isError) {
-        return <EmptyState message="Could not load your trips. Please try again later." />;
-    }
-
-    const renderScene = ({ route }) => {
-        switch (route.key) {
-            case 'scheduled':
-                return <FlatList
-                    data={categorizedTrips.scheduled}
-                    keyExtractor={(item) => item._id}
-                    renderItem={({ item }) => <TripCard trip={item} />}
-                    ListEmptyComponent={<Text className="p-8 text-center text-gray-500">No other scheduled trips.</Text>}
-                    contentContainerStyle={{ padding: 16 }}
-                />;
-            case 'history':
-                return <FlatList
-                    data={categorizedTrips.history}
-                    keyExtractor={(item) => item._id}
-                    renderItem={({ item }) => <TripCard trip={item} />}
-                    ListEmptyComponent={<Text className="p-8 text-center text-gray-500">No past trips found.</Text>}
-                    contentContainerStyle={{ padding: 16 }}
-                />;
-            default:
-                return null;
+    useEffect(() => {
+        if (isAnimated) {
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(animValue, { toValue: 1, duration: 800, useNativeDriver: false }),
+                    Animated.timing(animValue, { toValue: 0, duration: 800, useNativeDriver: false }),
+                ])
+            ).start();
         }
+    }, [isAnimated, animValue]);
+
+    const animatedStyle = {
+        backgroundColor: animValue.interpolate({
+            inputRange: [0, 1],
+            outputRange: ['#F9FAFB', '#FEF3C7']
+        })
     };
+
+    let boxStyle = 'bg-[#F9FAFB]';
+    let textStyle = 'text-gray-900';
     
-    // RENDER A SINGLE TOP-LEVEL LIST IF NO TRIPS ARE AVAILABLE
-    if (!trips || trips.length === 0) {
-        return (
-            <View style={styles.flexOne}>
-                 <View style={{ paddingTop: insets.top, ...styles.header }}>
-                    <Text className="text-2xl font-bold text-gray-900">My Trips</Text>
+    if (accentColor === 'green') {
+        boxStyle = 'bg-green-50 border border-green-200';
+        textStyle = 'text-green-800';
+    } else if (accentColor === 'red' || isOverdue) {
+        boxStyle = 'bg-red-50 border border-red-200';
+        textStyle = 'text-red-800';
+    } else if (accentColor === 'orange') {
+        boxStyle = 'bg-orange-50 border border-orange-200';
+        textStyle = 'text-orange-800';
+    }
+
+    return (
+        <Animated.View style={[{ width: '48%' }, isAnimated && animatedStyle]} className={`p-4 rounded-xl ${boxStyle}`}>
+            <View className="flex-row items-center">
+                <FontAwesome6 name={icon} size={12} color={iconColor} />
+                <Text className="ml-2 text-sm font-semibold text-gray-500">{title}</Text>
+            </View>
+            <Text className={`mt-1 text-base font-bold ${textStyle}`} numberOfLines={1}>{value}</Text>
+            {isAnimated && <Text className="text-xs font-semibold text-amber-600">Awaiting Verification</Text>}
+        </Animated.View>
+    );
+};
+
+const TripCard = ({ trip, tab }) => {
+    const navigation = useNavigation();
+    const scheduleDate = getScheduleDate(trip);
+    const latestMilestone = getLatestMilestone(trip);
+    const isActionRequired = latestMilestone.key === 'delivery_complete';
+    
+    // Dynamic data based on tab
+    let dynamicValue = 'N/A';
+    let dynamicTitle = 'Status';
+    let dynamicIcon = 'clock';
+    let dynamicColor = '#3B82F6';
+    let isOverdue = false;
+    let accentColor = null;
+    
+    if (tab === 'Active') {
+        const tripStarted = getTripStartedTimestamp(trip);
+        dynamicValue = formatTimeElapsed(tripStarted);
+        dynamicTitle = 'Time Elapsed';
+        dynamicIcon = 'clock';
+    } else if (tab === 'Schedule') {
+        const remaining = formatDaysRemaining(scheduleDate);
+        dynamicValue = remaining.text;
+        dynamicTitle = 'Starts In';
+        dynamicIcon = 'calendar-days';
+        isOverdue = remaining.isOverdue;
+    } else {
+        // History tab
+        if (trip.status === 'completed') {
+            dynamicValue = 'Trip Completed';
+            dynamicTitle = 'Status';
+            dynamicIcon = 'check-circle';
+            dynamicColor = '#16A34A';
+            accentColor = 'green';
+        } else if (trip.status === 'canceled') {
+            dynamicValue = 'Canceled';
+            dynamicTitle = 'Status';
+            dynamicIcon = 'times-circle';
+            dynamicColor = '#EF4444';
+            accentColor = 'red';
+        } else if (trip.status === 'issue_reported') {
+            dynamicValue = 'Issue Reported';
+            dynamicTitle = 'Status';
+            dynamicIcon = 'triangle-exclamation';
+            dynamicColor = '#F97316';
+            accentColor = 'orange';
+        }
+    }
+    
+    // Footer content based on tab and status
+    let footerContent = null;
+    if (tab === 'History') {
+        if (trip.status === 'completed') {
+            const tripStarted = getTripStartedTimestamp(trip);
+            const deliveryVerified = getDeliveryVerifiedTimestamp(trip);
+            const duration = formatTripDuration(tripStarted, deliveryVerified);
+            const completedDate = trip.completed_at ? format(new Date(trip.completed_at), "MMM d, yyyy 'at' h:mm a") : 'N/A';
+            footerContent = (
+                <View>
+                    <View className="flex-row items-center">
+                        <FontAwesome6 name="calendar-check" size={14} color="#16A34A" />
+                        <Text className="mt-1 ml-2 text-sm font-semibold text-gray-500">Completed</Text>
+                    </View>
+                    <Text className="mt-1 font-semibold text-gray-800" numberOfLines={1}>
+                        {completedDate} • Duration: {duration}
+                    </Text>
                 </View>
-                <EmptyState message="You have no trips assigned to you yet." />
+            );
+        } else if (trip.status === 'canceled') {
+            footerContent = (
+                <View>
+                    <View className="flex-row items-center">
+                        <FontAwesome6 name="times-circle" size={14} color="#EF4444" />
+                        <Text className="mt-1 ml-2 text-sm font-semibold text-gray-500">Cancellation Reason</Text>
+                    </View>
+                    <Text className="mt-1 font-semibold text-gray-800" numberOfLines={1}>
+                        {trip.cancel_reason || 'No reason provided'}
+                    </Text>
+                </View>
+            );
+        } else if (trip.status === 'issue_reported') {
+            footerContent = (
+                <View>
+                    <View className="flex-row items-center">
+                        <FontAwesome6 name="triangle-exclamation" size={14} color="#F97316" />
+                        <Text className="mt-1 ml-2 text-sm font-semibold text-gray-500">Issue Details</Text>
+                    </View>
+                    <Text className="mt-1 font-semibold text-gray-800" numberOfLines={1}>
+                        {trip.issue?.reason || 'Issue reported'} {trip.issue?.notes ? `• ${trip.issue.notes}` : ''}
+                    </Text>
+                </View>
+            );
+        }
+    } else {
+        // Default destination footer for Active and Schedule tabs
+        footerContent = (
+            <View>
+                <View className="flex-row items-center">
+                    <FontAwesome6 name="location-dot" size={14} color="#EF4444" />
+                    <Text className="mt-1 ml-2 text-sm font-semibold text-gray-500">Destination</Text>
+                </View>
+                <Text className="mt-1 font-semibold text-gray-800" numberOfLines={1}>
+                    {trip.destination?.address?.split(',')[0] || 'Not available'}
+                </Text>
             </View>
         );
     }
 
     return (
-        <View style={styles.flexOne} > 
-            <View style={{ paddingTop: insets.top, ...styles.header }}>
-                <Text className="text-3xl font-bold text-gray-900">My Trips</Text>
+        <View className="p-6 py-8 mb-4 bg-white border shadow-md border-slate-100 rounded-3xl">
+            <View className="flex-row items-start justify-between">
+                <View className="flex-1 mr-4">
+                    <Text className="text-lg font-extrabold text-gray-900" numberOfLines={1}>
+                        {trip.request_id?.material_id?.name}
+                    </Text>
+                    <StatusBadge status={trip.status} tab={tab} />
+                </View>
+                <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => navigation.navigate('TripDetail', { tripId: trip._id })}
+                    className="px-4 py-2 bg-black rounded-xl"
+                >
+                    <Text className="font-bold text-white">Details</Text>
+                </TouchableOpacity>
             </View>
 
-            {/* --- 1. Action Zone --- */}
-            {categorizedTrips.currentTrip ? (
-                <ActionCard trip={categorizedTrips.currentTrip} />
-            ) : (
-                <View className="items-center p-8 m-4 bg-green-100 border border-green-200 rounded-3xl">
-                     <Text className="text-lg font-bold text-green-800">All Caught Up! 🌴</Text>
-                     <Text className="mt-1 text-base text-center text-green-700">You have no active trips right now.</Text>
-                </View>
-            )}
-
-            {/* --- 2. Heads-Up Zone --- */}
-            {categorizedTrips.upNext.length > 0 && (
-                 <View className="pt-4">
-                    <Text className="mx-6 mb-4 text-2xl font-bold text-gray-900">Up Next</Text>
-                    <FlatList
-                        data={categorizedTrips.upNext}
-                        keyExtractor={(item) => item._id}
-                        renderItem={({ item }) => <TripCard trip={item} isHorizontal />}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{ paddingHorizontal: 24 }}
-                    />
-                </View>
-            )}
-
-            {/* --- 3. Reference Zone --- */}
-            <View style={styles.tabContainer}>
-                 <Text className="mx-6 mt-6 mb-2 text-2xl font-bold text-gray-900">All Trips</Text>
-                <TabView
-                    navigationState={{ index: tabIndex, routes }}
-                    renderScene={renderScene}
-                    onIndexChange={setTabIndex}
-                    initialLayout={{ width: Dimensions.get('window').width }}
-                    renderTabBar={props => 
-                        <TabBar 
-                            {...props} 
-                            indicatorStyle={styles.tabIndicator}
-                            style={styles.tabBar}
-                            labelStyle={styles.tabLabel}
-                            activeColor="#1F2937"
-                            inactiveColor="#6B7280"
-                        />
-                    }
+            <View className="flex-row flex-wrap justify-between mt-4 gap-y-3">
+                <InfoBox 
+                    icon="calendar-days" 
+                    iconColor="#3B82F6" 
+                    title="Schedule" 
+                    value={scheduleDate ? format(new Date(scheduleDate), "MMM d, yyyy") : 'N/A'} 
                 />
+                <InfoBox 
+                    icon="weight-hanging" 
+                    iconColor="#16A34A" 
+                    title="Quantity" 
+                    value={`${trip.request_id?.finalized_agreement?.quantity} ${trip.request_id?.finalized_agreement?.unit?.name || 'Tons'}`} 
+                />
+                <InfoBox 
+                    icon={dynamicIcon} 
+                    iconColor={dynamicColor} 
+                    title={dynamicTitle} 
+                    value={dynamicValue}
+                    isOverdue={isOverdue}
+                    accentColor={accentColor}
+                />
+                <InfoBox 
+                    icon="timeline" 
+                    iconColor="#3B82F6" 
+                    title="Milestone" 
+                    value={latestMilestone.label} 
+                    // isAnimated={isActionRequired} 
+                />
+            </View>
+
+            <View className="px-3 pt-4 mt-4 border-t border-slate-100">
+                {footerContent}
             </View>
         </View>
     );
 };
 
-// --- Styles with more spacing ---
+const FilterOption = ({ label, isSelected, onPress, style }) => (
+    <TouchableOpacity
+        onPress={onPress}
+        style={style}
+        className={`flex-row items-center p-4 mb-3 border rounded-2xl ${
+            isSelected ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white"
+        }`}
+    >
+        <Text className={`flex-1 font-semibold text-center ${isSelected ? "text-blue-600" : "text-gray-700"}`}>
+            {label}
+        </Text>
+    </TouchableOpacity>
+);
+
+const FilterSection = ({ title, children }) => (
+    <View className="mb-6">
+        <Text className="mb-4 text-lg font-bold text-gray-800">{title}</Text>
+        {children}
+    </View>
+);
+
+// --- Main Screen Component ---
+const TripScreen = () => {
+    const route = useRoute();
+    const { data: allTrips, isLoading, isError } = useFetchMyTrips();
+
+    const [activeTab, setActiveTab] = useState('Active');
+    const filterBottomSheetRef = useRef(null);
+    
+    const [filters, setFilters] = useState({ sortBy: SORT_OPTIONS.NEWEST, status: [], milestone: [] });
+    const [tempFilters, setTempFilters] = useState(filters);
+
+    const filteredAndSortedTrips = useMemo(() => {
+        if (!allTrips) return [];
+        
+        let trips = [];
+        
+        if (activeTab === 'Active') {
+            trips = allTrips.filter(trip => {
+                const lastMilestone = getLatestMilestone(trip).key;
+                return ACTIVE_STATUSES.includes(lastMilestone);
+            });
+        } else if (activeTab === 'Schedule') {
+            trips = allTrips.filter(trip => {
+                const lastMilestone = getLatestMilestone(trip).key;
+                return SCHEDULE_STATUSES.includes(lastMilestone);
+            });
+        } else {
+            trips = allTrips.filter(trip => HISTORY_TRIP_STATUSES.includes(trip.status));
+        }
+
+        if (filters.status.length > 0) {
+            if (activeTab === 'History') {
+                trips = trips.filter(trip => filters.status.includes(trip.status));
+            } else {
+                trips = trips.filter(trip => {
+                    const lastMilestone = getLatestMilestone(trip).key;
+                    return filters.status.includes(lastMilestone);
+                });
+            }
+        }
+
+        if (activeTab !== 'History' && filters.milestone.length > 0) {
+            trips = trips.filter(trip => {
+                const lastMilestone = getLatestMilestone(trip).key;
+                return lastMilestone && filters.milestone.includes(lastMilestone);
+            });
+        }
+
+        trips.sort((a, b) => {
+            const dateA = getScheduleDate(a) || a.createdAt;
+            const dateB = getScheduleDate(b) || b.createdAt;
+            if (filters.sortBy === SORT_OPTIONS.OLDEST) {
+                return new Date(dateA) - new Date(dateB);
+            }
+            return new Date(dateB) - new Date(dateA);
+        });
+        return trips;
+    }, [allTrips, activeTab, filters]);
+
+    const openFilterSheet = () => {
+        setTempFilters(filters);
+        filterBottomSheetRef.current?.snapToIndex(0);
+    };
+
+    const applyFilters = () => {
+        setFilters(tempFilters);
+        filterBottomSheetRef.current?.close();
+    };
+
+    const resetFilters = () => {
+        const initialFilters = { sortBy: SORT_OPTIONS.NEWEST, status: [], milestone: [] };
+        setTempFilters(initialFilters);
+        setFilters(initialFilters);
+        filterBottomSheetRef.current?.close();
+    };
+
+    const handleTabChange = (newTab) => {
+        if (newTab === activeTab) return;
+        setActiveTab(newTab);
+        const newFilters = { ...filters, status: [], milestone: [] };
+        setFilters(newFilters);
+        setTempFilters(newFilters);
+    };
+
+    const renderContent = () => {
+        if (isLoading) return <ActivityIndicator size="large" color="#1f2937" className="mt-16" />;
+        if (isError) return <Text className="mt-16 text-center text-red-500">Failed to load trips.</Text>;
+        if (filteredAndSortedTrips.length === 0) return <Text className="mt-16 text-center text-gray-500">No trips found.</Text>;
+
+        return (
+            <View className="flex-1">
+                <FlatList
+                    data={filteredAndSortedTrips}
+                    keyExtractor={(item) => item._id}
+                    renderItem={({ item }) => <TripCard trip={item} tab={activeTab} />}
+                    contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
+                    showsVerticalScrollIndicator={false}
+                />
+            </View>
+        );
+    };
+    
+    const TABS = ["Active", "Schedule", "History"];
+
+    const getFilterStatusOptions = () => {
+        if (activeTab === 'History') {
+            return HISTORY_TRIP_STATUSES.map(status => ({
+                key: status,
+                label: TRIP_STATUSES[status]
+            }));
+        } else if (activeTab === 'Active') {
+            return ACTIVE_STATUSES.map(status => ({
+                key: status,
+                label: MILESTONE_STATUSES[status]
+            }));
+        } else {
+            return SCHEDULE_STATUSES.map(status => ({
+                key: status,
+                label: MILESTONE_STATUSES[status]
+            }));
+        }
+    };
+
+    return (
+        <View style={styles.flexOne}>
+            <ScreenHeader onFilterPress={openFilterSheet} />
+
+            <View style={styles.tabContainer}>
+                {TABS.map(tab => (
+                    <TouchableOpacity
+                        key={tab}
+                        onPress={() => handleTabChange(tab)}
+                        style={[
+                            styles.tab,
+                            activeTab === tab ? styles.activeTab : null
+                        ]}
+                    >
+                        <Text style={[
+                            styles.tabText,
+                            activeTab === tab ? styles.activeTabText : null
+                        ]}>
+                            {tab}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+
+            <View className="flex-1">
+                {renderContent()}
+            </View>
+
+            <ReusableBottomSheet ref={filterBottomSheetRef}>
+                <View className="flex-1 p-6 bg-gray-50">
+                    <View className="flex-row items-center justify-between">
+                        <Text className="text-2xl font-bold text-gray-900">Sort & Filter</Text>
+                        <TouchableOpacity onPress={resetFilters} className="px-4 py-2 bg-gray-200 rounded-full">
+                            <Text className="font-bold text-gray-700">Reset</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <View className="my-6 border-b border-gray-200" />
+                    <ScrollView showsVerticalScrollIndicator={false}>
+                        <FilterSection title="Sort By">
+                            <View className="flex-row justify-between">
+                                {Object.values(SORT_OPTIONS).map(option => (
+                                    <FilterOption
+                                        key={option}
+                                        label={option}
+                                        style={{ width: "48%" }}
+                                        isSelected={tempFilters.sortBy === option}
+                                        onPress={() => setTempFilters(prev => ({ ...prev, sortBy: option }))}
+                                    />
+                                ))}
+                            </View>
+                        </FilterSection>
+
+                        {activeTab!=='Schedule' && (<FilterSection title={activeTab === 'History' ? "Trip Status" : "Current Status"}>
+                            <View className="flex-row flex-wrap justify-between">
+                                {getFilterStatusOptions().map(({ key, label }) => (
+                                    <FilterOption
+                                        key={key}
+                                        label={label}
+                                        style={{ width: "48%" }}
+                                        isSelected={tempFilters.status.includes(key)}
+                                        onPress={() => setTempFilters(prev => ({
+                                            ...prev,
+                                            status: prev.status.includes(key)
+                                                ? prev.status.filter(s => s !== key)
+                                                : [...prev.status, key],
+                                        }))}
+                                    />
+                                ))}
+                            </View>
+                        </FilterSection>)}
+
+                        {/* {activeTab !== 'History' && (
+                            <FilterSection title="Milestone Filter">
+                                <View className="flex-row flex-wrap justify-between">
+                                    {(activeTab === 'Active' ? ACTIVE_STATUSES : SCHEDULE_STATUSES).map(key => (
+                                        <FilterOption
+                                            key={key}
+                                            label={MILESTONE_STATUSES[key]}
+                                            style={{ width: "48%" }}
+                                            isSelected={tempFilters.milestone.includes(key)}
+                                            onPress={() => setTempFilters(prev => ({
+                                                ...prev,
+                                                milestone: prev.milestone.includes(key)
+                                                    ? prev.milestone.filter(m => m !== key)
+                                                    : [...prev.milestone, key],
+                                            }))}
+                                        />
+                                    ))}
+                                </View>
+                            </FilterSection>
+                        )} */}
+                    </ScrollView>
+                    <TouchableOpacity onPress={applyFilters} className="p-4 mt-4 bg-gray-800 rounded-2xl">
+                        <Text className="text-lg font-bold text-center text-white">Apply Filters</Text>
+                    </TouchableOpacity>
+                </View>
+            </ReusableBottomSheet>
+        </View>
+    );
+};
+
 const styles = StyleSheet.create({
-    flexOne: { flex: 1, backgroundColor: '#F9FAFB' },
-    container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    header: { paddingHorizontal: 24, paddingBottom: 16, backgroundColor: 'white' },
-    tabContainer: { flex: 1, marginTop: 16 },
-    tabBar: { backgroundColor: 'transparent', shadowOpacity: 0, elevation: 0, marginHorizontal: 16 },
-    tabIndicator: { backgroundColor: '#1F2937', height: 4, borderRadius: 2 },
-    tabLabel: { fontWeight: 'bold', textTransform: 'capitalize', fontSize: 16 },
+    flexOne: { 
+        flex: 1, 
+        backgroundColor: '#F9FAFB' 
+    },
+    tabContainer: {
+        flexDirection: 'row',
+        padding: 6,
+        marginHorizontal: 16,
+        marginVertical: 12,
+        backgroundColor: '#F3F4F6',
+        borderRadius: 16,
+    },
+    tab: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    activeTab: {
+        backgroundColor: '#000000',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    tabText: {
+        fontWeight: 'bold',
+        color: '#818992',
+    },
+    activeTabText: {
+        color: '#FFFFFF',
+    },
 });
 
-export default TripsScreen;
+export default TripScreen;

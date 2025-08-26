@@ -257,7 +257,7 @@ const RegisterScreen = ({ route }) => {
         className="h-[30%] items-center justify-center"
         style={{ minHeight: 200 }}
       >
-        <StatusBar barStyle="light-content" backgroundColor="#172033" />
+        {/* <StatusBar barStyle="light-content" backgroundColor="#172033" /> */}
         <Text className="mb-2 text-5xl font-bold text-white mt-14">
           Buildorite
         </Text>

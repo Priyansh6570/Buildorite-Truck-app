@@ -2,7 +2,8 @@ import { io } from "socket.io-client";
 import { useAuthStore } from "../store/authStore";
 import * as Location from "expo-location";
 
-const SOCKET_URL = "https://buildorite-backend.onrender.com/api/v1";
+// const SOCKET_URL = "https://r7dh1jlv-3000.inc1.devtunnels.ms";
+const SOCKET_URL = 'https://buildorite-backend.onrender.com/api/v1';
 const LOCATION_UPDATE_INTERVAL = 10 * 60 * 1000; // 10 minutes
 
 class SocketService {

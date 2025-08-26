@@ -7,6 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "scheme": "buildorite-truck",
     "splash": {
       "image": "./assets/splash-icon-dark.png",
       "resizeMode": "contain",
@@ -20,6 +21,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.buildorite.truckApp",
       "googleServicesFile": "./GoogleService-Info.plist",
+      "runtimeVersion": {
+        "policy": "appVersion"
+      },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -45,7 +49,22 @@
         "android.permission.FOREGROUND_SERVICE_LOCATION"
       ],
       "googleServicesFile": "./google-services.json",
-      "package": "com.buildorite.truckApp"
+      "package": "com.buildorite.truckApp",
+      "runtimeVersion": "1.0.0",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "buildorite-truck"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "androidStatusBar": {
       "barStyle": "light-content",

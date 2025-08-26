@@ -20,6 +20,7 @@ import {
 import { useAuthStore } from "../../store/authStore";
 import { useNavigation } from "@react-navigation/native";
 import { useLogoutUser } from "../../hooks/useAuth";
+import { useFetchTruckStat } from "../../hooks/useTrip"
 import ReusableBottomSheet from "../../components/Ui/ReusableBottomSheet";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -31,6 +32,11 @@ const ProfileScreen = () => {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const signOutBottomSheetRef = useRef(null);
   const insets = useSafeAreaInsets();
+
+  const { data: statsData } = useFetchTruckStat();
+  const activeTrucks = statsData?.data?.driverCount || 0;
+  const completedTrips = statsData?.data?.completedTripCount || 0;
+
 
   const handleLogout = () => {
     setIsSigningOut(true);
@@ -103,12 +109,10 @@ const ProfileScreen = () => {
               </TouchableOpacity>
             </View>
 
-            {/* Stats Cards for Truck App */}
             <View className="flex-row justify-between px-6 mt-6">
               <View className="flex-1 p-4 py-6 mx-2 bg-[#2C3441] bg-opacity-50 border border-slate-500 rounded-xl">
                 <Text className="text-3xl font-bold text-center text-white">
-                  {/* Replace with actual data */}
-                  8
+                  {activeTrucks}
                 </Text>
                 <Text className="font-semibold text-center text-gray-300 text-md">
                   Active Trucks
@@ -116,8 +120,7 @@ const ProfileScreen = () => {
               </View>
               <View className="flex-1 p-4 py-6 mx-2 bg-[#2C3441] bg-opacity-50 border border-slate-500 rounded-xl">
                 <Text className="text-3xl font-bold text-center text-white">
-                  {/* Replace with actual data */}
-                  21
+                  {completedTrips}
                 </Text>
                 <Text className="font-semibold text-center text-gray-300 text-md">
                   Completed Trips
@@ -127,14 +130,13 @@ const ProfileScreen = () => {
           </View>
 
           <View className="px-6">
-            {/* Quick Actions Card */}
             <View className="z-10 p-6 py-8 -mt-6 bg-white shadow-2xl rounded-3xl elevation-20">
               <Text className="mb-6 text-2xl font-bold text-gray-800">
                 Quick Actions
               </Text>
               <View className="flex-row justify-between gap-4">
                 <TouchableOpacity
-                  onPress={() => navigation.navigate("Help")}
+                  onPress={() => navigation.navigate("TruckOwnerHelp")}
                   onPressIn={() => setPressedAction("help")}
                   activeOpacity={1}
                   onPressOut={() => setPressedAction(null)}
@@ -188,7 +190,6 @@ const ProfileScreen = () => {
               </View>
             </View>
 
-            {/* Main Menu Items */}
             <View className="flex gap-4 mt-8 space-y-4">
               <TouchableOpacity
                 onPress={() => navigation.navigate("Truck")}
@@ -268,22 +269,6 @@ const ProfileScreen = () => {
                     </View>
                     <Text className="ml-4 font-semibold text-gray-800 text-md">
                       Settings
-                    </Text>
-                  </View>
-                  <FontAwesome6 name="chevron-right" size={16} color="#4B5563" />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => navigation.navigate("Messages")}
-                  activeOpacity={1}
-                  className="flex-row items-center justify-between p-4 border-b border-slate-100 active:bg-gray-50"
-                >
-                  <View className="flex-row items-center">
-                    <View className="p-3 bg-gray-100 rounded-xl">
-                      <Ionicons name="mail" size={20} color="#6B7280" />
-                    </View>
-                    <Text className="ml-4 font-semibold text-gray-800">
-                      Messages
                     </Text>
                   </View>
                   <FontAwesome6 name="chevron-right" size={16} color="#4B5563" />

@@ -101,7 +101,7 @@ const ViewMineScreen = ({ route }) => {
   const allChecked = Object.values(checkboxes).every(Boolean);
 
   const bannerImages = mine?.banner_images?.length
-    ? mine.banner_images
+    ? mine?.banner_images
     : [
         {
           url: "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png",

@@ -244,7 +244,7 @@ const AddTruckScreen = () => {
             </TouchableOpacity>
 
             <LinearGradient colors={["#172033", "#1C2533"]} className="h-[30%] items-center justify-center" style={{ minHeight: 250 }}>
-                <StatusBar barStyle="light-content" backgroundColor="#172033" />
+                {/* <StatusBar barStyle="light-content" backgroundColor="#172033" /> */}
                 <View className="items-center justify-center w-24 h-24 mb-4 overflow-hidden rounded-3xl">
                     <LinearGradient colors={['#10B981', '#059669']} className="items-center justify-center w-full h-full">
                         <FontAwesome5 name="truck" size={40} color="white" />

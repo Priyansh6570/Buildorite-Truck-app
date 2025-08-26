@@ -8,14 +8,11 @@ import {
   ActivityIndicator,
   Modal,
   BackHandler,
-  StatusBar,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useAuthStore } from "../../store/authStore";
 import { useUpdateUserProfile } from "../../hooks/useUser";
-import auth from "@react-native-firebase/auth";
+import { useVerifyPhone, useVerifyOtp } from "../../hooks/useAuth";
 import Toast from "react-native-toast-message";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -31,6 +28,8 @@ const AccountScreen = () => {
   const navigation = useNavigation();
   const { user } = useAuthStore();
   const updateUserMutation = useUpdateUserProfile();
+  const verifyPhoneMutation = useVerifyPhone();
+  const verifyOtpMutation = useVerifyOtp();
 
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
@@ -39,7 +38,7 @@ const AccountScreen = () => {
   const [phone, setPhone] = useState(user?.phone || "");
   const [newPhone, setNewPhone] = useState("");
   const [otp, setOtp] = useState("");
-  const [confirm, setConfirm] = useState(null);
+  const [otpSent, setOtpSent] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [otpError, setOtpError] = useState("");
@@ -64,16 +63,16 @@ const AccountScreen = () => {
 
   useEffect(() => {
     let interval;
-    if (resendTimer > 0) {
+    if (resendTimer > 0 && otpSent) {
       interval = setInterval(() => {
         setResendTimer((prev) => prev - 1);
       }, 1000);
-    } else {
+    } else if (resendTimer === 0) {
       setCanResend(true);
       clearInterval(interval);
     }
     return () => clearInterval(interval);
-  }, [resendTimer]);
+  }, [resendTimer, otpSent]);
 
   useEffect(() => {
     if (
@@ -146,87 +145,148 @@ const AccountScreen = () => {
   };
 
   const handlePhoneUpdate = async () => {
+    if (newPhone.length !== 10) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid Phone Number",
+        text2: "Please enter a valid 10-digit mobile number.",
+      });
+      return;
+    }
+
+    setIsSendingOtp(true);
+    setPhoneVerificationError(false);
+    setOtpError("");
+
     try {
-      setIsSendingOtp(true);
-      setPhoneVerificationError(false);
-      const formattedPhoneNumber = newPhone.startsWith("+91")
-        ? newPhone
-        : `+91${newPhone}`;
-      const confirmation = await auth().signInWithPhoneNumber(
-        formattedPhoneNumber
-      );
-      setConfirm(confirmation);
-      setResendTimer(30);
-      setCanResend(false);
-      setOtpError("");
+      verifyPhoneMutation.mutate(newPhone, {
+        onSuccess: () => {
+          console.log("OTP sent successfully for phone update");
+          Toast.show({ type: "success", text1: "OTP Sent Successfully" });
+          setOtpSent(true);
+          setResendTimer(30);
+          setCanResend(false);
+          setIsSendingOtp(false);
+        },
+        onError: (error) => {
+          console.error("Failed to send OTP for phone update:", error);
+          Toast.show({ 
+            type: "error", 
+            text1: "Failed to send OTP", 
+            text2: "Please try again." 
+          });
+          setIsSendingOtp(false);
+          setPhoneVerificationError(true);
+        },
+      });
     } catch (err) {
+      console.error("Error in handlePhoneUpdate:", err);
       Toast.show({
         type: "error",
         text1: "Error",
         text2: "Failed to send OTP. Please try again.",
       });
-    } finally {
       setIsSendingOtp(false);
+      setPhoneVerificationError(true);
     }
   };
 
   const handleOtpSubmit = async () => {
+    if (otp.length !== 6) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid OTP",
+        text2: "Please enter a valid 6-digit OTP.",
+      });
+      return;
+    }
+
+    setIsVerifying(true);
+    setPhoneVerificationError(false);
+    setOtpError("");
+
     try {
-      if (!confirm) return;
-      if (otp.length !== 6) return;
-
-      setIsVerifying(true);
-      setPhoneVerificationError(false);
-      await confirm.confirm(otp);
-
-      setIsVerifying(false);
-      setConfirm(null);
-      setPhone(newPhone);
-      setNewPhone("");
-      setOtp("");
-      setPhoneUpdateSuccess(true);
+      verifyOtpMutation.mutate({ phone: newPhone, otp }, {
+        onSuccess: (data) => {
+          console.log("OTP verified successfully for phone update");
+          Toast.show({ type: "success", text1: "Phone Number Updated Successfully" });
+          
+          // Update phone number and reset OTP states
+          setPhone(newPhone);
+          setNewPhone("");
+          setOtp("");
+          setOtpSent(false);
+          setPhoneUpdateSuccess(true);
+          setIsVerifying(false);
+          setResendTimer(30);
+          setCanResend(false);
+        },
+        onError: (err) => {
+          console.error("OTP verification error for phone update:", err);
+          Toast.show({ 
+            type: "error", 
+            text1: "Invalid OTP", 
+            text2: "The code you entered is incorrect." 
+          });
+          
+          setOtpError("OTP is Invalid");
+          setPhoneVerificationError(true);
+          setIsVerifying(false);
+          setOtp(""); // Clear OTP input on verification failure
+        },
+      });
     } catch (err) {
+      console.error("Error in handleOtpSubmit:", err);
       setOtpError("OTP is Invalid");
       setPhoneVerificationError(true);
       setIsVerifying(false);
+      setOtp(""); // Clear OTP input on error
+      Toast.show({ 
+        type: "error", 
+        text1: "Invalid OTP", 
+        text2: "The code you entered is incorrect." 
+      });
     }
   };
 
   const handleResendOtp = async () => {
-    if (canResend) {
-      try {
-        setIsSendingOtp(true);
-        const formattedPhoneNumber = newPhone.startsWith("+91")
-          ? newPhone
-          : `+91${newPhone}`;
-        const confirmation = await auth().signInWithPhoneNumber(
-          formattedPhoneNumber
-        );
-        setConfirm(confirmation);
-        setResendTimer(30);
-        setCanResend(false);
-        setOtpError("");
-      } catch (err) {
-        Toast.show({
-          type: "error",
-          text1: "Error",
-          text2: "Failed to resend OTP. Please try again.",
-        });
-      } finally {
-        setIsSendingOtp(false);
-      }
+    if (!canResend) return;
+
+    setIsSendingOtp(true);
+    setPhoneVerificationError(false);
+    setOtpError("");
+
+    try {
+      verifyPhoneMutation.mutate(newPhone, {
+        onSuccess: () => {
+          Toast.show({ type: "success", text1: "OTP Resent Successfully" });
+          setResendTimer(30);
+          setCanResend(false);
+          setIsSendingOtp(false);
+        },
+        onError: (error) => {
+          console.error("Failed to resend OTP:", error);
+          Toast.show({ 
+            type: "error", 
+            text1: "Failed to resend OTP", 
+            text2: "Please try again." 
+          });
+          setIsSendingOtp(false);
+        },
+      });
+    } catch (err) {
+      console.error("Error in handleResendOtp:", err);
+      Toast.show({
+        type: "error",
+        text1: "Failed to resend OTP",
+        text2: "Please try again.",
+      });
+      setIsSendingOtp(false);
     }
   };
 
   return (
-    <View
-      className="flex-1 bg-white"
-    >
-      {/* <StatusBar
-        backgroundColor={showModal ? "rgba(0,0,0,0.5)" : "#111827"}
-        barStyle="light-content"
-      /> */}
-
+    <View className="flex-1 bg-white">
       {/* Header */}
       <View className="flex-1">
         <ScrollView className="flex-1 bg-white">
@@ -363,7 +423,7 @@ const AccountScreen = () => {
                     </View>
                   </View>
                 </>
-              ) : !confirm ? (
+              ) : !otpSent ? (
                 <>
                   <View className="relative mb-4">
                     <TextInput
@@ -379,6 +439,7 @@ const AccountScreen = () => {
                       }}
                       keyboardType="phone-pad"
                       maxLength={10}
+                      editable={!isSendingOtp}
                     />
                     <Ionicons
                       name="call"
@@ -440,6 +501,9 @@ const AccountScreen = () => {
                       }}
                       keyboardType="number-pad"
                       maxLength={6}
+                      editable={!isVerifying}
+                      returnKeyType="done"
+                      onSubmitEditing={handleOtpSubmit}
                     />
                     <MaterialIcons
                       name="security"
@@ -512,29 +576,29 @@ const AccountScreen = () => {
               )}
             </View>
           </View>
-      <View className="px-6 py-4 bg-white border-t border-gray-200">
-        <TouchableOpacity
-          onPress={handleUpdate}
-          className={`h-[56px] justify-center items-center rounded-xl mb-2 ${
-            isFormValid() ? "bg-[#1F2937]" : "bg-gray-400"
-          }`}
-          disabled={!isFormValid() || updateUserMutation.isLoading}
-        >
-          {updateUserMutation.isLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text className="text-lg font-semibold text-white">
-              Save Changes
+          <View className="px-6 py-4 bg-white border-t border-gray-200">
+            <TouchableOpacity
+              onPress={handleUpdate}
+              className={`h-[56px] justify-center items-center rounded-xl mb-2 ${
+                isFormValid() ? "bg-[#1F2937]" : "bg-gray-400"
+              }`}
+              disabled={!isFormValid() || updateUserMutation.isLoading}
+            >
+              {updateUserMutation.isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text className="text-lg font-semibold text-white">
+                  Save Changes
+                </Text>
+              )}
+            </TouchableOpacity>
+            <Text className="text-sm text-center text-gray-500">
+              Changes will be saved to your account
             </Text>
-          )}
-        </TouchableOpacity>
-        <Text className="text-sm text-center text-gray-500">
-          Changes will be saved to your account
-        </Text>
-      </View>
+          </View>
         </ScrollView>
       </View>
-      
+
       <Modal
         animationType="fade"
         transparent={true}
@@ -580,7 +644,6 @@ const AccountScreen = () => {
           </View>
         </View>
       </Modal>
-      
     </View>
   );
 };

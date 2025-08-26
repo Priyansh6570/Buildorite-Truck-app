@@ -88,7 +88,7 @@ const HomeScreen = () => {
   const displayData = (selectedTab === "mines" ? mines : materials)?.slice(0, 5) || [];
 
   const keyExtractor = (item, index) => {
-    return `${selectedTab}-${item._id}-${index}`;
+    return `${selectedTab}-${item?._id}-${index}`;
   };
 
   if (!user) {

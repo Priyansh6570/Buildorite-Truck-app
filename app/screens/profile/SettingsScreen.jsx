@@ -114,7 +114,6 @@ const SettingsScreen = () => {
 
   return (
     <View className="flex-1 bg-white">
-      {/* <StatusBar backgroundColor="#111827" barStyle="light-content" /> */}
 
       {/* Header */}
       <View className="flex-1">
@@ -156,6 +155,12 @@ const SettingsScreen = () => {
                   MaterialCommunityIcons,
                   "Account",
                   () => navigation.navigate("Account")
+                )}
+                {user.role === "driver" && renderSettingsItem(
+                  "truck",
+                  Feather,
+                  "Vehicle",
+                  () => navigation.navigate("Vehicle")
                 )}
                 {renderSettingsItem(
                   "shield-outline",
