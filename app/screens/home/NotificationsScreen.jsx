@@ -1,30 +1,15 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  ActivityIndicator,
-  RefreshControl,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, ScrollView, ActivityIndicator, RefreshControl, TouchableOpacity } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNotifications, useMarkAllAsRead } from "../../hooks/useNotification";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import * as Notifications from "expo-notifications";
-import {
-  FontAwesome6,
-  Feather,
-  FontAwesome5,
-  MaterialCommunityIcons,
-  Ionicons,
-  MaterialIcons,
-} from "@expo/vector-icons";
+import { FontAwesome6, Feather, FontAwesome5, MaterialCommunityIcons, Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 dayjs.extend(relativeTime);
 
-// Professional icon mapping with better visual hierarchy
 const getNotificationMeta = (type) => {
   switch (type) {
     case "mine_request_created":
@@ -113,46 +98,46 @@ const getNotificationMeta = (type) => {
 };
 
 const handleNotificationNavigation = (navigation, notification) => {
-    if (!notification?.payload) return;
+  if (!notification?.payload) return;
 
-    const { requestId, tripId } = notification.payload;
+  const { requestId, tripId } = notification.payload;
 
-    switch (notification.type) {
-        case "request_countered":
-        case "request_accepted":
-        case "request_rejected":
-        case "request_canceled":
-            navigation.navigate("RequestDetailScreen", { requestId, userType: "buyer" });
-            break;
+  switch (notification.type) {
+    case "request_countered":
+    case "request_accepted":
+    case "request_rejected":
+    case "request_canceled":
+      navigation.navigate("RequestDetailScreen", { requestId, userType: "buyer" });
+      break;
 
-        case "mine_request_created":
-             navigation.navigate("RequestDetailScreen", { requestId, userType: "buyer" });
-            break;
-        case "driver_reassigned":
-        case "driver_assigned":
-        case "mine_trip_milestone":
-        case "mine_milestone_verified":
-        case "mine_trip_issue":
-            navigation.navigate("MineTripDetail", { tripId });
-            break;
+    case "mine_request_created":
+      navigation.navigate("RequestDetailScreen", { requestId, userType: "buyer" });
+      break;
+    case "driver_reassigned":
+    case "driver_assigned":
+    case "mine_trip_milestone":
+    case "mine_milestone_verified":
+    case "mine_trip_issue":
+      navigation.navigate("MineTripDetail", { tripId });
+      break;
 
-        case "driver_reassigned":
-        case "driver_assigned":
-        case "truck_trip_milestone":
-        case "truck_milestone_verified":
-        case "truck_trip_issue":
-            navigation.navigate("TruckOwnerTripDetail", { tripId });
-            break;
+    case "driver_reassigned":
+    case "driver_assigned":
+    case "truck_trip_milestone":
+    case "truck_milestone_verified":
+    case "truck_trip_issue":
+      navigation.navigate("TruckOwnerTripDetail", { tripId });
+      break;
 
-        case "driver_unassigned":
-        case "driver_trip_assigned":
-        case "driver_milestone_verified":
-            navigation.navigate("TripDetail", { tripId });
-            break;
+    case "driver_unassigned":
+    case "driver_trip_assigned":
+    case "driver_milestone_verified":
+      navigation.navigate("TripDetail", { tripId });
+      break;
 
-        default:
-            console.log("No navigation handler for type:", notification.type);
-    }
+    default:
+      console.log("No navigation handler for type:", notification.type);
+  }
 };
 
 const classifyNotifications = (list) => {
@@ -196,79 +181,85 @@ const NotificationItem = ({ notification }) => {
       activeOpacity={0.7}
       onPress={() => handleNotificationNavigation(navigation, notification)}
       style={{
-        backgroundColor: isUnread ? '#f0f9ff' : '#ffffff',
+        backgroundColor: isUnread ? "#f0f9ff" : "#ffffff",
         borderLeftWidth: isUnread ? 4 : 0,
-        borderLeftColor: '#0ea5e9',
+        borderLeftColor: "#0ea5e9",
         paddingVertical: 16,
         paddingHorizontal: 20,
         borderBottomWidth: 1,
-        borderBottomColor: '#f1f5f9',
+        borderBottomColor: "#f1f5f9",
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-        {/* Unread indicator */}
+      <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
         {isUnread && (
-          <View style={{
-            width: 8,
-            height: 8,
-            borderRadius: 4,
-            backgroundColor: '#0ea5e9',
-            marginRight: 12,
-            marginTop: 6,
-          }} />
+          <View
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: "#0ea5e9",
+              marginRight: 12,
+              marginTop: 6,
+            }}
+          />
         )}
-        
-        {/* Icon container */}
-        <View style={{
-          width: 48,
-          height: 48,
-          borderRadius: 12,
-          backgroundColor: bgColor,
-          borderWidth: 1,
-          borderColor: borderColor,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: 16,
-        }}>
+
+        <View
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: 12,
+            backgroundColor: bgColor,
+            borderWidth: 1,
+            borderColor: borderColor,
+            alignItems: "center",
+            justifyContent: "center",
+            marginRight: 16,
+          }}
+        >
           {icon}
         </View>
-        
-        {/* Content */}
+
         <View style={{ flex: 1 }}>
-          <Text style={{
-            fontSize: 16,
-            fontWeight: '600',
-            color: '#1f2937',
-            lineHeight: 22,
-            marginBottom: 4,
-          }}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: "600",
+              color: "#1f2937",
+              lineHeight: 22,
+              marginBottom: 4,
+            }}
+          >
             {notification.title}
           </Text>
-          
-          <Text style={{
-            fontSize: 14,
-            color: '#6b7280',
-            lineHeight: 20,
-            marginBottom: 8,
-          }}>
+
+          <Text
+            style={{
+              fontSize: 14,
+              color: "#6b7280",
+              lineHeight: 20,
+              marginBottom: 8,
+            }}
+          >
             {notification.message}
           </Text>
-          
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
             <Feather name="clock" size={12} color="#9ca3af" />
-            <Text style={{
-              fontSize: 12,
-              color: '#9ca3af',
-              marginLeft: 4,
-              fontWeight: '500',
-            }}>
+            <Text
+              style={{
+                fontSize: 12,
+                color: "#9ca3af",
+                marginLeft: 4,
+                fontWeight: "500",
+              }}
+            >
               {dayjs(notification.createdAt).fromNow()}
             </Text>
           </View>
         </View>
-        
-        {/* Arrow indicator */}
-        <View style={{ justifyContent: 'center', marginLeft: 8 }}>
+
+        <View style={{ justifyContent: "center", marginLeft: 8 }}>
           <Feather name="chevron-right" size={20} color="#d1d5db" />
         </View>
       </View>
@@ -277,20 +268,24 @@ const NotificationItem = ({ notification }) => {
 };
 
 const SectionHeader = ({ title, count }) => (
-  <View style={{
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  }}>
-    <Text style={{
-      fontSize: 14,
-      fontWeight: '700',
-      color: '#374151',
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
-    }}>
+  <View
+    style={{
+      backgroundColor: "#ffffff",
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: "#f1f5f9",
+    }}
+  >
+    <Text
+      style={{
+        fontSize: 14,
+        fontWeight: "700",
+        color: "#374151",
+        textTransform: "uppercase",
+        letterSpacing: 0.5,
+      }}
+    >
       {title}
     </Text>
   </View>
@@ -332,19 +327,23 @@ const NotificationsScreen = () => {
 
   if (isLoading) {
     return (
-      <View style={{ 
-        flex: 1, 
-        backgroundColor: '#ffffff', 
-        alignItems: 'center', 
-        justifyContent: 'center' 
-      }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#ffffff",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <ActivityIndicator size="large" color="#0ea5e9" />
-        <Text style={{
-          marginTop: 16,
-          fontSize: 16,
-          color: '#6b7280',
-          fontWeight: '500',
-        }}>
+        <Text
+          style={{
+            marginTop: 16,
+            fontSize: 16,
+            color: "#6b7280",
+            fontWeight: "500",
+          }}
+        >
           Loading notifications...
         </Text>
       </View>
@@ -352,21 +351,24 @@ const NotificationsScreen = () => {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#ffffff' }}>
-      {/* Header */}
-      <View style={{ 
-        paddingTop: insets.top,
-        backgroundColor: '#ffffff',
-        borderBottomWidth: 1,
-        borderBottomColor: '#f1f5f9',
-      }}>
-        <View style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 20,
-          paddingVertical: 16,
-        }}>
+    <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
+      <View
+        style={{
+          paddingTop: insets.top,
+          backgroundColor: "#ffffff",
+          borderBottomWidth: 1,
+          borderBottomColor: "#f1f5f9",
+        }}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 20,
+            paddingVertical: 16,
+          }}
+        >
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => navigation.goBack()}
@@ -374,44 +376,38 @@ const NotificationsScreen = () => {
               width: 44,
               height: 44,
               borderRadius: 12,
-              backgroundColor: '#f8fafc',
+              backgroundColor: "#f8fafc",
               borderWidth: 1,
-              borderColor: '#e2e8f0',
-              alignItems: 'center',
-              justifyContent: 'center',
+              borderColor: "#e2e8f0",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <Feather name="arrow-left" size={24} color="#374151" />
           </TouchableOpacity>
-          
-          <View style={{ flex: 1, alignItems: 'center', marginHorizontal: 16 }}>
-            <Text style={{
-              fontSize: 20,
-              fontWeight: '700',
-              color: '#111827',
-            }}>
+
+          <View style={{ flex: 1, alignItems: "center", marginHorizontal: 16 }}>
+            <Text
+              style={{
+                fontSize: 20,
+                fontWeight: "700",
+                color: "#111827",
+              }}
+            >
               Notifications
             </Text>
           </View>
-          
+
           <View style={{ width: 44 }} />
         </View>
       </View>
 
-      {/* Content */}
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ 
+        contentContainerStyle={{
           paddingBottom: insets.bottom + 20,
         }}
-        refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={onRefresh}
-            colors={['#0ea5e9']}
-            tintColor="#0ea5e9"
-          />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#0ea5e9"]} tintColor="#0ea5e9" />}
       >
         {grouped.length > 0 ? (
           <View>
@@ -419,47 +415,52 @@ const NotificationsScreen = () => {
               <View key={section.title}>
                 <SectionHeader title={section.title} count={section.data.length} />
                 {section.data.map((n, index) => (
-                  <NotificationItem 
-                    key={n._id} 
-                    notification={n}
-                  />
+                  <NotificationItem key={n._id} notification={n} />
                 ))}
               </View>
             ))}
           </View>
         ) : (
-          <View style={{
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingVertical: 80,
-            paddingHorizontal: 40,
-          }}>
-            <View style={{
-              width: 80,
-              height: 80,
-              borderRadius: 40,
-              backgroundColor: '#f1f5f9',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 24,
-            }}>
+          <View
+            style={{
+              alignItems: "center",
+              justifyContent: "center",
+              paddingVertical: 80,
+              paddingHorizontal: 40,
+            }}
+          >
+            <View
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: 40,
+                backgroundColor: "#f1f5f9",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 24,
+              }}
+            >
               <Ionicons name="notifications-outline" size={40} color="#9ca3af" />
             </View>
-            <Text style={{
-              fontSize: 18,
-              fontWeight: '600',
-              color: '#374151',
-              textAlign: 'center',
-              marginBottom: 8,
-            }}>
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "600",
+                color: "#374151",
+                textAlign: "center",
+                marginBottom: 8,
+              }}
+            >
               No notifications yet
             </Text>
-            <Text style={{
-              fontSize: 14,
-              color: '#6b7280',
-              textAlign: 'center',
-              lineHeight: 20,
-            }}>
+            <Text
+              style={{
+                fontSize: 14,
+                color: "#6b7280",
+                textAlign: "center",
+                lineHeight: 20,
+              }}
+            >
               When you receive notifications, they'll appear here
             </Text>
           </View>

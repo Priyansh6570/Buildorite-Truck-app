@@ -5,15 +5,13 @@ import {
     TextInput, 
     TouchableOpacity, 
     ScrollView, 
-    ActivityIndicator, 
-    BackHandler,
-    StatusBar,
+    ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
     Animated,
     StyleSheet
 } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAddTruck } from '../../hooks/useTruck';
 import Toast from 'react-native-toast-message';
@@ -22,9 +20,8 @@ import { FontAwesome5, FontAwesome6, Ionicons, MaterialIcons } from '@expo/vecto
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const AddTruckScreen = () => {
-    // --- HOOKS & STATE ---
     const navigation = useNavigation();
-    const insets = useSafeAreaInsets(); // For safe area positioning
+    const insets = useSafeAreaInsets();
     const { mutate: addTruck, isLoading: isAddingTruck } = useAddTruck();
     const [name, setName] = useState('');
     const [registrationNumber, setRegistrationNumber] = useState('');
@@ -34,13 +31,11 @@ const AddTruckScreen = () => {
     const [isRequestingPermission, setIsRequestingPermission] = useState(false);
     const [isAdding, setIsAdding] = useState(false);
     
-    // Input focus and error state
     const [isNameFocused, setIsNameFocused] = useState(false);
     const [isRegistrationFocused, setIsRegistrationFocused] = useState(false);
     const [registrationNumberError, setRegistrationNumberError] = useState(null);
 
 
-    // --- ANIMATION ---
     const pulseAnim = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
@@ -148,7 +143,6 @@ const AddTruckScreen = () => {
         );
     };
 
-    // --- UI COMPONENTS ---
     const SecureAuthSection = () => (
         <View className="my-6 overflow-hidden border-2 shadow-sm rounded-2xl border-slate-100">
             <LinearGradient colors={["#F0FDF4", "#f0f9ff"]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} className="flex-row items-center p-6">
@@ -244,7 +238,6 @@ const AddTruckScreen = () => {
             </TouchableOpacity>
 
             <LinearGradient colors={["#172033", "#1C2533"]} className="h-[30%] items-center justify-center" style={{ minHeight: 250 }}>
-                {/* <StatusBar barStyle="light-content" backgroundColor="#172033" /> */}
                 <View className="items-center justify-center w-24 h-24 mb-4 overflow-hidden rounded-3xl">
                     <LinearGradient colors={['#10B981', '#059669']} className="items-center justify-center w-full h-full">
                         <FontAwesome5 name="truck" size={40} color="white" />
@@ -258,7 +251,6 @@ const AddTruckScreen = () => {
                 <View className="flex-1 p-6 bg-white rounded-t-3xl ">
                     <View className="p-8 bg-white border rounded-3xl border-slate-100" style={{ elevation: 5, shadowColor: "#00000050" }}>
                         
-                        {/* Truck Name Input */}
                         <Text className="mb-2 font-semibold text-gray-800">Truck Name</Text>
                         <View className={`flex-row p-3 max-h-20 items-center bg-white border rounded-2xl ${isNameFocused ? "border-blue-500 border-2" : "border-slate-200"}`}>
                             <View className="overflow-hidden rounded-lg">
@@ -278,7 +270,6 @@ const AddTruckScreen = () => {
                             />
                         </View>
 
-                        {/* Registration Number Input */}
                         <Text className="mt-6 mb-2 font-semibold text-gray-800">Registration Number</Text>
                         <View className={`flex-row p-3 max-h-20 items-center bg-white border rounded-2xl ${isRegistrationFocused ? "border-blue-500 border-2" : registrationNumberError ? "border-red-500" : "border-slate-200"}`}>
                              <View className="overflow-hidden rounded-lg shadow-sm">
@@ -306,11 +297,9 @@ const AddTruckScreen = () => {
                         {registrationNumberError && <Text className="mt-2 text-red-500">{registrationNumberError}</Text>}
 
                         
-                        {/* Location Section */}
                         <Text className="mt-6 mb-2 font-semibold text-gray-800">Current Location</Text>
                         <LocationStatusDisplay />
 
-                        {/* Add Truck Button */}
                         <TouchableOpacity onPress={handleAddTruck} disabled={isButtonDisabled} className={`mt-8 p-5 rounded-2xl items-center justify-center ${isButtonDisabled ? 'bg-gray-400' : 'bg-[#1C2533]'}`} style={{ elevation: 3, shadowColor: "#000" }}>
                             {isAdding ? <ActivityIndicator color="#fff" /> : <Text className="text-xl font-bold text-white">Add Truck</Text>}
                         </TouchableOpacity>

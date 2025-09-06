@@ -25,16 +25,12 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-// Function to format registration number with spaces
 const formatRegNumber = (regNumber) => {
   if (!regNumber) return "";
 
-  // Handle common Indian registration formats like "AB12CD1234" or "23BH1234AA"
   if (regNumber.length === 10) {
-    // Format like "AB 12 CD 1234"
     return `${regNumber.slice(0, 2)} ${regNumber.slice(2, 4)} ${regNumber.slice(4, 6)} ${regNumber.slice(6)}`;
   } else if (regNumber.length === 9) {
-    // Format like "23 BH 1234 AA"
     return `${regNumber.slice(0, 2)} ${regNumber.slice(2, 4)} ${regNumber.slice(4, 8)} ${regNumber.slice(8)}`;
   }
 

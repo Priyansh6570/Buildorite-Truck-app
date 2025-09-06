@@ -1,7 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect } from "react";
 import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, Dimensions, Linking, Alert, StyleSheet, LayoutAnimation, Platform, UIManager } from "react-native";
 
-// Enable LayoutAnimation on Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
@@ -106,7 +105,6 @@ const MaterialDetail = () => {
 
   return (
     <View className="flex-1">
-      {/* Updated Header */}
       <View className="bg-[#111827]" style={{ paddingTop: insets.top }}>
         <View className="flex-row items-center p-4">
           <TouchableOpacity onPress={() => navigation.goBack()} className="p-3 bg-[#2C3441] bg-opacity-70 border border-slate-700 rounded-xl">
@@ -117,9 +115,7 @@ const MaterialDetail = () => {
       </View>
 
       <View className="flex-1">
-        {/* Updated ScrollView with F9FAFB background */}
         <ScrollView className="flex-1 mb-8 bg-white">
-          {/* --- Image Carousel --- */}
           <View className="relative">
             <Carousel
               data={bannerImages}
@@ -138,7 +134,6 @@ const MaterialDetail = () => {
               enableMomentum={false}
               lockScrollWhileSnapping={true}
             />
-            {/* Image Counter */}
             <View className="absolute z-10 bottom-4 left-4">
               <View className="px-4 py-2 bg-black rounded-lg bg-opacity-70">
                 <Text className="text-base font-bold text-white">
@@ -146,7 +141,6 @@ const MaterialDetail = () => {
                 </Text>
               </View>
             </View>
-            {/* Status Badge */}
             <View className="absolute z-10 bottom-4 right-4">
               <View className="flex-row items-center px-3 py-1.5 rounded-full" style={{ backgroundColor: status.color }}>
                 <View className="w-2.5 h-2.5 mr-2 bg-white rounded-full" />
@@ -156,7 +150,6 @@ const MaterialDetail = () => {
           </View>
 
           <View className="p-4 px-6">
-            {/* --- Material & Mine Info --- */}
             <View className="my-4">
               <Text className="mb-2 text-3xl font-bold text-gray-900 capitalize">{material?.name || "Material Name"}</Text>
               <View className="flex-row items-center">
@@ -167,7 +160,6 @@ const MaterialDetail = () => {
               </View>
             </View>
 
-            {/* --- Updated User Detail Card --- */}
             <View className="mt-4 mb-12">
               <View className="p-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
                 <View className="flex-row items-center justify-between mb-4">
@@ -196,13 +188,11 @@ const MaterialDetail = () => {
               </View>
             </View>
 
-            {/* --- Updated Pricing Options --- */}
             <Text className="mb-6 text-xl font-bold text-gray-900">Pricing Options</Text>
 
             <View className="gap-4 mb-6">
               {material.prices.map((price, index) => (
                 <View key={index} className="p-6 bg-white border shadow-sm border-slate-100 rounded-2xl">
-                  {/* Top Section */}
                   <View className="flex-row items-start justify-between mb-4">
                     <View className="flex-1">
                       <Text className="text-2xl font-bold text-black capitalize">per {price.unit.name}</Text>
@@ -219,7 +209,6 @@ const MaterialDetail = () => {
                     </View>
                   </View>
 
-                  {/* Bottom Section */}
                   <View className="flex-row items-center justify-between p-4 bg-gray-50 rounded-xl">
                     <View className="flex-row items-center">
                       <View className="items-center justify-center w-8 h-8 mr-3 bg-green-100 rounded-full">
@@ -235,7 +224,6 @@ const MaterialDetail = () => {
               ))}
             </View>
 
-            {/* --- Updated Material Properties --- */}
             <Text className="mt-6 mb-6 text-xl font-bold text-gray-900">Material Properties</Text>
             <View className="p-4 mb-6 bg-white shadow-sm rounded-2xl">
               <View className="gap-3">
@@ -259,7 +247,6 @@ const MaterialDetail = () => {
               </View>
             </View>
 
-            {/* --- Quality Assured Card --- */}
             <View className="mb-6 overflow-hidden border-2 shadow-sm rounded-2xl border-slate-100">
               <LinearGradient colors={["#F0FDF4", "#f0f9ff"]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} className="flex-row items-center p-6">
                 <View className="mr-4 overflow-hidden rounded-xl">
@@ -274,7 +261,6 @@ const MaterialDetail = () => {
               </LinearGradient>
             </View>
 
-            {/* --- Updated Description Section --- */}
             {material.description && (
               <>
                 <Text className="mt-6 mb-4 text-xl font-bold text-gray-900">Description</Text>
@@ -290,16 +276,11 @@ const MaterialDetail = () => {
       </View>
 
       <View className="absolute bottom-0 left-0 right-0 p-4 px-8 bg-white border-t border-gray-50">
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate("RequestMaterial", { material, mine })}
-            className="flex-row items-center justify-center py-4 bg-black rounded-xl"
-          >
-            <Text className="text-xl font-bold text-slate-200">Request</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity activeOpacity={0.7} onPress={() => navigation.navigate("RequestMaterial", { material, mine })} className="flex-row items-center justify-center py-4 bg-black rounded-xl">
+          <Text className="text-xl font-bold text-slate-200">Request</Text>
+        </TouchableOpacity>
+      </View>
 
-      {/* --- Contact Bottom Sheet --- */}
       <ReusableBottomSheet ref={contactBottomSheetRef} snapPoints={["55%"]} enablePanDownToClose={true} backgroundStyle={{ backgroundColor: "#fff" }} handleIndicatorStyle={{ backgroundColor: "#d1d5db" }}>
         <View className="flex-1 p-6">
           <View className="items-center mb-8">
@@ -345,9 +326,5 @@ const MaterialDetail = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  // Remove unused styles since we're not using shadows anymore
-});
 
 export default MaterialDetail;

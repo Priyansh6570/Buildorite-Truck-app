@@ -1,20 +1,12 @@
-import React from "react";
 import { View, TextInput, TouchableOpacity, Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-const SearchBar = ({ 
-  selectedTab, 
-  mineSearch, 
-  setMineSearch, 
-  materialSearch, 
-  setMaterialSearch, 
-  openFilterModal 
-}) => {
+const SearchBar = ({ selectedTab, mineSearch, setMineSearch, materialSearch, setMaterialSearch }) => {
   const clearSearch = () => {
     if (selectedTab === "mines") {
-      setMineSearch('');
+      setMineSearch("");
     } else {
-      setMaterialSearch('');
+      setMaterialSearch("");
     }
   };
 
@@ -38,7 +30,6 @@ const SearchBar = ({
           </TouchableOpacity>
         ) : null}
       </View>
-       {/* <View className="h-6" /> */}
     </View>
   );
 };

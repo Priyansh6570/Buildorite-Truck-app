@@ -99,9 +99,6 @@ const TruckOwnerList = ({ navigation }) => {
 
   return (
     <View className="flex-1 bg-white">
-      {/* <StatusBar barStyle="light-content" backgroundColor="#000" /> */}
-
-      {/* Top Section */}
       <View className="p-4 pb-6 bg-black">
         <View className="flex-row items-center justify-between pb-4">
                   <TouchableOpacity onPress={() => navigation.goBack()} className="">
@@ -135,7 +132,6 @@ const TruckOwnerList = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Bottom Section */}
       {isLoading && !users.length ? (
         <View className="items-center justify-center flex-1 bg-white">
           <ActivityIndicator size="large" color="black" />

@@ -38,7 +38,6 @@ import { useTripStore } from "./app/store/useTripStore";
 import socketService from "./app/api/driverSocket";
 import Toast from "react-native-toast-message";
 
-// Enhanced notification handler to support both tracking and regular push notifications
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
     const timestamp = new Date().toISOString();
@@ -47,7 +46,6 @@ Notifications.setNotificationHandler({
     const { action, tripId, type, payload } = notification.request.content.data;
     console.log(`[${timestamp}] Notification data:`, { action, tripId, type, payload });
 
-    // Handle driver location tracking notifications
     if (action === "START_TRACKING" && tripId) {
       console.log(`[${timestamp}] 🎯 Silent tracking push for trip ${tripId} - preparing for background execution`);
       return {
@@ -58,7 +56,6 @@ Notifications.setNotificationHandler({
       };
     }
 
-    // Handle regular push notifications for truck owners and drivers
     if (type && payload) {
       console.log(`[${timestamp}] 🔔 Regular push notification received:`, { type, payload });
       return {
@@ -145,7 +142,6 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, ({ data, error }) => {
       return;
     }
 
-    // NEW: Always send location update for periodic tracking (even without active trip)
     const locationData = {
       driverId: userId,
       coordinates: [currentLocation.coords.longitude, currentLocation.coords.latitude],
@@ -156,7 +152,6 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, ({ data, error }) => {
 
     console.log(`[${timestamp}] [Task Manager] 📦 Prepared location data:`, locationData);
 
-    // If there's an active trip, also send trip-specific update
     if (activeTripId) {
       const tripLocationData = {
         tripId: activeTripId,
@@ -212,10 +207,8 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, ({ data, error }) => {
         console.log(`[${retryTimestamp}] [Task Manager] 🔍 Authenticating user and sending location...`);
         socketService.emit("authenticate", { userId });
         
-        // NEW: Send periodic location update
         socketService.emit("driverLocationUpdate", locationData);
         
-        // If active trip, also send trip-specific update
         if (activeTripId) {
           const tripLocationData = {
             tripId: activeTripId,

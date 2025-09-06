@@ -68,7 +68,7 @@ const DriverProfileScreen = () => {
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex-1">
       <ScrollView className="flex-1">
-        {/* Header Section */}
+        
         <View className="pt-14 pb-14 bg-[#151E2C]" style={{ paddingTop: insets.top }}>
           <View className="flex-row items-center justify-between px-8 pt-4 pb-2">
             <View className="flex-row items-center">
@@ -120,7 +120,7 @@ const DriverProfileScreen = () => {
         </View>
 
         <View className="px-6">
-          {/* Quick Actions Section */}
+          
           <View className="z-10 p-6 py-8 -mt-6 bg-white shadow-2xl rounded-3xl" style={{elevation: 20}}>
             <Text className="mb-6 text-2xl font-bold text-gray-800">
               Quick Actions
@@ -164,7 +164,7 @@ const DriverProfileScreen = () => {
             </View>
           </View>
 
-          {/* Main Section */}
+          
           <View className="flex gap-4 mt-8 space-y-4">
             <TouchableOpacity
               onPress={() => navigation.navigate("Trips")}
@@ -219,7 +219,7 @@ const DriverProfileScreen = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Account & Settings */}
+          
           <View className="mt-8 mb-6">
             <Text className="mb-6 text-2xl font-bold text-gray-800">
               Account & Settings
@@ -277,7 +277,7 @@ const DriverProfileScreen = () => {
         </View>
       </ScrollView>
       </View>
-      {/* Sign Out Bottom Sheet */}
+      
       <ReusableBottomSheet
         ref={signOutBottomSheetRef}
         snapPoints={['45%']}

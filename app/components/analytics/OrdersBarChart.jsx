@@ -3,40 +3,35 @@ import { View, Text } from "react-native";
 import { BarChart } from "react-native-gifted-charts";
 
 const OrdersBarChart = ({ ordersByMonth }) => {
-  // Process data for bar chart
   const processOrdersData = () => {
     if (!ordersByMonth) return [];
 
     const entries = Object.entries(ordersByMonth);
-    
-    // Sort by date
+
     entries.sort(([a], [b]) => new Date(a) - new Date(b));
-    
-    // Always show months for bar chart
+
     const chartData = entries.map(([date, orders]) => ({
       value: orders,
-      label: new Date(date).toLocaleDateString('en', { month: 'short' }),
-      frontColor: '#10B981'
+      label: new Date(date).toLocaleDateString("en", { month: "short" }),
+      frontColor: "#10B981",
     }));
-    
+
     return chartData;
   };
 
-  // Calculate smart Y-axis range for orders
   const getYAxisRange = (data) => {
     if (!data.length) return { max: 10, step: 2 };
-    
-    const values = data.map(item => item.value);
+
+    const values = data.map((item) => item.value);
     const maxValue = Math.max(...values);
-    
-    // Calculate step to have maximum 6 sections (including 0)
+
     const step = Math.ceil((maxValue + 1) / 5);
     const adjustedMax = Math.ceil(maxValue / step) * step;
-    
+
     return {
       max: adjustedMax,
       step: step,
-      sections: Math.floor(adjustedMax / step)
+      sections: Math.floor(adjustedMax / step),
     };
   };
 
@@ -57,7 +52,7 @@ const OrdersBarChart = ({ ordersByMonth }) => {
   return (
     <View className="p-6 bg-white shadow-sm rounded-2xl">
       <Text className="mb-4 text-lg font-semibold text-gray-800">Orders Overview</Text>
-      
+
       <View className="items-center overflow-hidden">
         <BarChart
           data={chartData}
@@ -76,27 +71,25 @@ const OrdersBarChart = ({ ordersByMonth }) => {
           xAxisColor="#E5E7EB"
           yAxisColor="#E5E7EB"
           yAxisTextStyle={{
-            color: '#6B7280',
+            color: "#6B7280",
             fontSize: 10,
           }}
           xAxisLabelTextStyle={{
-            color: '#6B7280',
+            color: "#6B7280",
             fontSize: 10,
           }}
           maxValue={yAxisConfig.max}
           stepValue={yAxisConfig.step}
           noOfSections={yAxisConfig.sections}
-          // showGradient
           borderRadius={6}
           gradientColor="rgba(16, 185, 129, 0.3)"
           frontColor="#10B981"
           showValuesAsTopLabel
           topLabelTextStyle={{
-            color: '#1F2937',
+            color: "#1F2937",
             fontSize: 12,
-            fontWeight: '600'
+            fontWeight: "600",
           }}
-          // roundedTop
           roundedBottom={false}
         />
       </View>

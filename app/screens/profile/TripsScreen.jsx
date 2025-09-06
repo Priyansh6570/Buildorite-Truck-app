@@ -8,7 +8,6 @@ import { format, differenceInDays, differenceInHours, differenceInMinutes } from
 import { LinearGradient } from 'expo-linear-gradient';
 import ReusableBottomSheet from '../../components/Ui/ReusableBottomSheet';
 
-// --- Constants ---
 const SORT_OPTIONS = { NEWEST: "Newest First", OLDEST: "Oldest First" };
 const TRIP_STATUSES = { active: 'Active', issue_reported: 'Issue Reported', completed: 'Completed', canceled: 'Canceled' };
 const MILESTONE_STATUSES = { 
@@ -27,7 +26,6 @@ const ACTIVE_STATUSES = ['trip_started', 'arrived_at_pickup', 'loading_complete'
 const SCHEDULE_STATUSES = ['trip_assigned'];
 const HISTORY_TRIP_STATUSES = ['completed', 'canceled', 'issue_reported'];
 
-// --- Helper Functions ---
 const getScheduleDate = (trip) => trip?.request_id?.finalized_agreement?.schedule?.date;
 
 const getLatestMilestone = (trip) => {
@@ -113,7 +111,6 @@ const formatTripDuration = (startTime, endTime) => {
     return `${minutes}m`;
 };
 
-// --- Sub-components ---
 const ScreenHeader = ({ onFilterPress }) => {
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
@@ -160,7 +157,6 @@ const StatusBadge = ({ status, tab }) => {
         displayStatus = 'pending';
         styles = { dot: 'bg-yellow-500', bg: 'bg-yellow-50', text: 'text-yellow-500', border: 'border-yellow-100' };
     } else {
-        // History tab - use actual status
         const statusStyles = {
             completed: { dot: 'bg-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-100' },
             canceled: { dot: 'bg-red-500', bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-100' },
@@ -231,7 +227,6 @@ const TripCard = ({ trip, tab }) => {
     const latestMilestone = getLatestMilestone(trip);
     const isActionRequired = latestMilestone.key === 'delivery_complete';
     
-    // Dynamic data based on tab
     let dynamicValue = 'N/A';
     let dynamicTitle = 'Status';
     let dynamicIcon = 'clock';
@@ -251,7 +246,6 @@ const TripCard = ({ trip, tab }) => {
         dynamicIcon = 'calendar-days';
         isOverdue = remaining.isOverdue;
     } else {
-        // History tab
         if (trip.status === 'completed') {
             dynamicValue = 'Trip Completed';
             dynamicTitle = 'Status';
@@ -273,7 +267,6 @@ const TripCard = ({ trip, tab }) => {
         }
     }
     
-    // Footer content based on tab and status
     let footerContent = null;
     if (tab === 'History') {
         if (trip.status === 'completed') {
@@ -318,7 +311,6 @@ const TripCard = ({ trip, tab }) => {
             );
         }
     } else {
-        // Default destination footer for Active and Schedule tabs
         footerContent = (
             <View>
                 <View className="flex-row items-center">
@@ -376,7 +368,6 @@ const TripCard = ({ trip, tab }) => {
                     iconColor="#3B82F6" 
                     title="Milestone" 
                     value={latestMilestone.label} 
-                    // isAnimated={isActionRequired} 
                 />
             </View>
 
@@ -408,7 +399,6 @@ const FilterSection = ({ title, children }) => (
     </View>
 );
 
-// --- Main Screen Component ---
 const TripScreen = () => {
     const route = useRoute();
     const { data: allTrips, isLoading, isError } = useFetchMyTrips();
@@ -601,27 +591,6 @@ const TripScreen = () => {
                                 ))}
                             </View>
                         </FilterSection>)}
-
-                        {/* {activeTab !== 'History' && (
-                            <FilterSection title="Milestone Filter">
-                                <View className="flex-row flex-wrap justify-between">
-                                    {(activeTab === 'Active' ? ACTIVE_STATUSES : SCHEDULE_STATUSES).map(key => (
-                                        <FilterOption
-                                            key={key}
-                                            label={MILESTONE_STATUSES[key]}
-                                            style={{ width: "48%" }}
-                                            isSelected={tempFilters.milestone.includes(key)}
-                                            onPress={() => setTempFilters(prev => ({
-                                                ...prev,
-                                                milestone: prev.milestone.includes(key)
-                                                    ? prev.milestone.filter(m => m !== key)
-                                                    : [...prev.milestone, key],
-                                            }))}
-                                        />
-                                    ))}
-                                </View>
-                            </FilterSection>
-                        )} */}
                     </ScrollView>
                     <TouchableOpacity onPress={applyFilters} className="p-4 mt-4 bg-gray-800 rounded-2xl">
                         <Text className="text-lg font-bold text-center text-white">Apply Filters</Text>

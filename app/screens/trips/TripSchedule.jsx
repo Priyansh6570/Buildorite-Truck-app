@@ -116,7 +116,7 @@ const TripSchedule = () => {
         customStyles: {
           container: {
             ...dayStyle,
-            borderRadius: 8,
+            borderRadius: 6,
           },
           text: {
             color: textColor,
@@ -301,7 +301,6 @@ const TripSchedule = () => {
 
   return (
     <View className="flex-1 bg-gray-50">
-      {/* Header */}
       <View style={{ paddingTop: insets.top }} className="bg-white">
         <View className="flex-row items-center justify-between p-6 pt-4 pb-4">
           <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.goBack()} className="p-3 bg-gray-100 border border-slate-200 rounded-xl">
@@ -313,7 +312,6 @@ const TripSchedule = () => {
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Calendar Header - Month and Navigation */}
         <View className="mx-4 mt-4 overflow-hidden bg-white border border-gray-100 shadow-sm rounded-2xl">
           <Calendar
             theme={calendarTheme}
@@ -345,19 +343,12 @@ const TripSchedule = () => {
             enableSwipeMonths={true}
             renderHeader={(date) => (
               <View className="flex-row items-center justify-between px-4 py-3">
-                {/* <TouchableOpacity activeOpacity={0.8} onPress={() => {}}>
-                  <Feather name="chevron-left" size={24} color="#4F46E5" />
-                </TouchableOpacity> */}
                 <Text className="text-xl font-bold text-gray-900">{format(date, "MMMM yyyy")}</Text>
-                {/* <TouchableOpacity activeOpacity={0.8} onPress={() => {}}>
-                  <Feather name="chevron-right" size={24} color="#4F46E5" />
-                </TouchableOpacity> */}
               </View>
             )}
           />
         </View>
 
-        {/* Stats Cards */}
         <View className="px-4 pt-4">
           <View className="flex-row mb-6">
             <StatCard icon="clock" count={stats.upcoming} label="Upcoming" color="#3B82F6" bgColor="bg-blue-50" borderColor="border-blue-200" />
@@ -366,7 +357,6 @@ const TripSchedule = () => {
           </View>
         </View>
 
-        {/* Legend */}
         <View className="p-4 mx-4 mb-4 bg-white border border-gray-100 shadow-sm rounded-2xl">
           <Text className="mb-3 text-sm font-semibold text-gray-900">Legend</Text>
           <View className="flex-row flex-wrap">
@@ -383,7 +373,6 @@ const TripSchedule = () => {
           </View>
         </View>
 
-        {/* Selected Day Trips */}
         {selectedDate && selectedDayTrips.length > 0 && (
           <View className="p-4 mx-4 mb-6 bg-white border border-gray-100 shadow-sm rounded-2xl">
             <Text className="mb-3 text-lg font-bold text-gray-900">Trips on {format(parseISO(selectedDate), "MMM d, yyyy")}</Text>

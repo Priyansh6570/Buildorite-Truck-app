@@ -27,8 +27,6 @@ import TruckOwnerTripDetailScreen from "../screens/trips/TruckOwnerTripDetailScr
 import Analytics from "../screens/home/Analytics";
 import TruckOwnerHelpScreen from "../screens/home/TruckOwnerHelpScreen";
 
-import ViewMineScreen from "../screens/mine/ViewMineScreen";
-
 import SearchScreen from "../screens/home/SearchScreen";
 
 import MineDetail from "../components/home/MineDetail";
@@ -140,9 +138,6 @@ const AppNavigator = () => {
         <Stack.Screen name="Connection" component={TruckOwnerListScreen} options={{headerShown:false}} />
         <Stack.Screen name="Analytics" component={Analytics} options={{headerShown:false}} />
         <Stack.Screen name="TruckOwnerHelp" component={TruckOwnerHelpScreen} options={{headerShown:false}} />
-
-        {/* mine route  */}
-        <Stack.Screen name="MyMine" component={ViewMineScreen} options={{headerShown:false}} />
 
         <Stack.Screen name="SearchScreen" component={SearchScreen} options={{headerShown:false}} />
 

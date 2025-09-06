@@ -62,7 +62,7 @@ export const useLoginUser = () => {
   return useMutation({
     mutationFn: async (phone) => {
       const { data } = await api.post("/auth/login", { phone });
-      api.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`;
+      api.defaults.headers.common["Authorization"] = `Bearer ${data.accessToken}`;
       return data;
     },
     onSuccess: (loginData) => {
@@ -84,7 +84,7 @@ export const useRegisterUser = () => {
         phone,
         role,
       });
-      api.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`;
+      api.defaults.headers.common["Authorization"] = `Bearer ${data.accessToken}`;
       return data;
     },
     onSuccess: (registerData) => {
@@ -117,15 +117,15 @@ export const useLogoutUser = () => {
 
   return useMutation({
     mutationFn: async () => {
-      await api.post('/auth/logout');
+      await api.post("/auth/logout");
     },
     onSuccess: () => {
-      delete api.defaults.headers.common['Authorization'];
+      delete api.defaults.headers.common["Authorization"];
       clearUser();
       queryClient.clear();
     },
     onError: (err) => {
-      console.error('Logout error:', err.response?.data?.message || err.message);
+      console.error("Logout error:", err.response?.data?.message || err.message);
     },
   });
 };

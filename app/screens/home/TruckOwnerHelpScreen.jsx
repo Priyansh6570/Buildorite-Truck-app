@@ -15,7 +15,6 @@ import { Feather, FontAwesome6, Ionicons } from '@expo/vector-icons';
 import * as Device from 'expo-device';
 import { LinearGradient } from 'expo-linear-gradient';
 
-// Navigation Path Component
 const NavigationPath = ({ steps }) => (
   <View className="p-4 my-3 border border-blue-200 bg-blue-50 rounded-xl">
     <View className="flex-row items-center mb-2">
@@ -37,7 +36,6 @@ const NavigationPath = ({ steps }) => (
   </View>
 );
 
-// Step-by-Step Component
 const StepByStep = ({ steps, title }) => (
   <View className="p-4 my-3 border border-green-200 bg-green-50 rounded-xl">
     <View className="flex-row items-center mb-3">
@@ -55,7 +53,6 @@ const StepByStep = ({ steps, title }) => (
   </View>
 );
 
-// Permission Item Component
 const PermissionItem = ({ icon, title, description, color }) => (
   <View className="flex-row items-start p-3 mb-3 bg-white border border-gray-200 rounded-xl">
     <View 
@@ -71,7 +68,6 @@ const PermissionItem = ({ icon, title, description, color }) => (
   </View>
 );
 
-// Request Process Component
 const RequestProcessFlow = () => {
   const stages = [
     { stage: 'Request Sent', description: 'Your material request submitted to mine owner', icon: 'paper-plane', status: 'pending' },
@@ -142,7 +138,6 @@ const RequestProcessFlow = () => {
   );
 };
 
-// Trip Stage Component for Truck Owner
 const TruckOwnerTripFlow = () => {
   const stages = [
     { stage: 'Trip Assigned', description: 'Driver assigned to the request', icon: 'person-add', yourRole: false },
@@ -204,7 +199,6 @@ const TruckOwnerHelpScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedSection, setExpandedSection] = useState(null);
 
-  // Help sections data for Truck Owner
   const helpSections = [
     {
       id: 'getting-started',
@@ -509,7 +503,6 @@ Thank you!`;
 
   return (
     <View className="flex-1 bg-gray-50">
-      {/* Header */}
       <View style={{ paddingTop: insets.top }} className="pb-4 bg-white shadow-lg">
         <View className="flex-row items-center justify-between p-6">
           <TouchableOpacity 
@@ -531,7 +524,6 @@ Thank you!`;
           </TouchableOpacity>
         </View>
 
-        {/* Search Bar */}
         <View className="mx-6 mt-4">
           <View className="flex-row items-center px-4 py-3 bg-gray-100 rounded-xl">
             <Feather name="search" size={20} color="#6b7280" />
@@ -553,7 +545,6 @@ Thank you!`;
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="p-6">
-          {/* Quick Actions */}
           <View className="mb-6">
             <Text className="mb-4 text-lg font-bold text-gray-900">Quick Actions</Text>
             <View className="flex-row gap-3">
@@ -595,7 +586,6 @@ Thank you!`;
             </View>
           </View>
 
-          {/* Help Sections */}
           <View className="flex gap-3">
             {filteredSections.map((section) => (
               <View key={section.id} className="bg-white shadow-sm rounded-2xl shadow-gray-400">
@@ -645,7 +635,6 @@ Thank you!`;
             ))}
           </View>
 
-          {/* No Results */}
           {searchQuery && filteredSections.length === 0 && (
             <View className="items-center py-12">
               <View className="items-center justify-center w-16 h-16 mb-4 bg-gray-100 rounded-full">
@@ -655,7 +644,6 @@ Thank you!`;
               <Text className="text-gray-600">Try searching with different keywords</Text>
             </View>
           )}
-          {/* Support Section */}
           <View className="p-6 mt-8 border-2 border-blue-200 bg-blue-50 rounded-2xl">
             <View className="items-center">
               <View className="items-center justify-center w-16 h-16 mb-4 bg-blue-100 rounded-full">
@@ -686,8 +674,6 @@ Thank you!`;
               <Text className="mt-3 text-sm text-blue-600">support@buildorite.com</Text>
             </View>
           </View>
-
-          {/* App Info */}
           <View className="items-center mt-8 mb-6">
             <Text className="text-sm text-gray-500">Buildorite Mine App</Text>
             <Text className="text-xs text-gray-400">Version 1.0.0</Text>

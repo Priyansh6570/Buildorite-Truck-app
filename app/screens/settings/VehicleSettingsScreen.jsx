@@ -8,8 +8,6 @@ import {
   ActivityIndicator,
   Modal,
   BackHandler,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -180,7 +178,6 @@ const VehicleSettingsScreen = () => {
     <View className="flex-1 bg-white">
       <View className="flex-1">
         <ScrollView className="flex-1 bg-white">
-          {/* Header */}
           <View className="flex-row items-center justify-center px-8 py-16 bg-gray-900">
             <TouchableOpacity
               onPress={handleBackPress}
@@ -194,7 +191,6 @@ const VehicleSettingsScreen = () => {
           </View>
 
           <View className="px-6 mb-12">
-            {/* Info Card */}
             <View className="p-8 -mt-6 bg-white shadow-2xl rounded-2xl">
               <View className="flex-row items-center justify-between mb-3">
                 <Text className="text-xl font-semibold text-gray-700">
@@ -208,7 +204,6 @@ const VehicleSettingsScreen = () => {
               </Text>
             </View>
 
-            {/* Main Form */}
             <View className="p-8 py-10 mt-6 bg-white border shadow-sm rounded-3xl border-slate-100">
               <View className="flex-row items-start mb-6">
                 <View className="mr-5 overflow-hidden rounded-2xl">
@@ -231,7 +226,6 @@ const VehicleSettingsScreen = () => {
                 </View>
               </View>
 
-              {/* Vehicle Model */}
               <Text className="my-2 text-base font-semibold text-gray-700">
                 Vehicle Model
               </Text>
@@ -251,7 +245,6 @@ const VehicleSettingsScreen = () => {
                 />
               </View>
 
-              {/* Registration Number */}
               <Text className="mb-2 text-base font-semibold text-gray-700">
                 Registration Number
               </Text>
@@ -286,7 +279,6 @@ const VehicleSettingsScreen = () => {
           </View>
 
         </ScrollView>
-          {/* Save Button */}
           <View className="absolute bottom-0 w-full px-6 py-4 bg-white border-t border-gray-200">
             <TouchableOpacity
               onPress={handleUpdate}
@@ -309,7 +301,6 @@ const VehicleSettingsScreen = () => {
           </View>
       </View>
 
-      {/* Unsaved Changes Modal */}
       <Modal
         animationType="fade"
         transparent={true}

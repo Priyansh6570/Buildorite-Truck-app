@@ -20,7 +20,7 @@ export const useFetchMines = (filters, searchTerm) => {
         ? `/search?model=mine&${params.toString()}`
         : `/mine/mine?${params.toString()}`;
 
-      const { data, totalCount, totalPages } = await api.get(endpoint);
+      const { data } = await api.get(endpoint);
 
       setMinePagination({ totalCount: data.totalCount, totalPages: data.totalPages });
       
@@ -69,7 +69,6 @@ export const useFetchMineById = (id) => {
   });
 };
 
-// Fetch global mine and material count
 export const useFetchGlobalMineAndMaterialCount = () => {
   return useQuery({
     queryKey: ['globalMineAndMaterialCount'],

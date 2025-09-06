@@ -1,15 +1,6 @@
 // src/screens/UpdateTruckScreen.jsx
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-  StatusBar,
-  Image,
-} from "react-native";
+import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, StatusBar, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useUpdateTruck, useFetchMyTruck } from "../../hooks/useTruck";
 import Toast from "react-native-toast-message";
@@ -17,11 +8,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 const UpdateTruckScreen = () => {
   const navigation = useNavigation();
-  const {
-    data: truckData,
-    isLoading: isFetchingTruck,
-    isError: isFetchingError,
-  } = useFetchMyTruck();
+  const { data: truckData, isLoading: isFetchingTruck, isError: isFetchingError } = useFetchMyTruck();
   const updateTruckMutation = useUpdateTruck();
 
   const [name, setName] = useState("");
@@ -38,35 +25,18 @@ const UpdateTruckScreen = () => {
   }, [truckData]);
 
   useEffect(() => {
-    setIsButtonDisabled(
-      updateTruckMutation.isLoading ||
-        name.trim() === "" ||
-        registrationNumber.trim() === "" ||
-        Boolean(registrationNumberError) ||
-        Boolean(nameError)
-    );
-  }, [
-    updateTruckMutation.isLoading,
-    name,
-    registrationNumber,
-    registrationNumberError,
-    nameError,
-  ]);
+    setIsButtonDisabled(updateTruckMutation.isLoading || name.trim() === "" || registrationNumber.trim() === "" || Boolean(registrationNumberError) || Boolean(nameError));
+  }, [updateTruckMutation.isLoading, name, registrationNumber, registrationNumberError, nameError]);
 
   const validateRegistrationNumber = (number) => {
     if (!number.trim()) {
       return "Registration number is required.";
     }
 
-    const pattern1 =
-      /^[A-Z]{2}[ -]{0,1}[0-9]{2}[ -]{0,1}[A-HJ-NP-Z]{1,2}[ -]{0,1}[0-9]{4}$/;
-    const pattern2 =
-      /^[0-9]{2}[ -]{0,1}BH[ -]{0,1}[0-9]{4}[ -]{0,1}[A-HJ-NP-Z]{1,2}$/;
+    const pattern1 = /^[A-Z]{2}[ -]{0,1}[0-9]{2}[ -]{0,1}[A-HJ-NP-Z]{1,2}[ -]{0,1}[0-9]{4}$/;
+    const pattern2 = /^[0-9]{2}[ -]{0,1}BH[ -]{0,1}[0-9]{4}[ -]{0,1}[A-HJ-NP-Z]{1,2}$/;
 
-    if (
-      !pattern1.test(number.trim().toUpperCase()) &&
-      !pattern2.test(number.trim().toUpperCase())
-    ) {
+    if (!pattern1.test(number.trim().toUpperCase()) && !pattern2.test(number.trim().toUpperCase())) {
       return "Invalid registration number format.";
     }
     return null;
@@ -86,12 +56,7 @@ const UpdateTruckScreen = () => {
   };
 
   const isFormValid = () => {
-    return (
-      !nameError &&
-      !registrationNumberError &&
-      name.trim() !== "" &&
-      registrationNumber.trim() !== ""
-    );
+    return !nameError && !registrationNumberError && name.trim() !== "" && registrationNumber.trim() !== "";
   };
 
   const handleUpdate = () => {
@@ -103,10 +68,7 @@ const UpdateTruckScreen = () => {
 
     const updateData = {
       name: name.trim(),
-      registration_number: registrationNumber
-        .trim()
-        .toUpperCase()
-        .replace(/\s/g, ""),
+      registration_number: registrationNumber.trim().toUpperCase().replace(/\s/g, ""),
     };
     updateTruckMutation.mutate({ id: truckData._id, truckData: updateData });
     Toast.show({
@@ -130,9 +92,7 @@ const UpdateTruckScreen = () => {
   if (isFetchingError) {
     return (
       <View className="items-center justify-center flex-1 bg-white">
-        <Text className="text-lg text-red-500">
-          Failed to fetch truck details.
-        </Text>
+        <Text className="text-lg text-red-500">Failed to fetch truck details.</Text>
       </View>
     );
   }
@@ -147,13 +107,8 @@ const UpdateTruckScreen = () => {
 
   return (
     <View className="flex-1 bg-white">
-      {/* <StatusBar backgroundColor={"#f3f4f6"} barStyle="dark-content" /> */}
-
       <View className="p-4 pb-6 bg-gray-100" style={{ height: "25%" }}>
-        <TouchableOpacity
-          onPress={navigation.goBack}
-          className="absolute left-0 z-10 p-6"
-        >
+        <TouchableOpacity onPress={navigation.goBack} className="absolute left-0 z-10 p-6">
           <Text className="text-4xl font-bold">&#8592;</Text>
         </TouchableOpacity>
 
@@ -162,79 +117,28 @@ const UpdateTruckScreen = () => {
         </View>
 
         <View className="px-6 mt-12">
-          <Text className="mb-2 text-lg font-semibold text-black">
-            Update Truck Details
-          </Text>
-          <Text className="text-gray-600">
-            You can update your truck's name and registration number below.
-          </Text>
+          <Text className="mb-2 text-lg font-semibold text-black">Update Truck Details</Text>
+          <Text className="text-gray-600">You can update your truck's name and registration number below.</Text>
         </View>
       </View>
 
-      <ScrollView
-        className="flex-1 px-6 pt-6 bg-white"
-        style={{ height: "75%" }}
-      >
+      <ScrollView className="flex-1 px-6 pt-6 bg-white" style={{ height: "75%" }}>
         <Text className="mb-2 text-lg font-bold text-black">Truck Name</Text>
         <View className="flex-row items-center px-4 py-4 mb-2 bg-white rounded-lg shadow-md">
-          <MaterialCommunityIcons
-            name="truck"
-            size={20}
-            color="black"
-            className="mr-3"
-          />
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="Enter truck name"
-            placeholderTextColor="#A0A0A0"
-            className="flex-1 ml-2 text-black"
-            onBlur={handleNameBlur}
-          />
+          <MaterialCommunityIcons name="truck" size={20} color="black" className="mr-3" />
+          <TextInput value={name} onChangeText={setName} placeholder="Enter truck name" placeholderTextColor="#A0A0A0" className="flex-1 ml-2 text-black" onBlur={handleNameBlur} />
         </View>
-        {nameError && (
-          <Text className="mb-4 text-xs text-red-500">{nameError}</Text>
-        )}
+        {nameError && <Text className="mb-4 text-xs text-red-500">{nameError}</Text>}
 
-        <Text className="mb-2 text-lg font-bold text-black">
-          Registration Number
-        </Text>
+        <Text className="mb-2 text-lg font-bold text-black">Registration Number</Text>
         <View className="flex-row items-center px-4 py-4 mb-2 bg-white rounded-lg shadow-md">
-          <Image
-            source={require("../../../assets/icons/number-plate.png")}
-            style={{ width: 24, height: 24, marginRight: 12 }}
-            resizeMode="contain"
-          />
-          <TextInput
-            value={registrationNumber}
-            onChangeText={setRegistrationNumber}
-            placeholder="example: MP04XY1234"
-            placeholderTextColor="#A0A0A0"
-            className="flex-1 ml-2 text-black"
-            onBlur={handleRegistrationNumberBlur}
-            autoCapitalize="characters"
-          />
+          <Image source={require("../../../assets/icons/number-plate.png")} style={{ width: 24, height: 24, marginRight: 12 }} resizeMode="contain" />
+          <TextInput value={registrationNumber} onChangeText={setRegistrationNumber} placeholder="example: MP04XY1234" placeholderTextColor="#A0A0A0" className="flex-1 ml-2 text-black" onBlur={handleRegistrationNumberBlur} autoCapitalize="characters" />
         </View>
-        {registrationNumberError && (
-          <Text className="mb-4 text-xs text-red-500">
-            {registrationNumberError}
-          </Text>
-        )}
+        {registrationNumberError && <Text className="mb-4 text-xs text-red-500">{registrationNumberError}</Text>}
 
-        <TouchableOpacity
-          onPress={handleUpdate}
-          className={`p-4 mt-4 mb-8 rounded-lg shadow-md ${
-            isFormValid() ? "bg-black" : "bg-gray-400"
-          }`}
-          disabled={isButtonDisabled}
-        >
-          {updateTruckMutation.isLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text className="font-bold text-center text-white">
-              Update Truck
-            </Text>
-          )}
+        <TouchableOpacity onPress={handleUpdate} className={`p-4 mt-4 mb-8 rounded-lg shadow-md ${isFormValid() ? "bg-black" : "bg-gray-400"}`} disabled={isButtonDisabled}>
+          {updateTruckMutation.isLoading ? <ActivityIndicator color="#fff" /> : <Text className="font-bold text-center text-white">Update Truck</Text>}
         </TouchableOpacity>
       </ScrollView>
     </View>

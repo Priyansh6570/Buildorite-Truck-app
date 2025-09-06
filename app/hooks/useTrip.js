@@ -1,13 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/axiosInstance';
 
-// --- Query Keys ---
 const MY_TRIPS_QUERY_KEY = ['trips', 'my'];
 
-/**
- * Fetches all trips for the currently logged-in user.
- * The backend determines which trips to return based on the user's role.
- */
 export const useFetchMyTrips = () => {
     return useQuery({
         queryKey: MY_TRIPS_QUERY_KEY,
@@ -34,10 +29,6 @@ export const useFetchUserTripCounts = () => {
     });
 };
 
-/**
- * Fetches a single trip by its ID, including populated details.
- * @param {string} tripId - The ID of the trip to fetch.
- */
 export const useFetchTripById = (tripId) => {
     return useQuery({
         queryKey: ['trip', tripId],
@@ -49,9 +40,6 @@ export const useFetchTripById = (tripId) => {
     });
 };
 
-/**
- * Hook for a driver to update a trip's milestone.
- */
 export const useUpdateMilestone = () => {
     const queryClient = useQueryClient();
     return useMutation({
@@ -69,9 +57,6 @@ export const useUpdateMilestone = () => {
     });
 };
 
-/**
- * Hook for a Mine Owner or Truck Owner to verify a milestone.
- */
 export const useVerifyMilestone = () => {
     const queryClient = useQueryClient();
     return useMutation({
@@ -105,9 +90,6 @@ export const useUpdateLiveLocation = () => {
   });
 };
 
-/**
- * Hook for a driver to report an issue with a trip.
- */
 export const useReportIssue = () => {
     const queryClient = useQueryClient();
     return useMutation({

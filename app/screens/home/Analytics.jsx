@@ -8,21 +8,18 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { format } from "date-fns";
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming, Easing } from "react-native-reanimated";
 
-// Hooks and NEW Components
 import { useFetchTruckOwnerAnalytics } from "../../hooks/useTrip";
 import ReusableBottomSheet from "../../components/Ui/ReusableBottomSheet";
-import SpendLineChart from "../../components/analytics/SpendLineChart"; // New
-import OrdersBarChart from "../../components/analytics/OrdersBarChart"; // Reused
-import DeliveryModePieChart from "../../components/analytics/DeliveryModePieChart"; // New
+import SpendLineChart from "../../components/analytics/SpendLineChart";
+import OrdersBarChart from "../../components/analytics/OrdersBarChart";
+import DeliveryModePieChart from "../../components/analytics/DeliveryModePieChart";
 
-// Helper for currency formatting
 const formatter = new Intl.NumberFormat("en-IN", {
   maximumFractionDigits: 0,
   style: "currency",
   currency: "INR",
 });
 
-// Reusable Info Card Component
 const InfoCard = ({ icon, mainText, subText, footerText, onPress, bgColor }) => (
   <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={{ backgroundColor: bgColor }} className="w-[48%] p-4 rounded-2xl shadow-lg shadow-gray-400 mb-4">
     <View className="flex-row items-start justify-between">
@@ -37,10 +34,8 @@ const InfoCard = ({ icon, mainText, subText, footerText, onPress, bgColor }) => 
   </TouchableOpacity>
 );
 
-// Animated Refetch Icon
 const AnimatedFeather = Animated.createAnimatedComponent(Feather);
 
-// Main Analytics Screen Component
 const Analytics = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -52,13 +47,11 @@ const Analytics = () => {
 
   const { data, isLoading, isError, refetch, isRefetching } = useFetchTruckOwnerAnalytics(format(startDate, "yyyy-MM-dd"), format(endDate, "yyyy-MM-dd"));
 
-  // Refs for Bottom Sheets
   const spendSheetRef = useRef(null);
   const ordersSheetRef = useRef(null);
   const logisticsSheetRef = useRef(null);
   const durationSheetRef = useRef(null);
 
-  // Animation for refetch button
   const rotation = useSharedValue(0);
   const animatedStyles = useAnimatedStyle(() => ({
     transform: [{ rotateZ: `${rotation.value}deg` }],
@@ -119,7 +112,6 @@ const Analytics = () => {
     <View className="flex-1 bg-gray-50">
       <View className="flex-1">
         <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Header */}
           <View style={{ paddingTop: insets.top }} className="pb-4 bg-white shadow-lg">
             <View className="flex-row items-center justify-between p-6 pb-4">
               <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.goBack()} className="p-3 bg-gray-100 border border-slate-200 rounded-xl">
@@ -133,7 +125,6 @@ const Analytics = () => {
               </TouchableOpacity>
             </View>
 
-            {/* Date Picker Section */}
             <View className="p-4 mx-6 bg-[#F9FAFB] rounded-xl">
               <View className="flex-row mb-3">
                 <View className="flex-1 mr-2">
@@ -158,20 +149,17 @@ const Analytics = () => {
           </View>
 
           <View className="p-6">
-            {/* Quick Info Cards */}
             <View className="flex-row flex-wrap justify-between">
               <InfoCard bgColor="#3579F3" icon="indian-rupee-sign" mainText={formatter.format(data.spendBreakdown?.totalSpend || 0).replace("₹", "₹ ")} subText="Total Spend" footerText="View Breakdown" onPress={() => spendSheetRef.current?.snapToIndex(0)} />
               <InfoCard bgColor="#19AC4F" icon="clipboard-list" mainText={totalOrders} subText="Orders Placed" footerText="View by status" onPress={() => ordersSheetRef.current?.snapToIndex(0)} />
               <InfoCard bgColor="#A048F2" icon="truck" mainText={data.logisticsEfficiency.totalTrips} subText="Total Trips" footerText="On-time vs. Delayed" onPress={() => logisticsSheetRef.current?.snapToIndex(0)} />
               <InfoCard bgColor="#F46A13" icon="receipt" mainText={formatter.format(avgSpendPerOrder || 0).replace("₹", "₹ ")} subText="Avg Spend / Order" footerText="For all placed orders" />
             </View>
-            {/* Charts Section */}
             <View className="flex-col gap-6 mt-4">
               <SpendLineChart spendByMonth={data.spendByMonth} />
               <OrdersBarChart ordersByMonth={data.ordersByMonth} />
               <DeliveryModePieChart deliveryMethodBreakdown={data.deliveryMethodBreakdown} />
             </View>
-            {/* Top Procured Materials */}
             <View className="mt-10">
               <Text className="mb-4 text-xl font-bold text-gray-900">Top Procured Materials</Text>
               <FlatList
@@ -189,7 +177,6 @@ const Analytics = () => {
 
                   return (
                     <View className="p-5 bg-white shadow-lg w-52 shadow-gray-400 rounded-2xl">
-                      {/* Header with Rank Badge */}
                       <View className="flex-row items-center justify-between mb-4">
                         <View style={{ backgroundColor: bgColor }} className="px-3 py-1 rounded-lg">
                           <Text style={{ color }} className="p-1 text-xl font-bold">
@@ -200,13 +187,9 @@ const Analytics = () => {
                           <FontAwesome6 name="cube" size={18} color={color} />
                         </View>
                       </View>
-
-                      {/* Material Name */}
                       <Text className="mb-2 text-lg font-bold text-gray-900" numberOfLines={2}>
                         {item.name}
                       </Text>
-
-                      {/* Stats */}
                       <View className="flex-row items-center justify-between">
                         <View>
                           <Text className="text-2xl font-extrabold" style={{ color }}>
@@ -240,17 +223,11 @@ const Analytics = () => {
 
                   return (
                     <View key={index} className="flex-row items-center p-5 mb-4 bg-white shadow-lg shadow-gray-400 rounded-2xl">
-                      {/* Rank and Icon */}
                       <View className="items-center mr-4">
                         <View style={{ backgroundColor: bgColor, borderColor: "white" }} className="items-center justify-center mb-2 border-2 w-14 h-14 rounded-2xl">
                           <FontAwesome6 name="mountain" size={22} color={color} />
                         </View>
-                        {/* <View style={{ backgroundColor: color }} className="px-2 py-1 rounded-full">
-                          <Text className="text-xs font-bold text-white">#{index + 1}</Text>
-                        </View> */}
                       </View>
-
-                      {/* Supplier Details */}
                       <View className="flex-1">
                         <View className="flex-row items-center">
                           <Text className="flex-1 text-lg font-bold text-gray-900" numberOfLines={1}>
@@ -263,17 +240,7 @@ const Analytics = () => {
                             <Text className="text-xs font-medium text-gray-500">Orders</Text>
                           </View>
                         </View>
-
-                          {/* <View className="flex-row items-center mb-2">
-                            <FontAwesome6 name="certificate" size={12} color="#16a34a" />
-                            <Text className="ml-1 text-sm text-gray-600">Verified Mining Partner</Text>
-                          </View> */}
-                        <View className="flex-row items-center justify-between">
-                          {/* <View className="flex-row items-center">
-                            <FontAwesome6 name="star" size={12} color="#f59e0b" />
-                            <Text className="ml-1 text-xs text-gray-500">Top Supplier</Text>
-                          </View> */}
-                        </View>
+                        <View className="flex-row items-center justify-between"></View>
                       </View>
                     </View>
                   );
@@ -287,7 +254,6 @@ const Analytics = () => {
                 </View>
                 <FontAwesome6 name="chevron-right" size={16} color="#9ca3af" />
               </View>
-
               <View>
                 <Text className="text-sm font-medium text-gray-600">Average Trip Duration</Text>
                 <Text className="mt-1 text-3xl font-bold text-gray-900">{data.logisticsEfficiency.avgTripDurationHours.toFixed(1)} hrs</Text>
@@ -296,13 +262,10 @@ const Analytics = () => {
               </View>
             </TouchableOpacity>
           </View>
-
-          {/* Date Time Pickers (Modal) */}
           {showStartDatePicker && <DateTimePicker value={startDate} mode="date" display="default" onChange={(e, d) => onDateChange(e, d, true)} maximumDate={endDate} />}
           {showEndDatePicker && <DateTimePicker value={endDate} mode="date" display="default" onChange={(e, d) => onDateChange(e, d, false)} minimumDate={startDate} maximumDate={new Date()} />}
         </ScrollView>
       </View>
-      {/* --- Bottom Sheets --- */}
       <ReusableBottomSheet ref={spendSheetRef}>
         <BottomSheetContentWrapper title="Spend Breakdown" onClose={() => spendSheetRef.current?.close()}>
           <View className="px-4">
@@ -314,7 +277,6 @@ const Analytics = () => {
           </View>
         </BottomSheetContentWrapper>
       </ReusableBottomSheet>
-
       <ReusableBottomSheet ref={ordersSheetRef}>
         <BottomSheetContentWrapper title="Order Status Details" onClose={() => ordersSheetRef.current?.close()}>
           <View className="px-4">
@@ -324,7 +286,6 @@ const Analytics = () => {
           </View>
         </BottomSheetContentWrapper>
       </ReusableBottomSheet>
-
       <ReusableBottomSheet ref={logisticsSheetRef}>
         <BottomSheetContentWrapper title="Logistics Metrics" onClose={() => logisticsSheetRef.current?.close()}>
           <View className="flex-row justify-between px-4">
@@ -333,13 +294,10 @@ const Analytics = () => {
           </View>
         </BottomSheetContentWrapper>
       </ReusableBottomSheet>
-
       <ReusableBottomSheet ref={durationSheetRef}>
         <BottomSheetContentWrapper title="Avg. Milestone Duration" onClose={() => durationSheetRef.current?.close()}>
           <View className="px-4 pb-6">
             <Text className="mb-20 text-center text-gray-600">Average time between key trip stages.</Text>
-
-            {/* Milestone Items */}
             {Object.entries(data.logisticsEfficiency.milestoneAverages).map(([milestone, duration], index) => (
               <MilestoneItem key={milestone} milestone={milestone} duration={duration} index={index} />
             ))}
@@ -349,8 +307,6 @@ const Analytics = () => {
     </View>
   );
 };
-
-// --- Helper & Sub-Components (largely reused) ---
 
 const BottomSheetContentWrapper = ({ title, onClose, children }) => (
   <View className="flex-1 bg-gray-50">
@@ -408,15 +364,12 @@ const MilestoneItem = ({ milestone, duration, index }) => {
 
   return (
     <View className="flex-row items-center my-2">
-      {/* Timeline Indicator */}
       <View className="items-center mr-4">
         <View style={{ backgroundColor: `${color}20`, borderColor: color }} className="items-center justify-center w-12 h-12 border-2 rounded-full">
           <FontAwesome6 name="flag-checkered" size={16} color={color} />
         </View>
         {index < 6 && <View style={{ backgroundColor: "#cbd5e1" }} className="w-0.5 h-8 mt-2" />}
       </View>
-
-      {/* Milestone Details */}
       <View className="flex-1 p-4 bg-white border border-gray-200 shadow-sm rounded-xl">
         <Text className="text-sm font-semibold text-gray-800" style={{ color }}>
           {start}
@@ -429,8 +382,6 @@ const MilestoneItem = ({ milestone, duration, index }) => {
           {end}
         </Text>
       </View>
-
-      {/* Duration Display */}
       <View className="items-center justify-center w-20 p-3 ml-4 border border-gray-200 bg-gray-50 rounded-xl">
         <Text className="text-lg font-bold text-gray-800">{duration.toFixed(1)}</Text>
         <Text className="text-xs font-medium text-gray-500">hours</Text>

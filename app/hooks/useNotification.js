@@ -1,9 +1,7 @@
-// hooks/useNotification.js
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../api/axiosInstance";
 import Toast from "react-native-toast-message";
 
-// Fetch notifications (with cursor-based pagination)
 export const useNotifications = (cursor, limit = 20) => {
   return useQuery({
     queryKey: ["notifications", cursor],
@@ -17,7 +15,6 @@ export const useNotifications = (cursor, limit = 20) => {
   });
 };
 
-// Fetch unread count
 export const useUnreadCount = () => {
   return useQuery({
     queryKey: ["notifications-unread-count"],
@@ -29,7 +26,6 @@ export const useUnreadCount = () => {
   });
 };
 
-// Mark single notification as read
 export const useMarkAsRead = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -51,7 +47,6 @@ export const useMarkAsRead = () => {
   });
 };
 
-// Mark all notifications as read
 export const useMarkAllAsRead = () => {
   const queryClient = useQueryClient();
   return useMutation({

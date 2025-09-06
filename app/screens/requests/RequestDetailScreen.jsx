@@ -12,12 +12,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { WebView } from "react-native-webview";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
-
-// --- Helper Constants & Components ---
-
 const REJECTION_REASONS = ["Price is too low", "Out of stock", "Scheduling conflict", "Cannot meet terms"];
 
-// Re-usable component for detail rows in modals
 const DetailRow = ({ icon, label, value, iconColor = "#6366F1" }) => (
   <View className="flex-row items-start mb-6">
     <View className="items-center justify-center w-10 h-10 mr-4 bg-gray-100 rounded-xl">
@@ -97,7 +93,6 @@ const DriverCard = ({ driver, isSelected, onSelect, requestScheduleDate }) => {
   );
 };
 
-// Enhanced Document viewer component with actual viewing capabilities
 const DocumentViewer = ({ visible, onClose, document }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -201,7 +196,6 @@ const DocumentViewer = ({ visible, onClose, document }) => {
           activeOpacity={0.8}
           onPress={() => {
             resetState();
-            // Force re-render by updating a state
           }}
           className="px-6 py-3 bg-blue-500 rounded-xl"
         >
@@ -228,7 +222,6 @@ const DocumentViewer = ({ visible, onClose, document }) => {
   return (
     <Modal transparent={true} visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.documentViewerContainer}>
-        {/* Header */}
         <View className="flex-row items-center justify-between p-4 bg-white border-b border-gray-200" style={{ paddingTop: Platform.OS === "ios" ? 50 : 20 }}>
           <TouchableOpacity activeOpacity={0.8} onPress={onClose} className="p-2">
             <Feather name="arrow-left" size={24} color="#374151" />
@@ -241,13 +234,11 @@ const DocumentViewer = ({ visible, onClose, document }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Content */}
         <View className="flex-1 bg-gray-100">{error ? renderErrorView() : isPDF ? renderPDFViewer() : isImage ? renderImageViewer() : renderUnsupportedFormat()}</View>
       </View>
     </Modal>
   );
 };
-// --- Main Screen Component ---
 
 const RequestDetailScreen = () => {
   const route = useRoute();
@@ -255,7 +246,6 @@ const RequestDetailScreen = () => {
   const insets = useSafeAreaInsets();
   const { requestId, userType } = route.params;
 
-  // --- State and Hooks ---
   const { data: request, isLoading, isError, refetch } = useFetchRequestById(requestId);
   const { data: drivers, isLoading: isLoadingDrivers } = useFetchMyDrivers();
   const { mutate: updateStatus } = useUpdateRequestStatus();
@@ -277,18 +267,15 @@ const RequestDetailScreen = () => {
   const [confirmationDetails, setConfirmationDetails] = useState(null);
   const [documentViewer, setDocumentViewer] = useState({ visible: false, document: null });
   const [refreshing, setRefreshing] = useState(false);
-  const [isPressAccept, setIsPressAccept] = useState(false);
 
   const handleRefresh = () => {
     setRefreshing(true);
     refetch().finally(() => setRefreshing(false));
   };
 
-  // --- Derived State ---
   const assignableDrivers = drivers?.filter((d) => d.truck && d.truck._id);
   const availableDriversForChange = drivers?.filter((d) => d.truck && d.truck._id && d._id !== request?.driver_id?._id);
 
-  // --- Loading and Error States ---
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -319,7 +306,6 @@ const RequestDetailScreen = () => {
     }
   };
 
-  // --- Event Handlers ---
   const handleViewDocument = (file) => {
     setDocumentViewer({ visible: true, document: file });
   };
@@ -359,7 +345,7 @@ const RequestDetailScreen = () => {
       Toast.show({ type: "error", text1: "Please select a driver or choose to assign later." });
       return;
     }
-    
+
     const details = {
       assignLater,
       driver: assignLater ? null : drivers.find((d) => d._id === selectedDriverId),
@@ -430,8 +416,6 @@ const RequestDetailScreen = () => {
       }
     );
   };
-
-  // --- Render Functions for UI Sections ---
 
   const renderStatusBadge = () => {
     const statusConfig = {
@@ -514,8 +498,6 @@ const RequestDetailScreen = () => {
         </View>
       );
     }
-
-    // Waiting for other party
     if ((status === "pending" || status === "countered") && last_updated_by === userType) {
       return (
         <View className="p-6 m-6 border border-blue-200 bg-blue-50 rounded-xl">
@@ -527,7 +509,6 @@ const RequestDetailScreen = () => {
       );
     }
 
-    // Handle other status states...
     if (status === "canceled" && last_updated_by === userType) {
       return (
         <View className="p-6 m-6 border border-red-200 bg-red-50 rounded-xl">
@@ -635,7 +616,6 @@ const RequestDetailScreen = () => {
       </View>
 
       <View className="relative">
-        {/* Timeline line */}
         <View className="absolute left-6 top-0 bottom-8 w-0.5 bg-gray-200" />
 
         {request.history
@@ -648,10 +628,8 @@ const RequestDetailScreen = () => {
 
             return (
               <View key={index} className="relative mb-8">
-                {/* Step indicator */}
                 <View className={`absolute left-4 w-4 h-4 rounded-full border-2 border-white shadow-md ${isYou ? "bg-blue-500" : "bg-gray-400"}`} style={{ zIndex: 10 }} />
 
-                {/* Card */}
                 <View className="ml-12 bg-white border border-gray-200 rounded-xl">
                   <View className="p-6">
                     <View className="flex-row items-start gap-4">
@@ -674,13 +652,11 @@ const RequestDetailScreen = () => {
                             for {entry.proposal.quantity} {entry.proposal.unit.name}
                           </Text>
 
-                          {/* Schedule Date */}
                           <View className="flex-row items-center mb-3">
                             <FontAwesome6 name="calendar" size={14} color="#6B7280" />
                             <Text className="ml-2 text-sm text-gray-600">{format(new Date(entry.proposal.schedule.date), "MMM d, yyyy 'at' h:mm a")}</Text>
                           </View>
 
-                          {/* Comments */}
                           {entry.proposal.comments && (
                             <View className="pt-3 mt-3 border-t border-gray-200">
                               <Text className="text-sm text-gray-700">"{entry.proposal.comments}"</Text>
@@ -688,7 +664,6 @@ const RequestDetailScreen = () => {
                           )}
                         </View>
 
-                        {/* Attachments */}
                         {entry.proposal.attachments?.length > 0 && (
                           <View className="mt-3">
                             <Text className="mb-1 text-sm font-semibold text-gray-900">Attachments ({entry.proposal.attachments.length})</Text>
@@ -703,7 +678,6 @@ const RequestDetailScreen = () => {
                                   </Text>
                                   <Text className="text-xs text-gray-500">{file.url?.toLowerCase().includes(".pdf") ? "PDF" : "Image"} • Tap to view</Text>
                                 </View>
-                                {/* <FontAwesome6 name="eye" size={14} color="#2563EB" /> */}
                               </TouchableOpacity>
                             ))}
                           </View>
@@ -719,10 +693,8 @@ const RequestDetailScreen = () => {
     </View>
   );
 
-  // --- Main JSX Return ---
   return (
     <View style={styles.flexOne}>
-      {/* --- Header --- */}
       <View style={{ paddingTop: insets.top }} className="bg-white">
         <View className="flex-row items-center justify-between p-6 pt-4 pb-4">
           <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.goBack()} className="p-3 bg-gray-100 border border-slate-200 rounded-xl">
@@ -739,8 +711,6 @@ const RequestDetailScreen = () => {
             {renderStatusBadge()}
             {request?.trip_id ? renderTripDetailButton() : null}
           </View>
-
-          {/* --- Material Card --- */}
           <View className="p-6 m-6 bg-white border border-gray-200 rounded-xl">
             <View className="flex-row items-start justify-between mb-6">
               <View className="flex-1">
@@ -749,12 +719,10 @@ const RequestDetailScreen = () => {
                   ₹{Math.round(agreement.price / agreement.quantity).toLocaleString("en-IN")} per {agreement.unit.name}
                 </Text>
               </View>
-              {/* <View className="items-center justify-center w-16 h-16 bg-gray-100 rounded-xl"> */}
               <TouchableOpacity activeOpacity={0.8} onPress={() => mineContactSheetRef.current?.snapToIndex(0)} className="ml-4 flex-row items-center px-4 py-2.5 bg-green-500 rounded-lg shadow-sm">
                 <FontAwesome6 name="phone" size={12} color="white" />
                 <Text className="ml-2 text-sm font-semibold text-white">Call</Text>
               </TouchableOpacity>
-              {/* </View> */}
             </View>
 
             <View className="flex-row gap-4 mb-6">
@@ -795,7 +763,6 @@ const RequestDetailScreen = () => {
 
           <View className="flex-1">{renderActionPanel()}</View>
 
-          {/* --- Proposal Details Card --- */}
           <View className="mx-6 mb-6">
             <View className="p-6 bg-white border border-gray-200 rounded-xl">
               <View className="flex-row items-center mb-4">
@@ -806,9 +773,6 @@ const RequestDetailScreen = () => {
                 </View>
                 <Text className="text-xl font-bold text-gray-900">Proposal Details</Text>
               </View>
-
-              {/* horizontal line */}
-
               <View className="h-px mb-8 bg-gray-200" />
 
               <View className="flex gap-6">
@@ -823,7 +787,6 @@ const RequestDetailScreen = () => {
                   </View>
                 </View>
 
-                {/* pricing info including delivery charges if delivery charges exist */}
                 <View className="flex-row items-start gap-4">
                   <View className="items-center justify-center p-2.5 bg-cyan-100 rounded-xl">
                     <FontAwesome6 name="money-bill-wave" size={16} color="#3B82F3" />
@@ -892,9 +855,11 @@ const RequestDetailScreen = () => {
 
                   <View className="p-6 mb-6 border border-gray-200 bg-gray-50 rounded-xl">
                     <DetailRow icon="user" label="Buyer" value={request.truck_owner_id.name} iconColor="#10B981" />
-                     {request.current_proposal.delivery_charge  ? <DetailRow icon="indian-rupee-sign" label="Final Price" value={`₹${(request.current_proposal.price + request.current_proposal.delivery_charge).toLocaleString("en-IN")} for ${request.current_proposal.quantity} ${request.current_proposal.unit.name}`} iconColor="#F59E0B" /> : <DetailRow icon="indian-rupee-sign" label="Final Price" value={`₹${(request.current_proposal.price).toLocaleString("en-IN")} for ${request.current_proposal.quantity} ${request.current_proposal.unit.name}`} iconColor="#F59E0B" />}
-                {/* {request.current_proposal.delivery_charge ? <Text className="text-sm font-medium text-slate-500">This includes ₹{request.current_proposal.delivery_charge.toLocaleString("en-IN")} Delivery Charges</Text> : null} */}
-              
+                    {request.current_proposal.delivery_charge ? (
+                      <DetailRow icon="indian-rupee-sign" label="Final Price" value={`₹${(request.current_proposal.price + request.current_proposal.delivery_charge).toLocaleString("en-IN")} for ${request.current_proposal.quantity} ${request.current_proposal.unit.name}`} iconColor="#F59E0B" />
+                    ) : (
+                      <DetailRow icon="indian-rupee-sign" label="Final Price" value={`₹${request.current_proposal.price.toLocaleString("en-IN")} for ${request.current_proposal.quantity} ${request.current_proposal.unit.name}`} iconColor="#F59E0B" />
+                    )}
                     <DetailRow icon="calendar-alt" label="Schedule" value={format(new Date(request.current_proposal.schedule.date), "EEE, MMM d, yyyy 'at' h:mm a")} iconColor="#3B82F6" />
                     {confirmationDetails?.driver && (
                       <>
@@ -925,12 +890,10 @@ const RequestDetailScreen = () => {
             </View>
           </Modal>
 
-          {/* Document Viewer Modal */}
           <DocumentViewer visible={documentViewer.visible} onClose={() => setDocumentViewer({ visible: false, document: null })} document={documentViewer.document} />
         </ScrollView>
       </View>
 
-      {/* Driver Contact Bottom Sheet */}
       <ReusableBottomSheet ref={driverContactSheetRef} enablePanDownToClose={true} backgroundStyle={{ backgroundColor: "#fff" }} handleIndicatorStyle={{ backgroundColor: "#d1d5db" }}>
         <View className="flex-1 p-6">
           <View className="items-center mb-8">
@@ -1076,8 +1039,16 @@ const RequestDetailScreen = () => {
               <View className="p-6 mb-6 border border-gray-200 bg-gray-50 rounded-xl">
                 <DetailRow icon="user" label="Buyer" value={request.truck_owner_id.name} iconColor="#10B981" />
 
-                {request.current_proposal.delivery_charge  ? <DetailRow icon="indian-rupee-sign" label="Final Price" value={`₹${(request.current_proposal.price + request.current_proposal.delivery_charge).toLocaleString("en-IN")} for ${request.current_proposal.quantity} ${request.current_proposal.unit.name}`} iconColor="#F59E0B" /> : <DetailRow icon="indian-rupee-sign" label="Final Price" value={`₹${(request.current_proposal.price).toLocaleString("en-IN")} for ${request.current_proposal.quantity} ${request.current_proposal.unit.name}`} iconColor="#F59E0B" />}
-                {request.current_proposal.delivery_charge ? <Text className="mt-1 text-sm font-medium text-slate-500">This includes {'\n'}₹{request.current_proposal.delivery_charge.toLocaleString("en-IN")} Delivery Charges</Text> : null}
+                {request.current_proposal.delivery_charge ? (
+                  <DetailRow icon="indian-rupee-sign" label="Final Price" value={`₹${(request.current_proposal.price + request.current_proposal.delivery_charge).toLocaleString("en-IN")} for ${request.current_proposal.quantity} ${request.current_proposal.unit.name}`} iconColor="#F59E0B" />
+                ) : (
+                  <DetailRow icon="indian-rupee-sign" label="Final Price" value={`₹${request.current_proposal.price.toLocaleString("en-IN")} for ${request.current_proposal.quantity} ${request.current_proposal.unit.name}`} iconColor="#F59E0B" />
+                )}
+                {request.current_proposal.delivery_charge ? (
+                  <Text className="mt-1 text-sm font-medium text-slate-500">
+                    This includes {"\n"}₹{request.current_proposal.delivery_charge.toLocaleString("en-IN")} Delivery Charges
+                  </Text>
+                ) : null}
               </View>
 
               <View className="pt-6 mt-auto space-y-4 border-t border-gray-200">
@@ -1189,7 +1160,6 @@ const RequestDetailScreen = () => {
   );
 };
 
-// --- Enhanced Styles ---
 const styles = StyleSheet.create({
   flexOne: {
     flex: 1,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { View, Text, TouchableOpacity, Image, ScrollView, ActivityIndicator, RefreshControl, Dimensions, Linking, Alert } from "react-native";
 import Carousel from "react-native-snap-carousel";
 import { useNavigation } from "@react-navigation/native";
@@ -11,11 +11,10 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { useFetchMineById } from "../../hooks/useMine";
 import ReusableBottomSheet from "../../components/Ui/ReusableBottomSheet";
 import LocationComponent from "../../components/Ui/LocationComponent";
-import Toast from "react-native-toast-message";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import utc from "dayjs/plugin/utc";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import ShareComponent from "../../components/utils/ShareComponent"; 
+import ShareComponent from "../../components/utils/ShareComponent";
 
 dayjs.extend(customParseFormat);
 dayjs.extend(utc);
@@ -85,7 +84,11 @@ const MineDetail = ({ route }) => {
 
   const to24HourFormat = (t) => {
     if (!t) return "00:00:00";
-    const clean = t.replace(/\u202F/g, " ").replace(/[^\x00-\x7F]/g, "").trim().toLowerCase();
+    const clean = t
+      .replace(/\u202F/g, " ")
+      .replace(/[^\x00-\x7F]/g, "")
+      .trim()
+      .toLowerCase();
     const timeParts = clean.match(/(\d+):(\d+)\s*(am|pm)/);
     if (!timeParts) return "00:00:00";
     let [_, hour, minute, period] = timeParts;
@@ -122,7 +125,7 @@ const MineDetail = ({ route }) => {
       return { status: "Closed", subtitle: `Opens at ${open}`, color: "#EF4444" };
     }
   };
-  
+
   const timeAgo = (timestamp) => {
     const now = new Date();
     const updatedTime = new Date(timestamp);
@@ -161,16 +164,14 @@ const MineDetail = ({ route }) => {
 
   const status = getCurrentStatus();
   const materials = mine?.materials || [];
-  const bannerImages = mine?.banner_images?.length
-    ? mine.banner_images
-    : [{ url: "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png" }];
+  const bannerImages = mine?.banner_images?.length ? mine.banner_images : [{ url: "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png" }];
 
   const materialIcons = [
     { icon: "mountain", color: "#F97316" },
     { icon: "cubes", color: "#374151" },
     { icon: "gem", color: "#D97706" },
   ];
-  
+
   const shareData = {
     path: `mine/${mine?._id}`,
     app: "truck",
@@ -193,14 +194,7 @@ const MineDetail = ({ route }) => {
 
       <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />} showsVerticalScrollIndicator={false} className="flex-1">
         <View className="relative">
-          <Carousel
-            data={bannerImages}
-            renderItem={({ item }) => <Image source={{ uri: item.url }} className="w-full h-96" style={{ resizeMode: "cover" }} />}
-            sliderWidth={screenWidth}
-            itemWidth={screenWidth}
-            loop={true}
-            autoplay={true}
-          />
+          <Carousel data={bannerImages} renderItem={({ item }) => <Image source={{ uri: item.url }} className="w-full h-96" style={{ resizeMode: "cover" }} />} sliderWidth={screenWidth} itemWidth={screenWidth} loop={true} autoplay={true} />
           <View className="absolute z-10 bottom-4 right-4">
             <View className="flex-row items-center px-4 py-1 rounded-full" style={{ backgroundColor: status.color }}>
               <View className="w-3 h-3 mr-2 bg-white rounded-full" />
@@ -224,24 +218,27 @@ const MineDetail = ({ route }) => {
             <View className="flex-row justify-between mt-2 mb-8">
               <TouchableOpacity onPress={handleContactPress} className="items-center" activeOpacity={0.9}>
                 <View className="px-10 py-6 bg-[#EEF2FF] rounded-2xl">
-                  <View className="p-3 bg-blue-600 rounded-full"><Ionicons name="call" size={20} color="white" /></View>
+                  <View className="p-3 bg-blue-600 rounded-full">
+                    <Ionicons name="call" size={20} color="white" />
+                  </View>
                   <Text className="mt-2 text-base font-semibold text-center text-blue-600">Call</Text>
                 </View>
               </TouchableOpacity>
               <TouchableOpacity className="items-center" activeOpacity={0.9} onPress={handleDirectionsPress}>
                 <View className="px-8 py-6 bg-[#F0FDF4] rounded-2xl">
-                  <View className="p-4 mx-auto bg-green-600 rounded-full"><FontAwesome5 name="location-arrow" size={13} color="white" /></View>
+                  <View className="p-4 mx-auto bg-green-600 rounded-full">
+                    <FontAwesome5 name="location-arrow" size={13} color="white" />
+                  </View>
                   <Text className="mt-2 text-base font-semibold text-green-600">Directions</Text>
                 </View>
               </TouchableOpacity>
-              
-              {/* --- UPDATED: This is now just the button that triggers the sheet --- */}
+
               <TouchableOpacity className="items-center" activeOpacity={0.9} onPress={handleSharePress}>
                 <View className="flex-col p-6 px-6 bg-[#f8efff] rounded-2xl">
-                    <View className="flex items-center justify-center px-3 py-3 mx-auto bg-purple-600 rounded-full">
-                        <MaterialDesignIcons name="share-variant" size={20} color="white" />
-                    </View>
-                    <Text className="mt-2 text-base font-semibold text-purple-600">Share Mine</Text>
+                  <View className="flex items-center justify-center px-3 py-3 mx-auto bg-purple-600 rounded-full">
+                    <MaterialDesignIcons name="share-variant" size={20} color="white" />
+                  </View>
+                  <Text className="mt-2 text-base font-semibold text-purple-600">Share Mine</Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -262,7 +259,6 @@ const MineDetail = ({ route }) => {
               </View>
             </View>
 
-            {/* Mine Information */}
             <View className="p-6 mb-5 bg-white border border-gray-100 shadow-sm rounded-2xl">
               <Text className="mb-5 text-xl font-bold text-gray-900">Mine Information</Text>
               <View className="flex gap-4 space-y-4">
@@ -281,7 +277,6 @@ const MineDetail = ({ route }) => {
               </View>
             </View>
 
-            {/* Available Materials */}
             <View className="p-6 mb-8 bg-white border border-gray-100 shadow-sm rounded-2xl">
               <View className="flex-row items-center justify-between mb-6">
                 <Text className="text-xl font-bold text-gray-900">Available Materials</Text>
@@ -337,7 +332,6 @@ const MineDetail = ({ route }) => {
               )}
             </View>
 
-            {/* Operating Hours */}
             <View className="p-2 mb-8 bg-white border border-gray-100 shadow-sm rounded-2xl">
               <View className="p-4 border-b border-gray-100">
                 <View className="flex-row items-center">

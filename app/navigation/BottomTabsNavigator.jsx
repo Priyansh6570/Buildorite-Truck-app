@@ -68,7 +68,6 @@ const CustomTabBar = ({ state, descriptors, navigation, unreadCount }) => {
   );
 };
 
-// Animated Tab Button Component
 const AnimatedTabButton = ({ onPress, isFocused, routeName, label, unreadCount }) => {
   const scaleValue = useRef(new Animated.Value(1)).current;
   const opacityValue = useRef(new Animated.Value(1)).current;
@@ -160,7 +159,6 @@ const AnimatedTabButton = ({ onPress, isFocused, routeName, label, unreadCount }
           marginBottom: 0,
         }}
       >
-        {/* Gradient Background */}
         <Animated.View
           style={{
             position: 'absolute',
@@ -187,7 +185,6 @@ const AnimatedTabButton = ({ onPress, isFocused, routeName, label, unreadCount }
           </LinearGradient>
         </Animated.View>
 
-        {/* Regular Icon */}
         <Animated.View
           style={{
             opacity: gradientOpacityValue.interpolate({

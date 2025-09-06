@@ -10,7 +10,6 @@ import * as Location from "expo-location";
 import ReusableBottomSheet from "../../components/Ui/ReusableBottomSheet";
 import { LinearGradient } from "expo-linear-gradient";
 
-// Trip status banner component (retained from reference)
 const TripStatusBanner = ({ lastMilestone }) => {
   const details = useMemo(() => {
     const baseStyle = "flex-row items-center p-4 border rounded-xl shadow-sm";
@@ -142,17 +141,12 @@ const TripStatusBanner = ({ lastMilestone }) => {
 const TripCancelBanner = ({ cancelReason }) => {
   return (
     <View className="flex-row items-center p-4 border border-red-200 shadow-sm rounded-xl bg-red-50">
-      {/* Status indicator dot */}
       <View className="absolute top-3 right-3">
         <View className="w-3 h-3 bg-red-500 rounded-full" />
       </View>
-
-      {/* Icon container */}
       <View className="items-center justify-center w-12 h-12 mr-4 bg-red-600 rounded-xl">
         <FontAwesome6 name="ban" size={18} color="white" solid />
       </View>
-
-      {/* Content */}
       <View className="flex-1">
         <Text className="text-lg font-bold text-red-900">Trip Canceled</Text>
         <Text className="mt-1 text-sm leading-5 text-red-700">{cancelReason || "Trip has been canceled"}</Text>
@@ -161,37 +155,33 @@ const TripCancelBanner = ({ cancelReason }) => {
   );
 };
 
-    const issueReasons = [
-    { label: 'Accident', value: 'accident' },
-    { label: 'Vehicle Breakdown', value: 'vehicle_breakdown' },
-    { label: 'Unable to Load', value: 'unable_to_load' },
-    { label: 'Delivery Issue', value: 'delivery_issue' },
-    { label: 'Other', value: 'other' },
-  ];
+const issueReasons = [
+  { label: "Accident", value: "accident" },
+  { label: "Vehicle Breakdown", value: "vehicle_breakdown" },
+  { label: "Unable to Load", value: "unable_to_load" },
+  { label: "Delivery Issue", value: "delivery_issue" },
+  { label: "Other", value: "other" },
+];
 
 const TripIssueReportedBanner = ({ issue }) => {
   return (
     <View className="flex-row items-center p-4 border border-orange-200 shadow-sm rounded-xl bg-orange-50">
-      {/* Status indicator dot */}
       <View className="absolute top-3 right-3">
         <View className="w-3 h-3 bg-orange-500 rounded-full" />
       </View>
-
-      {/* Icon container */}
       <View className="items-center justify-center w-12 h-12 mr-4 bg-orange-600 rounded-xl">
         <FontAwesome6 name="triangle-exclamation" size={18} color="white" solid />
       </View>
-
-      {/* Content */}
       <View className="flex-1">
-        <Text className="text-lg font-bold text-orange-900">Issue Reported : <Text className="font-medium text-orange-700">{issueReasons.find(r => r.value === issue?.reason)?.label}</Text></Text>
+        <Text className="text-lg font-bold text-orange-900">
+          Issue Reported : <Text className="font-medium text-orange-700">{issueReasons.find((r) => r.value === issue?.reason)?.label}</Text>
+        </Text>
         <Text className="mt-1 text-sm leading-5 text-orange-700">{issue?.notes || "An issue has been reported for this trip."}</Text>
       </View>
     </View>
   );
 };
 
-// Component to handle opening directions in maps
 const GetDirectionsButton = ({ destinationLocation, buttonText, subText }) => {
   const openDirections = async () => {
     if (!destinationLocation?.coordinates) {
@@ -206,7 +196,7 @@ const GetDirectionsButton = ({ destinationLocation, buttonText, subText }) => {
       }
       const currentLocation = await Location.getCurrentPositionAsync({});
       const { latitude: startLat, longitude: startLng } = currentLocation.coords;
-      const [endLng, endLat] = destinationLocation.coordinates;
+      const [endLng, endLat] = destinationLocation?.coordinates;
       const url = Platform.select({
         ios: `http://maps.apple.com/?saddr=${startLat},${startLng}&daddr=${endLat},${endLng}&dirflg=d`,
         android: `google.navigation:q=${endLat},${endLng}&mode=d`,
@@ -266,7 +256,7 @@ const TripDetailScreen = () => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isPress, setIsPress] = useState(false);
-    const [selectedReason, setSelectedReason] = useState(null);
+  const [selectedReason, setSelectedReason] = useState(null);
   const [issueNotes, setIssueNotes] = useState("");
 
   const OnRefresh = useCallback(async () => {
@@ -276,12 +266,12 @@ const TripDetailScreen = () => {
   }, [refetch]);
 
   const { lastMilestone, nextAction, allMilestones } = useMemo(() => {
-    if (!trip || !trip.milestone_history) {
+    if (!trip || !trip?.milestone_history) {
       return { lastMilestone: null, nextAction: null, allMilestones: [] };
     }
 
-    const history = trip.milestone_history.map((m) => m.status);
-    const lastMilestoneStatus = history.length > 0 ? history[history.length - 1] : "trip_assigned";
+    const history = trip?.milestone_history?.map((m) => m?.status);
+    const lastMilestoneStatus = history?.length > 0 ? history[history?.length - 1] : "trip_assigned";
 
     const milestones = [
       { id: "trip_started", label: "Start Trip", requires: "trip_assigned", modalText: "Are you sure you want to start the trip?" },
@@ -296,7 +286,6 @@ const TripDetailScreen = () => {
     for (const m of milestones) {
       if (history.includes(m.id)) continue;
       if (m.requires === "pickup_verified" && !history.includes("pickup_verified")) {
-        // Special case: waiting for mine owner
         if (history.includes("loading_complete")) {
           action = { id: "pickup_verified", label: "Waiting for Mine Owner Verification", disabled: true };
         }
@@ -312,7 +301,7 @@ const TripDetailScreen = () => {
       action = { id: "delivery_verified", label: "Waiting for Buyer Verification", disabled: true };
     }
 
-    if (trip.status === "completed") {
+    if (trip?.status === "completed") {
       action = { id: "completed", label: "Trip Completed", disabled: true };
     }
 
@@ -329,8 +318,8 @@ const TripDetailScreen = () => {
     ];
 
     const populatedMilestones = fullMilestoneList.map((m) => {
-      const historyEntry = trip.milestone_history.find((h) => h.status === m.id);
-      return { ...m, isCompleted: !!historyEntry, timestamp: historyEntry?.timestamp, isCurrent: lastMilestoneStatus === m.id };
+      const historyEntry = trip?.milestone_history?.find((h) => h?.status === m?.id);
+      return { ...m, isCompleted: !!historyEntry, timestamp: historyEntry?.timestamp, isCurrent: lastMilestoneStatus === m?.id };
     });
 
     return { lastMilestone: lastMilestoneStatus, nextAction: action, allMilestones: populatedMilestones };
@@ -362,24 +351,26 @@ const TripDetailScreen = () => {
     );
   };
 
-    const handleReportIssue = () => {
+  const handleReportIssue = () => {
     if (!selectedReason) {
-      Toast.show({ type: 'error', text1: 'Please select a reason for the issue.' });
+      Toast.show({ type: "error", text1: "Please select a reason for the issue." });
       return;
     }
     if (isReportingIssue) return;
     setIsReportingIssue(true);
-    reportIssue({ tripId, reason: selectedReason, notes: issueNotes }, {
-      onSuccess: () => {
-        Toast.show({ type: 'success', text1: 'Issue Reported Successfully' });
-        reportIssueSheetRef.current?.close();
-        setSelectedReason(null);
-        setIssueNotes("");
-      },
-      onError: (err) => {
-        Toast.show({ type: 'error', text1: 'Failed to Report Issue', text2: err.message || "An unknown error occurred." });
+    reportIssue(
+      { tripId, reason: selectedReason, notes: issueNotes },
+      {
+        onSuccess: () => {
+          Toast.show({ type: "success", text1: "Issue Reported Successfully" });
+          reportIssueSheetRef.current?.close();
+          setSelectedReason(null);
+          setIssueNotes("");
+        },
+        onError: (err) => {
+          Toast.show({ type: "error", text1: "Failed to Report Issue", text2: err.message || "An unknown error occurred." });
+        },
       }
-    }
     );
     setIsReportingIssue(false);
   };
@@ -394,12 +385,12 @@ const TripDetailScreen = () => {
 
   const renderDirectionsSection = () => {
     const pickupStatuses = ["trip_assigned", "trip_started", "arrived_at_pickup", "loading_complete"];
-    const deliveryStatuses = [ "pickup_verified", "en_route_to_delivery", "arrived_at_delivery", "delivery_complete"];
+    const deliveryStatuses = ["pickup_verified", "en_route_to_delivery", "arrived_at_delivery", "delivery_complete"];
 
     if (pickupStatuses.includes(lastMilestone)) {
-      return <GetDirectionsButton destinationLocation={trip.request_id.mine_id.location} buttonText="Directions to Mine" subText="Navigate to the pickup location" />;
+      return <GetDirectionsButton destinationLocation={trip?.request_id?.mine_id?.location} buttonText="Directions to Mine" subText="Navigate to the pickup location" />;
     } else if (deliveryStatuses.includes(lastMilestone)) {
-      return <GetDirectionsButton destinationLocation={trip.destination} buttonText="Directions to Delivery" subText="Navigate to the delivery location" />;
+      return <GetDirectionsButton destinationLocation={trip?.destination} buttonText="Directions to Delivery" subText="Navigate to the delivery location" />;
     }
     return null;
   };
@@ -429,7 +420,6 @@ const TripDetailScreen = () => {
 
   return (
     <View className="flex-1 bg-white">
-      {/* Header */}
       <View style={{ paddingTop: insets.top }} className="bg-white">
         <View className="flex-row items-center justify-between p-6 pt-4 pb-4">
           <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.goBack()} className="p-3 bg-gray-100 border border-slate-200 rounded-xl">
@@ -442,108 +432,90 @@ const TripDetailScreen = () => {
 
       <View className="flex-1">
         <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={OnRefresh} />}>
-          {/* Status Section */}
-          <View className="px-4 pt-4 pb-2">
-            {
-              trip.status === "canceled" ? (
-                <TripCancelBanner cancelReason={trip.cancel_reason} />
-              ) : trip.status === "issue_reported" && trip.issue ? (
-                <TripIssueReportedBanner issue={trip.issue} />
-              ) : (
-                <TripStatusBanner lastMilestone={lastMilestone} />
-              )
-            }
-          </View>
+          <View className="px-4 pt-4 pb-2">{trip.status === "canceled" ? <TripCancelBanner cancelReason={trip.cancel_reason} /> : trip.status === "issue_reported" && trip.issue ? <TripIssueReportedBanner issue={trip.issue} /> : <TripStatusBanner lastMilestone={lastMilestone} />}</View>
 
-          {/* Custom Directions Section */}
           {trip.status === "active" && <View className="px-4 py-3">{renderDirectionsSection()}</View>}
 
-          {/* Trip Information Section */}
           <View className="px-4 py-3">
-  <View className="bg-white border border-gray-100 shadow-lg rounded-2xl">
-    <View className="px-6 py-5 border-b border-gray-100">
-      <View className="flex-row items-center">
-        <View className="items-center justify-center w-12 h-12 mr-4 overflow-hidden rounded-xl">
-          <LinearGradient colors={["#4F46E5", "#6366F1"]} className="items-center justify-center w-full h-full">
-            <FontAwesome5 name="clipboard-list" size={18} color="white" />
-          </LinearGradient>
-        </View>
-        <View className="flex-1">
-          <Text className="text-xl font-bold text-gray-900">Trip Details</Text>
-          <Text className="text-sm text-gray-500 mt-0.5">Complete shipment information</Text>
-        </View>
-      </View>
-    </View>
-    <View className="px-2 py-2">
-      <View className="border bg-gray-50/70 rounded-xl border-gray-100/50">
-        <View className="flex-row items-center justify-between px-5 py-4">
-          <View className="flex-row items-center flex-1">
-            <View className="items-center justify-center w-8 h-8 mr-3 bg-blue-100 rounded-lg">
-              <FontAwesome5 name="calendar-alt" size={14} color="#3B82F6" />
-            </View>
-            <Text className="text-base font-medium text-gray-700">Schedule Date</Text>
-          </View>
-          <Text className="text-base font-semibold text-gray-900">{format(new Date(trip.request_id.finalized_agreement.schedule.date), "MMM d, yyyy")}</Text>
-        </View>
-        <View className="mx-5 border-b border-gray-200/60" />
-        <View className="flex-row items-center justify-between px-5 py-4">
-          <View className="flex-row items-center flex-1">
-            <View className="items-center justify-center w-8 h-8 mr-3 rounded-lg bg-amber-100">
-              <FontAwesome5 name="cube" size={14} color="#F59E0B" />
-            </View>
-            <Text className="text-base font-medium text-gray-700">Material</Text>
-          </View>
-          <Text className="font-semibold text-gray-900 text-base max-w-[160px] text-right">{trip.request_id.material_id.name}</Text>
-        </View>
-        <View className="mx-5 border-b border-gray-200/60" />
-        <View className="flex-row items-center justify-between px-5 py-4">
-          <View className="flex-row items-center flex-1">
-            <View className="items-center justify-center w-8 h-8 mr-3 bg-purple-100 rounded-lg">
-              <FontAwesome5 name="balance-scale" size={14} color="#8B5CF6" />
-            </View>
-            <Text className="text-base font-medium text-gray-700">Quantity</Text>
-          </View>
-          <Text className="text-base font-semibold text-gray-900">
-            {trip.request_id.finalized_agreement.quantity} {trip.request_id.finalized_agreement.unit.name}
-          </Text>
-        </View>
-        <View className="mx-5 border-b border-gray-200/60" />
-
-        {/* Price */}
-        <View className="flex-row items-center justify-between px-5 py-4">
-          <View className="flex-row items-center flex-1">
-            <View className="items-center justify-center w-8 h-8 mr-3 bg-green-100 rounded-lg">
-              <FontAwesome5 name="rupee-sign" size={14} color="#10B981" />
-            </View>
-            <Text className="text-base font-medium text-gray-700">Total Price</Text>
-          </View>
-          <View className="bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
-            <Text className="text-base font-bold text-green-700">₹{formatter.format(trip.request_id.finalized_agreement.price)}</Text>
-          </View>
-        </View>
-        {trip.status !== "completed" && (
-          <>
-            <View className="mx-5 border-b border-gray-200/60" />
-            <View className="px-5 py-4">
-              <TouchableOpacity 
-                onPress={() => reportIssueSheetRef.current?.snapToIndex(0)} 
-                className="flex-row items-center justify-center px-4 py-3 transition-colors border border-red-200/80 rounded-xl bg-red-50/80 active:bg-red-100"
-                activeOpacity={0.7}
-              >
-                <View className="items-center justify-center w-8 h-8 mr-3 bg-red-100 rounded-lg">
-                  <Feather name="alert-triangle" size={16} color="#EF4444" />
+            <View className="bg-white border border-gray-100 shadow-lg rounded-2xl">
+              <View className="px-6 py-5 border-b border-gray-100">
+                <View className="flex-row items-center">
+                  <View className="items-center justify-center w-12 h-12 mr-4 overflow-hidden rounded-xl">
+                    <LinearGradient colors={["#4F46E5", "#6366F1"]} className="items-center justify-center w-full h-full">
+                      <FontAwesome5 name="clipboard-list" size={18} color="white" />
+                    </LinearGradient>
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-xl font-bold text-gray-900">Trip Details</Text>
+                    <Text className="text-sm text-gray-500 mt-0.5">Complete shipment information</Text>
+                  </View>
                 </View>
-                <Text className="text-base font-semibold text-red-700">Report Issue</Text>
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
-      </View>
-    </View>
-  </View>
-</View>
+              </View>
+              <View className="px-2 py-2">
+                <View className="border bg-gray-50/70 rounded-xl border-gray-100/50">
+                  <View className="flex-row items-center justify-between px-5 py-4">
+                    <View className="flex-row items-center flex-1">
+                      <View className="items-center justify-center w-8 h-8 mr-3 bg-blue-100 rounded-lg">
+                        <FontAwesome5 name="calendar-alt" size={14} color="#3B82F6" />
+                      </View>
+                      <Text className="text-base font-medium text-gray-700">Schedule Date</Text>
+                    </View>
+                    <Text className="text-base font-semibold text-gray-900">{format(new Date(trip.request_id.finalized_agreement.schedule.date), "MMM d, yyyy")}</Text>
+                  </View>
+                  <View className="mx-5 border-b border-gray-200/60" />
+                  <View className="flex-row items-center justify-between px-5 py-4">
+                    <View className="flex-row items-center flex-1">
+                      <View className="items-center justify-center w-8 h-8 mr-3 rounded-lg bg-amber-100">
+                        <FontAwesome5 name="cube" size={14} color="#F59E0B" />
+                      </View>
+                      <Text className="text-base font-medium text-gray-700">Material</Text>
+                    </View>
+                    <Text className="font-semibold text-gray-900 text-base max-w-[160px] text-right">{trip.request_id.material_id.name}</Text>
+                  </View>
+                  <View className="mx-5 border-b border-gray-200/60" />
+                  <View className="flex-row items-center justify-between px-5 py-4">
+                    <View className="flex-row items-center flex-1">
+                      <View className="items-center justify-center w-8 h-8 mr-3 bg-purple-100 rounded-lg">
+                        <FontAwesome5 name="balance-scale" size={14} color="#8B5CF6" />
+                      </View>
+                      <Text className="text-base font-medium text-gray-700">Quantity</Text>
+                    </View>
+                    <Text className="text-base font-semibold text-gray-900">
+                      {trip.request_id.finalized_agreement.quantity} {trip.request_id.finalized_agreement.unit.name}
+                    </Text>
+                  </View>
+                  <View className="mx-5 border-b border-gray-200/60" />
 
-          {/* Mine Details Section */}
+                  {/* Price */}
+                  <View className="flex-row items-center justify-between px-5 py-4">
+                    <View className="flex-row items-center flex-1">
+                      <View className="items-center justify-center w-8 h-8 mr-3 bg-green-100 rounded-lg">
+                        <FontAwesome5 name="rupee-sign" size={14} color="#10B981" />
+                      </View>
+                      <Text className="text-base font-medium text-gray-700">Total Price</Text>
+                    </View>
+                    <View className="bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
+                      <Text className="text-base font-bold text-green-700">₹{formatter.format(trip.request_id.finalized_agreement.price)}</Text>
+                    </View>
+                  </View>
+                  {trip.status !== "completed" && (
+                    <>
+                      <View className="mx-5 border-b border-gray-200/60" />
+                      <View className="px-5 py-4">
+                        <TouchableOpacity onPress={() => reportIssueSheetRef.current?.snapToIndex(0)} className="flex-row items-center justify-center px-4 py-3 transition-colors border border-red-200/80 rounded-xl bg-red-50/80 active:bg-red-100" activeOpacity={0.7}>
+                          <View className="items-center justify-center w-8 h-8 mr-3 bg-red-100 rounded-lg">
+                            <Feather name="alert-triangle" size={16} color="#EF4444" />
+                          </View>
+                          <Text className="text-base font-semibold text-red-700">Report Issue</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </>
+                  )}
+                </View>
+              </View>
+            </View>
+          </View>
+
           <View className="px-4 py-3">
             <View className="bg-white border border-gray-100 shadow-lg rounded-2xl">
               <View className="px-6 py-5 border-b border-gray-100">
@@ -602,7 +574,6 @@ const TripDetailScreen = () => {
             </View>
           </View>
 
-          {/* Delivery Details Section */}
           <View className="px-4 py-3">
             <View className="bg-white border border-gray-100 shadow-lg rounded-2xl">
               <View className="px-6 py-5 border-b border-gray-100">
@@ -652,7 +623,6 @@ const TripDetailScreen = () => {
             </View>
           </View>
 
-          {/* Trip Timeline Section */}
           <View className="px-4 py-3">
             <View className="bg-white border border-gray-100 shadow-lg rounded-2xl">
               <View className="px-6 py-5 border-b border-gray-100">
@@ -728,7 +698,6 @@ const TripDetailScreen = () => {
             </View>
           </View>
 
-          {/* Milestone Update Modal */}
           <Modal visible={isModalVisible} transparent={true} animationType="fade" onRequestClose={() => setModalVisible(false)}>
             <View className="justify-center flex-1 px-6 bg-black/60">
               <View className="p-8 mx-2 bg-white shadow-2xl rounded-2xl">
@@ -776,7 +745,6 @@ const TripDetailScreen = () => {
         </ScrollView>
       </View>
 
-      {/* Action Button */}
       {nextAction && !nextAction.disabled && (
         <View className="absolute bottom-0 left-0 right-0 px-6 py-4 bg-white border-t border-gray-200">
           <TouchableOpacity activeOpacity={0.8} onPress={() => setModalVisible(true)} className="flex-row items-center justify-center w-full py-4 bg-blue-600 rounded-2xl">
@@ -795,11 +763,12 @@ const TripDetailScreen = () => {
         </View>
       )}
 
-       {/* Report Issue Bottom Sheet */}
       <ReusableBottomSheet ref={reportIssueSheetRef} enablePanDownToClose={true} backgroundStyle={{ backgroundColor: "#fff" }} handleIndicatorStyle={{ backgroundColor: "#d1d5db" }}>
         <View className="flex-1 p-6">
           <View className="items-center mb-6">
-            <View className="p-4 mb-4 bg-red-100 rounded-full"><Feather name="alert-triangle" size={28} color="#EF4444" /></View>
+            <View className="p-4 mb-4 bg-red-100 rounded-full">
+              <Feather name="alert-triangle" size={28} color="#EF4444" />
+            </View>
             <Text className="mb-2 text-2xl font-bold text-center text-gray-900">Report an Issue</Text>
             <Text className="text-center text-gray-600 text-md">Please select a reason and provide details about the issue.</Text>
           </View>
@@ -807,27 +776,20 @@ const TripDetailScreen = () => {
           <Text className="mb-3 text-base font-semibold text-gray-700">Reason for reporting:</Text>
           <View className="flex-row flex-wrap mb-6">
             {issueReasons.map((reason) => (
-              <TouchableOpacity activeOpacity={0.8} key={reason.value} onPress={() => setSelectedReason(reason.value)} className={`px-4 py-2 border rounded-full mr-2 mb-2 ${selectedReason === reason.value ? 'bg-red-500 border-red-500' : 'bg-gray-100 border-gray-200'}`}>
-                <Text className={`font-semibold ${selectedReason === reason.value ? 'text-white' : 'text-gray-700'}`}>{reason.label}</Text>
+              <TouchableOpacity activeOpacity={0.8} key={reason.value} onPress={() => setSelectedReason(reason.value)} className={`px-4 py-2 border rounded-full mr-2 mb-2 ${selectedReason === reason.value ? "bg-red-500 border-red-500" : "bg-gray-100 border-gray-200"}`}>
+                <Text className={`font-semibold ${selectedReason === reason.value ? "text-white" : "text-gray-700"}`}>{reason.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
 
           <Text className="mb-3 text-base font-semibold text-gray-700">Notes (Optional):</Text>
-          <TextInput
-            value={issueNotes}
-            onChangeText={setIssueNotes}
-            placeholder="Provide specific details about the issue..."
-            multiline
-            className="h-24 p-4 mb-8 text-base bg-gray-100 border border-gray-200 rounded-lg"
-            textAlignVertical="top"
-          />
+          <TextInput value={issueNotes} onChangeText={setIssueNotes} placeholder="Provide specific details about the issue..." multiline className="h-24 p-4 mb-8 text-base bg-gray-100 border border-gray-200 rounded-lg" textAlignVertical="top" />
 
           <View className="flex-row gap-4 mt-auto">
             <TouchableOpacity onPress={() => reportIssueSheetRef.current?.close()} className="flex-1 p-4 bg-gray-200 rounded-2xl">
               <Text className="text-lg font-bold text-center text-gray-700">Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleReportIssue} disabled={isReportingIssue || !selectedReason} className={`flex-1 p-4 rounded-2xl flex-row items-center justify-center ${!selectedReason || isReportingIssue ? 'bg-red-200' : 'bg-red-500'}`}>
+            <TouchableOpacity onPress={handleReportIssue} disabled={isReportingIssue || !selectedReason} className={`flex-1 p-4 rounded-2xl flex-row items-center justify-center ${!selectedReason || isReportingIssue ? "bg-red-200" : "bg-red-500"}`}>
               {isReportingIssue ? (
                 <ActivityIndicator size="small" color="white" />
               ) : (
@@ -841,7 +803,6 @@ const TripDetailScreen = () => {
         </View>
       </ReusableBottomSheet>
 
-      {/* Mine Owner Contact Bottom Sheet */}
       <ReusableBottomSheet ref={mineContactSheetRef} enablePanDownToClose={true} backgroundStyle={{ backgroundColor: "#fff" }} handleIndicatorStyle={{ backgroundColor: "#d1d5db" }}>
         <View className="flex-1 p-6">
           <View className="items-center mb-8">
@@ -890,7 +851,6 @@ const TripDetailScreen = () => {
         </View>
       </ReusableBottomSheet>
 
-      {/* Buyer Contact Bottom Sheet */}
       <ReusableBottomSheet ref={buyerContactSheetRef} enablePanDownToClose={true} backgroundStyle={{ backgroundColor: "#fff" }} handleIndicatorStyle={{ backgroundColor: "#d1d5db" }}>
         <View className="flex-1 p-6">
           <View className="items-center mb-8">

@@ -1,19 +1,15 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Modal, StyleSheet, Dimensions, StatusBar } from "react-native";
+import { View, Text, TouchableOpacity, Modal, StyleSheet, StatusBar } from "react-native";
 import { Feather, FontAwesome6, FontAwesome5 } from "@expo/vector-icons";
 import MapViewComponent from "./MapViewComponent";
 import { LinearGradient } from "expo-linear-gradient";
-
-const { height, width } = Dimensions.get("window");
 
 const LiveTrack = ({ driverLocation, mineLocation, deliveryLocation, milestoneHistory = [] }) => {
   const [isMapVisible, setMapVisible] = useState(false);
 
   return (
     <>
-      {/* Professional Card Design */}
       <View style={styles.card}>
-        {/* Header Section */}
         <View style={styles.header}>
           <View style={styles.iconContainer}>
             <LinearGradient colors={["#059669", "#047857"]} style={styles.gradient}>
@@ -32,10 +28,8 @@ const LiveTrack = ({ driverLocation, mineLocation, deliveryLocation, milestoneHi
           </View>
         </View>
 
-        {/* Divider */}
         <View style={styles.divider} />
 
-        {/* Content Section */}
         <View style={styles.content}>
           <View style={styles.infoCard}>
             <View style={styles.infoHeader}>
@@ -54,11 +48,9 @@ const LiveTrack = ({ driverLocation, mineLocation, deliveryLocation, milestoneHi
         </View>
       </View>
 
-      {/* Enhanced Full-Screen Modal */}
       <Modal animationType="slide" transparent={false} visible={isMapVisible} onRequestClose={() => setMapVisible(false)} statusBarTranslucent={true}>
         <StatusBar backgroundColor="transparent" barStyle="dark-content" translucent />
         <View style={styles.fullScreenContainer}>
-          {/* Enhanced Header with gradient background */}
           <LinearGradient colors={["rgba(255,255,255,0.95)", "rgba(255,255,255,0.85)"]} style={styles.modalHeader}>
             <View style={styles.headerLeft}>
               <View style={styles.headerIcon}>
@@ -77,12 +69,10 @@ const LiveTrack = ({ driverLocation, mineLocation, deliveryLocation, milestoneHi
             </TouchableOpacity>
           </LinearGradient>
 
-          {/* Map Container */}
           <View style={styles.mapWrapper}>
             <MapViewComponent driverLocation={driverLocation} mineLocation={mineLocation} deliveryLocation={deliveryLocation} milestoneHistory={milestoneHistory} />
           </View>
 
-          {/* Optional: Bottom Safe Area for devices with home indicator */}
           <View style={styles.bottomSafeArea} />
         </View>
       </Modal>
@@ -91,7 +81,6 @@ const LiveTrack = ({ driverLocation, mineLocation, deliveryLocation, milestoneHi
 };
 
 const styles = StyleSheet.create({
-  // Professional Card Styles (unchanged)
   card: {
     backgroundColor: "white",
     borderRadius: 16,
@@ -226,8 +215,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginLeft: 12,
   },
-
-  // Enhanced Full-Screen Modal Styles
   fullScreenContainer: {
     flex: 1,
     backgroundColor: "#f8fafc",

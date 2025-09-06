@@ -10,7 +10,7 @@ export const handleNotificationNavigation = (data) => {
   const { requestId, tripId } = data.payload;
 
   switch (data.type) {
-    // 🟢 Request → RequestDetailScreen
+    // Request → RequestDetailScreen
     case "request_countered":
     case "request_accepted":
     case "request_rejected":
@@ -21,7 +21,7 @@ export const handleNotificationNavigation = (data) => {
       });
       break;
 
-    // 🟢 Truck Owner → TruckOwnerTripDetail
+    // Truck Owner → TruckOwnerTripDetail
     case "driver_reassigned":
     case "driver_assigned":
     case "truck_trip_milestone":
@@ -32,7 +32,7 @@ export const handleNotificationNavigation = (data) => {
       });
       break;
 
-    // 🟢 Driver → TripDetail
+    // Driver → TripDetail
     case "driver_unassigned":
     case "driver_trip_assigned":
     case "driver_milestone_verified":

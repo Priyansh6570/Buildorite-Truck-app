@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
-  StatusBar,
   ActivityIndicator,
   SafeAreaView,
 } from "react-native";
@@ -78,7 +77,6 @@ const ProfileScreen = () => {
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex-1">
         <ScrollView className="flex-1">
-          {/* Header Section */}
           <View className="pt-14 pb-14 bg-[#151E2C]" style={{ paddingTop: insets.top }}>
             <View className="flex-row items-center justify-between px-8 pt-4 pb-2">
               <View className="flex-row items-center">

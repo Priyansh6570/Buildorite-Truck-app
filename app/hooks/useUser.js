@@ -1,4 +1,3 @@
-// hooks/useUser.js
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../api/axiosInstance";
 import { useAuthStore } from "../store/authStore";
@@ -11,7 +10,8 @@ export const useUpdatePushToken = () => {
     mutationFn: async (token) => {
       if (!token) {
         throw new Error("Push token is required.");
-      } console.log("Updating push token:", token);
+      }
+      console.log("Updating push token:", token);
       const data = await api.patch("/user/me/pushtoken", { pushToken: token.pushToken });
       console.log("Push token updated:", data._response);
     },

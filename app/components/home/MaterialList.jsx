@@ -12,15 +12,13 @@ const MaterialCard = ({ material, routeNav }) => {
   const navigation = useNavigation();
   const scaleValue = useRef(new Animated.Value(1)).current;
 
-  // --- Status Configuration ---
-  // This memoized function determines the card's status, text, color, and interactivity.
   const statusConfig = useMemo(() => {
     const status = material.availability_status?.toLowerCase();
     switch (status) {
       case "available":
         return { text: "Available", color: "bg-green-500", isPressable: true };
       case "limited":
-        return { text: "Limited", color: "bg-amber-500", isPressable: true }; // Yellowish-orange for limited stock
+        return { text: "Limited", color: "bg-amber-500", isPressable: true };
       case "unavailable":
       default:
         return { text: "Unavailable", color: "bg-red-500", isPressable: false };
@@ -38,9 +36,7 @@ const MaterialCard = ({ material, routeNav }) => {
   const secondPrice = priceList[1];
   const extraPriceCount = priceList.length > 2 ? priceList.length - 2 : 0;
 
-  const formatPrice = (amount) => {
-    return amount > 1000 ? `${Math.floor(amount / 1000)}K` : amount;
-  };
+  const formatPrice = (amount) => amount > 1000 ? `${Math.floor(amount / 1000)}K` : amount;
 
   const handleNavigate = () => {
     navigation.navigate(routeNav, { materialId: material._id });
@@ -77,27 +73,26 @@ const MaterialCard = ({ material, routeNav }) => {
     return `${months}mo ago`;
   };
 
-  // Icon configuration
   const iconConfigs = [
     {
       library: "FontAwesome6",
       name: "mountain",
-      gradientColors: ["#f97316", "#ea580c"], // Orange
+      gradientColors: ["#f97316", "#ea580c"],
     },
     {
       library: "FontAwesome6",
       name: "gem",
-      gradientColors: ["#8b5cf6", "#7c3aed"], // Purple
+      gradientColors: ["#8b5cf6", "#7c3aed"],
     },
     {
       library: "FontAwesome6",
       name: "layer-group",
-      gradientColors: ["#10b981", "#059669"], // Green
+      gradientColors: ["#10b981", "#059669"],
     },
     {
       library: "FontAwesome6",
       name: "cubes",
-      gradientColors: ["#3b82f6", "#2563eb"], // Blue
+      gradientColors: ["#3b82f6", "#2563eb"],
     },
   ];
 
@@ -111,169 +106,67 @@ const MaterialCard = ({ material, routeNav }) => {
 
   const selectedIcon = getRandomIcon(material._id);
 
-  const renderIcon = (iconConfig, isUnavailable) => {
+  const renderIcon = (iconConfig) => {
     const iconProps = {
       name: iconConfig.name,
       size: 20,
       color: "white",
     };
-
-    if (iconConfig.library === "FontAwesome6") {
-      return <FontAwesome6 {...iconProps} />;
-    } else if (iconConfig.library === "MaterialCommunityIcons") {
-      return <MaterialCommunityIcons {...iconProps} />;
-    } else if (iconConfig.library === "AntDesign") {
-      return <AntDesign {...iconProps} />;
-    }
+    if (iconConfig.library === "FontAwesome6") return <FontAwesome6 {...iconProps} />;
+    else if (iconConfig.library === "MaterialCommunityIcons") return <MaterialCommunityIcons {...iconProps} />;
+    else if (iconConfig.library === "AntDesign") return <AntDesign {...iconProps} />;
     return null;
   };
 
   const renderPricingBoxes = () => {
     const pricingCount = priceList.length;
-
-    if (pricingCount === 0) {
-      return null;
-    }
-
-    // Case 1: More than 2 pricing options
+    if (pricingCount === 0) return null;
     if (pricingCount > 2) {
       return (
         <View className="space-y-2">
-          {/* First pricing box */}
-          <View
-            className={`px-4 py-5 mb-2 rounded-lg ${isUnavailable ? "bg-gray-300" : "bg-[#F9FAFB]"
-              }`}
-          >
+          <View className={`px-4 py-5 mb-2 rounded-lg ${isUnavailable ? "bg-gray-300" : "bg-[#F9FAFB]"}`}>
             <View className="flex-row items-center justify-between">
-              <Text
-                className={`text-lg font-semibold ${isUnavailable ? "text-gray-500" : "text-gray-600"
-                  }`}
-              >
-                per {firstPrice.unit?.name || "unit"}
-              </Text>
-              <Text
-                className={`text-xl font-bold ${isUnavailable ? "text-gray-500" : "text-gray-800"
-                  }`}
-              >
-                ₹{formatPrice(firstPrice.price || 0)}
-              </Text>
+              <Text className={`text-lg font-semibold ${isUnavailable ? "text-gray-500" : "text-gray-600"}`}>per {firstPrice.unit?.name || "unit"}</Text>
+              <Text className={`text-xl font-bold ${isUnavailable ? "text-gray-500" : "text-gray-800"}`}>₹{formatPrice(firstPrice.price || 0)}</Text>
             </View>
           </View>
-
-          {/* Second pricing box */}
-          <View
-            className={`px-4 py-5 mb-2 rounded-lg ${isUnavailable ? "bg-gray-300" : "bg-[#F9FAFB]"
-              }`}
-          >
+          <View className={`px-4 py-5 mb-2 rounded-lg ${isUnavailable ? "bg-gray-300" : "bg-[#F9FAFB]"}`}>
             <View className="flex-row items-center justify-between">
-              <Text
-                className={`text-lg font-semibold ${isUnavailable ? "text-gray-500" : "text-gray-600"
-                  }`}
-              >
-                per {secondPrice.unit?.name || "unit"}
-              </Text>
-              <Text
-                className={`text-xl font-bold ${isUnavailable ? "text-gray-500" : "text-gray-800"
-                  }`}
-              >
-                ₹{formatPrice(secondPrice.price || 0)}
-              </Text>
+              <Text className={`text-lg font-semibold ${isUnavailable ? "text-gray-500" : "text-gray-600"}`}>per {secondPrice.unit?.name || "unit"}</Text>
+              <Text className={`text-xl font-bold ${isUnavailable ? "text-gray-500" : "text-gray-800"}`}>₹{formatPrice(secondPrice.price || 0)}</Text>
             </View>
           </View>
-
-          {/* More options gradient box */}
           <View className="w-full mb-4 overflow-hidden rounded-xl">
-            <LinearGradient
-              colors={
-                isUnavailable ? ["#9ca3af", "#9ca3af"] : ["#212B39", "#4A5462"]
-              }
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              className="p-3 py-5 rounded-lg"
-            >
-              <Text className="font-medium text-center text-white">
-                +{extraPriceCount} more pricing option
-                {extraPriceCount > 1 ? "s" : ""}
-              </Text>
+            <LinearGradient colors={isUnavailable ? ["#9ca3af", "#9ca3af"] : ["#212B39", "#4A5462"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} className="p-3 py-5 rounded-lg">
+              <Text className="font-medium text-center text-white">+{extraPriceCount} more pricing option{extraPriceCount > 1 ? "s" : ""}</Text>
             </LinearGradient>
           </View>
         </View>
       );
     }
-
-    // Case 2: Only 1 pricing option
     if (pricingCount === 1) {
       return (
         <View className="w-full mb-4 overflow-hidden rounded-xl">
-          <LinearGradient
-            colors={
-              isUnavailable ? ["#9ca3af", "#9ca3af"] : ["#212B39", "#4A5462"]
-            }
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            className="p-4 py-5 rounded-lg"
-          >
-            <Text
-              className={`text-md text-center text-slate-50 ${isUnavailable ? "opacity-70" : ""
-                }`}
-            >
-              {isUnavailable ? "was" : "starting from"}
-            </Text>
-            <Text
-              className={`text-2xl text-center font-bold text-white mt-1 ${isUnavailable ? "line-through opacity-70" : ""
-                }`}
-            >
-              ₹{formatPrice(firstPrice.price || 0)}/
-              {firstPrice.unit?.name || "unit"}
-            </Text>
+          <LinearGradient colors={isUnavailable ? ["#9ca3af", "#9ca3af"] : ["#212B39", "#4A5462"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} className="p-4 py-5 rounded-lg">
+            <Text className={`text-md text-center text-slate-50 ${isUnavailable ? "opacity-70" : ""}`}>{isUnavailable ? "was" : "starting from"}</Text>
+            <Text className={`text-2xl text-center font-bold text-white mt-1 ${isUnavailable ? "line-through opacity-70" : ""}`}>₹{formatPrice(firstPrice.price || 0)}/{firstPrice.unit?.name || "unit"}</Text>
           </LinearGradient>
         </View>
       );
     }
-
-    // Case 3: Exactly 2 pricing options
     if (pricingCount === 2) {
       return (
         <View className="space-y-2">
-          {/* First pricing box */}
-          <View
-            className={`px-4 py-5 mb-2 rounded-lg ${isUnavailable ? "bg-gray-300" : "bg-[#F9FAFB]"
-              }`}
-          >
+          <View className={`px-4 py-5 mb-2 rounded-lg ${isUnavailable ? "bg-gray-300" : "bg-[#F9FAFB]"}`}>
             <View className="flex-row items-center justify-between">
-              <Text
-                className={`text-lg font-semibold ${isUnavailable ? "text-gray-500" : "text-gray-600"
-                  }`}
-              >
-                per {firstPrice.unit?.name || "unit"}
-              </Text>
-              <Text
-                className={`text-xl font-bold ${isUnavailable ? "text-gray-500" : "text-gray-800"
-                  }`}
-              >
-                ₹{formatPrice(firstPrice.price || 0)}
-              </Text>
+              <Text className={`text-lg font-semibold ${isUnavailable ? "text-gray-500" : "text-gray-600"}`}>per {firstPrice.unit?.name || "unit"}</Text>
+              <Text className={`text-xl font-bold ${isUnavailable ? "text-gray-500" : "text-gray-800"}`}>₹{formatPrice(firstPrice.price || 0)}</Text>
             </View>
           </View>
-
-          {/* Second pricing box */}
-          <View
-            className={`px-4 py-5 mb-4 rounded-lg ${isUnavailable ? "bg-gray-300" : "bg-[#F9FAFB]"
-              }`}
-          >
+          <View className={`px-4 py-5 mb-4 rounded-lg ${isUnavailable ? "bg-gray-300" : "bg-[#F9FAFB]"}`}>
             <View className="flex-row items-center justify-between">
-              <Text
-                className={`text-lg font-semibold ${isUnavailable ? "text-gray-500" : "text-gray-600"
-                  }`}
-              >
-                per {secondPrice.unit?.name || "unit"}
-              </Text>
-              <Text
-                className={`text-xl font-bold ${isUnavailable ? "text-gray-500" : "text-gray-800"
-                  }`}
-              >
-                ₹{formatPrice(secondPrice.price || 0)}
-              </Text>
+              <Text className={`text-lg font-semibold ${isUnavailable ? "text-gray-500" : "text-gray-600"}`}>per {secondPrice.unit?.name || "unit"}</Text>
+              <Text className={`text-xl font-bold ${isUnavailable ? "text-gray-500" : "text-gray-800"}`}>₹{formatPrice(secondPrice.price || 0)}</Text>
             </View>
           </View>
         </View>

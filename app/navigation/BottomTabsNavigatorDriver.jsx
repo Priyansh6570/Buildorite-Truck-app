@@ -18,7 +18,6 @@ import { useUnreadCount } from "../hooks/useNotification";
 
 const Tab = createBottomTabNavigator();
 
-// Custom Tab Bar Component
 const CustomTabBar = ({ state, descriptors, navigation, unreadCount }) => {
   return (
     <View style={{
@@ -67,7 +66,6 @@ const CustomTabBar = ({ state, descriptors, navigation, unreadCount }) => {
   );
 };
 
-// Animated Tab Button Component
 const AnimatedTabButton = ({ onPress, isFocused, routeName, label, unreadCount }) => {
   const scaleValue = useRef(new Animated.Value(1)).current;
   const opacityValue = useRef(new Animated.Value(1)).current;
@@ -157,7 +155,6 @@ const AnimatedTabButton = ({ onPress, isFocused, routeName, label, unreadCount }
           alignItems: 'center',
         }}
       >
-        {/* Gradient Background */}
         <Animated.View
           style={{
             position: 'absolute',
@@ -183,7 +180,6 @@ const AnimatedTabButton = ({ onPress, isFocused, routeName, label, unreadCount }
           </LinearGradient>
         </Animated.View>
 
-        {/* Regular Icon */}
         <Animated.View
           style={{
             opacity: gradientOpacityValue.interpolate({
@@ -199,7 +195,6 @@ const AnimatedTabButton = ({ onPress, isFocused, routeName, label, unreadCount }
           />
         </Animated.View>
 
-        {/* Unread Badge */}
         {routeName === "Activity" && unreadCount > 0 && (
           <View
             style={{
@@ -263,7 +258,6 @@ const BottomTabsNavigatorDriver = () => {
   const { user } = useAuthStore();
   const { expoPushToken } = useNotification();
   const { mutate: updatePushToken } = useUpdatePushToken();
-  const checkUserMutation = useCheckUser();
 
   const { data: unreadCount } = useUnreadCount();
 

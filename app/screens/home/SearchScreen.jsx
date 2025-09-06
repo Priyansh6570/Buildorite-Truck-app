@@ -2,9 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
-  FlatList,
   ActivityIndicator,
-  StatusBar,
   TouchableOpacity,
   TextInput,
   Animated,
@@ -17,7 +15,6 @@ import { useFetchMines } from '../../hooks/useMine';
 import { useFetchMaterials } from '../../hooks/useMaterial';
 import MineCard from '../../components/home/MineList';
 import MaterialCard from '../../components/home/MaterialList';
-import Toast from 'react-native-toast-message';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const HEADER_MAX_HEIGHT = 150;
@@ -71,7 +68,6 @@ const SearchScreen = ({ route, navigation }) => {
   } = useFetchMaterials(materialFilters, materialSearch);
 
   useEffect(() => {
-    // Reset both stores when the screen is first mounted
     const { resetStore: resetMineStore } = useMineStore.getState();
     const { resetStore: resetMaterialStore } = useMaterialStore.getState();
     
@@ -198,7 +194,6 @@ const SearchScreen = ({ route, navigation }) => {
   };
   const [searchFocused, setSearchFocused] = useState(false);
 
-  // Update header animations to work with white background
   const headerHeight = scrollY.interpolate({
     inputRange: [0, HEADER_SCROLL_DISTANCE],
     outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],

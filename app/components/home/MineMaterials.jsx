@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  ActivityIndicator,
-  Image,
-} from "react-native";
+import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { useFetchMaterialsByMine } from "../../hooks/useMaterial";
 import MaterialCard from "./MaterialList";
@@ -21,13 +14,7 @@ const MineMaterial = () => {
 
   const insets = useSafeAreaInsets();
 
-  const {
-    data: materials,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useFetchMaterialsByMine(mineId);
+  const { data: materials, isLoading, isError, error, refetch } = useFetchMaterialsByMine(mineId);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -48,15 +35,8 @@ const MineMaterial = () => {
 
   return (
     <View className="flex-1 bg-gray-50">
-      {/* Header */}
-      <View
-        className="flex-row items-center justify-center px-8 pb-8 bg-gray-900"
-        style={{ paddingTop: insets.top + 40 }}
-      >
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          className="absolute left-8 top-16 p-3 py-5 bg-[#2C3441] bg-opacity-50 border border-slate-500 rounded-xl"
-        >
+      <View className="flex-row items-center justify-center px-8 pb-8 bg-gray-900" style={{ paddingTop: insets.top + 40 }}>
+        <TouchableOpacity onPress={() => navigation.goBack()} className="absolute left-8 top-16 p-3 py-5 bg-[#2C3441] bg-opacity-50 border border-slate-500 rounded-xl">
           <Feather name="arrow-left" size={24} color="white" />
         </TouchableOpacity>
 
@@ -70,13 +50,10 @@ const MineMaterial = () => {
         </View>
       </View>
 
-      {/* Content */}
       {isLoading ? (
         <View className="items-center justify-center flex-1">
           <ActivityIndicator size="large" color="#3b82f6" />
-          <Text className="mt-4 font-medium text-gray-600">
-            Loading materials...
-          </Text>
+          <Text className="mt-4 font-medium text-gray-600">Loading materials...</Text>
         </View>
       ) : isError ? (
         <View className="items-center justify-center flex-1 px-6">
@@ -85,17 +62,9 @@ const MineMaterial = () => {
               <View className="p-4 mb-4 bg-red-100 rounded-full">
                 <Text className="text-2xl">⚠️</Text>
               </View>
-              <Text className="mb-2 text-lg font-bold text-center text-gray-900">
-                Loading Failed
-              </Text>
-              <Text className="mb-4 text-center text-gray-600">
-                {error?.message ||
-                  "Unable to load materials. Please try again."}
-              </Text>
-              <TouchableOpacity
-                onPress={onRefresh}
-                className="w-full px-6 py-3 bg-blue-600 rounded-xl"
-              >
+              <Text className="mb-2 text-lg font-bold text-center text-gray-900">Loading Failed</Text>
+              <Text className="mb-4 text-center text-gray-600">{error?.message || "Unable to load materials. Please try again."}</Text>
+              <TouchableOpacity onPress={onRefresh} className="w-full px-6 py-3 bg-blue-600 rounded-xl">
                 <Text className="font-bold text-center text-white">Retry</Text>
               </TouchableOpacity>
             </View>
@@ -108,12 +77,8 @@ const MineMaterial = () => {
               <View className="p-4 mb-4 bg-blue-100 rounded-full">
                 <Text className="text-2xl">📦</Text>
               </View>
-              <Text className="mb-2 text-lg font-bold text-center text-gray-900">
-                No Materials Found
-              </Text>
-              <Text className="mb-4 text-center text-gray-600">
-                No materials have been added to this mine yet.
-              </Text>
+              <Text className="mb-2 text-lg font-bold text-center text-gray-900">No Materials Found</Text>
+              <Text className="mb-4 text-center text-gray-600">No materials have been added to this mine yet.</Text>
             </View>
           </View>
         </View>

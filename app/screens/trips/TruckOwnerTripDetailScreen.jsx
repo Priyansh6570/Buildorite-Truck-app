@@ -12,7 +12,6 @@ import LiveTrack from "../../components/Trip/LiveTrack";
 import ReusableBottomSheet from "../../components/Ui/ReusableBottomSheet";
 import { LinearGradient } from "expo-linear-gradient";
 
-// Trip status banner component
 const TripStatusBanner = ({ lastMilestone }) => {
   const details = useMemo(() => {
     const baseStyle = "flex-row items-center p-4 border rounded-xl shadow-sm";
@@ -127,17 +126,12 @@ const TripStatusBanner = ({ lastMilestone }) => {
 
   return (
     <View className={details.style}>
-      {/* Status indicator dot */}
       <View className="absolute top-3 right-3">
         <View className={`w-3 h-3 rounded-full ${details.statusDot}`} />
       </View>
-
-      {/* Icon container */}
       <View className={details.iconContainer}>
         <FontAwesome6 name={details.icon} size={18} color="white" solid />
       </View>
-
-      {/* Content */}
       <View className="flex-1">
         <Text className={`text-lg font-bold ${details.textColor}`}>{details.heading}</Text>
         <Text className={`text-sm mt-1 ${details.subTextColor} leading-5`}>{details.subheading}</Text>
@@ -149,17 +143,12 @@ const TripStatusBanner = ({ lastMilestone }) => {
 const TripCancelBanner = ({ cancelReason }) => {
   return (
     <View className="flex-row items-center p-4 border border-red-200 shadow-sm rounded-xl bg-red-50">
-      {/* Status indicator dot */}
       <View className="absolute top-3 right-3">
         <View className="w-3 h-3 bg-red-500 rounded-full" />
       </View>
-
-      {/* Icon container */}
       <View className="items-center justify-center w-12 h-12 mr-4 bg-red-600 rounded-xl">
         <FontAwesome6 name="ban" size={18} color="white" solid />
       </View>
-
-      {/* Content */}
       <View className="flex-1">
         <Text className="text-lg font-bold text-red-900">Trip Canceled</Text>
         <Text className="mt-1 text-sm leading-5 text-red-700">{cancelReason || "Trip has been canceled"}</Text>
@@ -168,28 +157,23 @@ const TripCancelBanner = ({ cancelReason }) => {
   );
 };
 
-    const issueReasons = [
-    { label: 'Accident', value: 'accident' },
-    { label: 'Vehicle Breakdown', value: 'vehicle_breakdown' },
-    { label: 'Unable to Load', value: 'unable_to_load' },
-    { label: 'Delivery Issue', value: 'delivery_issue' },
-    { label: 'Other', value: 'other' },
-  ];
+const issueReasons = [
+  { label: 'Accident', value: 'accident' },
+  { label: 'Vehicle Breakdown', value: 'vehicle_breakdown' },
+  { label: 'Unable to Load', value: 'unable_to_load' },
+  { label: 'Delivery Issue', value: 'delivery_issue' },
+  { label: 'Other', value: 'other' },
+];
 
 const TripIssueReportedBanner = ({ issue }) => {
   return (
     <View className="flex-row items-center p-4 border border-orange-200 shadow-sm rounded-xl bg-orange-50">
-      {/* Status indicator dot */}
       <View className="absolute top-3 right-3">
         <View className="w-3 h-3 bg-orange-500 rounded-full" />
       </View>
-
-      {/* Icon container */}
       <View className="items-center justify-center w-12 h-12 mr-4 bg-orange-600 rounded-xl">
         <FontAwesome6 name="triangle-exclamation" size={18} color="white" solid />
       </View>
-
-      {/* Content */}
       <View className="flex-1">
         <Text className="text-lg font-bold text-orange-900">Issue Reported : <Text className="font-medium text-orange-700">{issueReasons.find(r => r.value === issue?.reason)?.label}</Text></Text>
         <Text className="mt-1 text-sm leading-5 text-orange-700">{issue?.notes || "An issue has been reported for this trip."}</Text>
@@ -219,7 +203,6 @@ const TruckOwnerTripDetailScreen = () => {
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isPress, setIsPress] = useState(false);
 
-  // Enhanced tracking state
   const [liveDriverLocation, setLiveDriverLocation] = useState(null);
   const [trackingStatus, setTrackingStatus] = useState("idle");
   const [trackingError, setTrackingError] = useState("");
@@ -463,7 +446,6 @@ const TruckOwnerTripDetailScreen = () => {
       case "requesting":
         return (
           <View className="bg-white border border-gray-100 shadow-lg rounded-2xl">
-            {/* Header */}
             <View className="px-6 py-5 border-b border-gray-100">
               <View className="flex-row items-center">
                 <View className="items-center justify-center w-12 h-12 mr-4 overflow-hidden rounded-xl">
@@ -478,25 +460,20 @@ const TruckOwnerTripDetailScreen = () => {
                 <View className="w-2 h-2 bg-blue-400 rounded-full" />
               </View>
             </View>
-
-            {/* Loading Content */}
             <View className="px-6 py-6">
               <View className="flex-row items-center justify-center p-6 border border-blue-100 bg-blue-50 rounded-xl">
                 <ActivityIndicator size="small" color="#3B82F6" />
                 <Text className="ml-4 font-semibold text-blue-800">Requesting driver location...</Text>
               </View>
-
               <View className="p-4 mt-4 bg-gray-50 rounded-xl">
                 <Text className="text-sm leading-5 text-center text-gray-600">Please wait while we connect to your driver's GPS tracker</Text>
               </View>
             </View>
           </View>
         );
-
       case "failed":
         return (
           <View className="bg-white border border-gray-100 shadow-lg rounded-2xl">
-            {/* Header */}
             <View className="px-6 py-5 border-b border-gray-100">
               <View className="flex-row items-center">
                 <View className="items-center justify-center w-12 h-12 mr-4 overflow-hidden rounded-xl">
@@ -513,8 +490,6 @@ const TruckOwnerTripDetailScreen = () => {
                 </TouchableOpacity>
               </View>
             </View>
-
-            {/* Error Content */}
             <View className="px-6 py-6">
               <View className="p-4 mb-4 border border-red-100 bg-red-50 rounded-xl">
                 <View className="flex-row items-center mb-2">
@@ -525,7 +500,6 @@ const TruckOwnerTripDetailScreen = () => {
                 </View>
                 <Text className="text-sm text-red-600 ml-9">Unable to connect to driver's GPS. This could be due to poor signal or device issues.</Text>
               </View>
-
               <TouchableOpacity activeOpacity={0.8} onPress={handleStartTracking} className="flex-row items-center justify-center w-full py-4 bg-red-600 shadow-sm rounded-xl">
                 <FontAwesome5 name="sync-alt" size={14} color="white" />
                 <Text className="ml-3 text-base font-bold text-white">Try Again</Text>
@@ -533,11 +507,9 @@ const TruckOwnerTripDetailScreen = () => {
             </View>
           </View>
         );
-
       case "stale":
         return (
           <View className="bg-white border border-gray-100 shadow-lg rounded-2xl">
-            {/* Header */}
             <View className="px-6 py-5 border-b border-gray-100">
               <View className="flex-row items-center">
                 <View className="items-center justify-center w-12 h-12 mr-4 overflow-hidden rounded-xl">
@@ -554,8 +526,6 @@ const TruckOwnerTripDetailScreen = () => {
                 </TouchableOpacity>
               </View>
             </View>
-
-            {/* Stale Content */}
             <View className="px-6 py-6">
               <View className="p-4 mb-4 border border-orange-100 bg-orange-50 rounded-xl">
                 <View className="flex-row items-center mb-2">
@@ -566,7 +536,6 @@ const TruckOwnerTripDetailScreen = () => {
                 </View>
                 <Text className="text-sm text-orange-600 ml-9">Showing last known location from {locationAge} minutes ago. Live tracking unavailable.</Text>
               </View>
-
               <TouchableOpacity activeOpacity={0.8} onPress={() => setShowMap(true)} className="flex-row items-center justify-center w-full py-4 bg-orange-600 shadow-sm rounded-xl">
                 <FontAwesome5 name="map-marked-alt" size={14} color="white" />
                 <Text className="ml-3 text-base font-bold text-white">View Last Location</Text>
@@ -574,11 +543,9 @@ const TruckOwnerTripDetailScreen = () => {
             </View>
           </View>
         );
-
       case "active":
         return (
           <View className="bg-white border border-gray-100 shadow-lg rounded-2xl">
-            {/* Header */}
             <View className="px-6 py-5 border-b border-gray-100">
               <View className="flex-row items-center">
                 <View className="items-center justify-center w-12 h-12 mr-4 overflow-hidden rounded-xl">
@@ -601,8 +568,6 @@ const TruckOwnerTripDetailScreen = () => {
                 </View>
               </View>
             </View>
-
-            {/* Success Content */}
             <View className="px-6 py-6">
               <View className="p-4 mb-4 border border-green-100 bg-green-50 rounded-xl">
                 <View className="flex-row items-center mb-2">
@@ -613,7 +578,6 @@ const TruckOwnerTripDetailScreen = () => {
                 </View>
                 <Text className="text-sm text-green-600 ml-9">Driver location is being tracked in real-time. Last updated just now.</Text>
               </View>
-
               <TouchableOpacity activeOpacity={0.8} onPress={() => setShowMap(true)} className="flex-row items-center justify-center w-full py-4 bg-green-600 shadow-sm rounded-xl">
                 <FontAwesome5 name="map-marked-alt" size={14} color="white" />
                 <Text className="ml-3 text-base font-bold text-white">View Live Map</Text>
@@ -621,11 +585,9 @@ const TruckOwnerTripDetailScreen = () => {
             </View>
           </View>
         );
-
-      default: // idle
+      default:
         return (
           <View className="bg-white border border-gray-100 shadow-lg rounded-2xl">
-            {/* Header */}
             <View className="px-6 py-5 border-b border-gray-100">
               <View className="flex-row items-center">
                 <View className="items-center justify-center w-12 h-12 mr-4 overflow-hidden rounded-xl">
@@ -640,8 +602,6 @@ const TruckOwnerTripDetailScreen = () => {
                 <View className="w-2 h-2 bg-indigo-400 rounded-full" />
               </View>
             </View>
-
-            {/* Start Tracking Content */}
             <View className="px-6 py-6">
               <View className="p-4 mb-4 border border-indigo-100 bg-indigo-50 rounded-xl">
                 <View className="flex-row items-center mb-3">
@@ -652,7 +612,6 @@ const TruckOwnerTripDetailScreen = () => {
                 </View>
                 <Text className="text-sm leading-5 text-indigo-700">Get live updates on your driver's location, estimated arrival times, and route progress.</Text>
               </View>
-
               <TouchableOpacity activeOpacity={0.8} onPress={handleStartTracking} className="flex-row items-center justify-center w-full py-4 bg-indigo-600 shadow-sm rounded-xl">
                 <Feather name="map-pin" size={18} color="white" />
                 <Text className="ml-3 text-base font-bold text-white">Start Tracking Driver</Text>
@@ -688,7 +647,6 @@ const TruckOwnerTripDetailScreen = () => {
 
   return (
     <View className="flex-1 bg-white">
-      {/* Header */}
       <View style={{ paddingTop: insets.top }} className="bg-white">
         <View className="flex-row items-center justify-between p-6 pt-4 pb-4">
           <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.goBack()} className="p-3 bg-gray-100 border border-slate-200 rounded-xl">
@@ -698,10 +656,8 @@ const TruckOwnerTripDetailScreen = () => {
           <View className="w-12 h-12" />
         </View>
       </View>
-
       <View className="flex-1">
         <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }} refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={OnRefresh} />}>
-          {/* Status Section */}
           <View className="px-4 pt-4 pb-2">
             {trip.status === "canceled" ? (
               <TripCancelBanner cancelReason={trip.cancel_reason} />
@@ -711,8 +667,6 @@ const TruckOwnerTripDetailScreen = () => {
               <TripStatusBanner lastMilestone={lastMilestone} />
             )}
           </View>
-
-          {/* Track Driver Section */}
           {((trip.status === "active") || (trip.status === "issue_reported")) && (
             <View className="px-4 py-3">
               {showMap && liveDriverLocation ? (
@@ -728,11 +682,8 @@ const TruckOwnerTripDetailScreen = () => {
               )}
             </View>
           )}
-
-          {/* Trip Information Section */}
           <View className="px-4 py-3">
             <View className="bg-white border border-gray-100 shadow-lg rounded-2xl">
-              {/* Header Section */}
               <View className="px-6 py-5 border-b border-gray-100">
                 <View className="flex-row items-center">
                   <View className="items-center justify-center w-12 h-12 mr-4 overflow-hidden rounded-xl">
@@ -747,11 +698,8 @@ const TruckOwnerTripDetailScreen = () => {
                   <View className="w-2 h-2 bg-green-400 rounded-full" />
                 </View>
               </View>
-
-              {/* Content Section */}
               <View className="px-2 py-2">
                 <View className="border bg-gray-50/70 rounded-xl border-gray-100/50">
-                  {/* Schedule Date */}
                   <View className="flex-row items-center justify-between px-5 py-4">
                     <View className="flex-row items-center flex-1">
                       <View className="items-center justify-center w-8 h-8 mr-3 bg-blue-100 rounded-lg">
@@ -761,10 +709,7 @@ const TruckOwnerTripDetailScreen = () => {
                     </View>
                     <Text className="text-base font-semibold text-gray-900">{format(new Date(trip?.request_id?.finalized_agreement?.schedule?.date), "MMM d, yyyy")}</Text>
                   </View>
-
                   <View className="mx-5 border-b border-gray-200/60" />
-
-                  {/* Material */}
                   <View className="flex-row items-center justify-between px-5 py-4">
                     <View className="flex-row items-center flex-1">
                       <View className="items-center justify-center w-8 h-8 mr-3 rounded-lg bg-amber-100">
@@ -774,10 +719,7 @@ const TruckOwnerTripDetailScreen = () => {
                     </View>
                     <Text className="font-semibold text-gray-900 text-base max-w-[160px] text-right">{trip?.request_id?.material_id?.name}</Text>
                   </View>
-
                   <View className="mx-5 border-b border-gray-200/60" />
-
-                  {/* Quantity */}
                   <View className="flex-row items-center justify-between px-5 py-4">
                     <View className="flex-row items-center flex-1">
                       <View className="items-center justify-center w-8 h-8 mr-3 bg-purple-100 rounded-lg">
@@ -789,10 +731,7 @@ const TruckOwnerTripDetailScreen = () => {
                       {trip?.request_id?.finalized_agreement?.quantity} {trip?.request_id?.finalized_agreement?.unit?.name}
                     </Text>
                   </View>
-
                   <View className="mx-5 border-b border-gray-200/60" />
-
-                  {/* Price */}
                   <View className="flex-row items-center justify-between px-5 py-4">
                     <View className="flex-row items-center flex-1">
                       <View className="items-center justify-center w-8 h-8 mr-3 bg-green-100 rounded-lg">
@@ -808,11 +747,8 @@ const TruckOwnerTripDetailScreen = () => {
               </View>
             </View>
           </View>
-
-          {/* Mine Details Section */}
           <View className="px-4 py-3">
             <View className="bg-white border border-gray-100 shadow-lg rounded-2xl">
-              {/* Header Section */}
               <View className="px-6 py-5 border-b border-gray-100">
                 <View className="flex-row items-center">
                   <View className="items-center justify-center w-12 h-12 mr-4 overflow-hidden rounded-xl">
@@ -827,11 +763,8 @@ const TruckOwnerTripDetailScreen = () => {
                   <View className="w-2 h-2 bg-orange-400 rounded-full" />
                 </View>
               </View>
-
-              {/* Content Section */}
               <View className="px-2 py-2">
                 <View className="border bg-gray-50/70 rounded-xl border-gray-100/50">
-                  {/* Mine Name */}
                   <View className="px-5 py-4">
                     <View className="flex-row items-center mb-2">
                       <View className="items-center justify-center w-8 h-8 mr-3 rounded-lg bg-amber-100">
@@ -841,10 +774,7 @@ const TruckOwnerTripDetailScreen = () => {
                     </View>
                     <Text className="text-base font-semibold text-gray-900 ml-11">{trip?.request_id?.mine_id?.name}</Text>
                   </View>
-
                   <View className="mx-5 border-b border-gray-200/60" />
-
-                  {/* Address */}
                   <View className="px-5 py-4">
                     <View className="flex-row items-center mb-2">
                       <View className="items-center justify-center w-8 h-8 mr-3 bg-red-100 rounded-lg">
@@ -854,10 +784,7 @@ const TruckOwnerTripDetailScreen = () => {
                     </View>
                     <Text className="text-base font-medium leading-5 text-gray-900 ml-11">{trip?.request_id?.mine_id?.location?.address}</Text>
                   </View>
-
                   <View className="mx-5 border-b border-gray-200/60" />
-
-                  {/* Owner */}
                   <View className="flex-row items-center justify-between px-5 py-4">
                     <View className="flex-1">
                       <View className="flex-row items-center mb-2">
@@ -877,11 +804,8 @@ const TruckOwnerTripDetailScreen = () => {
               </View>
             </View>
           </View>
-
-          {/* Delivery Details Section */}
           <View className="px-4 py-3">
             <View className="bg-white border border-gray-100 shadow-lg rounded-2xl">
-              {/* Header Section */}
               <View className="px-6 py-5 border-b border-gray-100">
                 <View className="flex-row items-center">
                   <View className="items-center justify-center w-12 h-12 mr-4 overflow-hidden rounded-xl">
@@ -896,11 +820,8 @@ const TruckOwnerTripDetailScreen = () => {
                   <View className="w-2 h-2 bg-teal-400 rounded-full" />
                 </View>
               </View>
-
-              {/* Content Section */}
               <View className="px-2 py-2">
                 <View className="border bg-gray-50/70 rounded-xl border-gray-100/50">
-                  {/* Delivery Location */}
                   <View className="px-5 py-4">
                     <View className="flex-row items-center mb-2">
                       <View className="items-center justify-center w-8 h-8 mr-3 bg-teal-100 rounded-lg">
@@ -914,11 +835,8 @@ const TruckOwnerTripDetailScreen = () => {
               </View>
             </View>
           </View>
-
-          {/* Driver Details Section */}
           <View className="px-4 py-3">
             <View className="bg-white border border-gray-100 shadow-lg rounded-2xl">
-              {/* Header Section */}
               <View className="px-6 py-5 border-b border-gray-100">
                 <View className="flex-row items-center">
                   <View className="items-center justify-center w-12 h-12 mr-4 overflow-hidden rounded-xl">
@@ -933,11 +851,8 @@ const TruckOwnerTripDetailScreen = () => {
                   <View className="w-2 h-2 bg-blue-400 rounded-full" />
                 </View>
               </View>
-
-              {/* Content Section */}
               <View className="px-2 py-2">
                 <View className="border bg-gray-50/70 rounded-xl border-gray-100/50">
-                  {/* Driver */}
                   <View className="flex-row items-center justify-between px-5 py-4">
                     <View className="flex-1">
                       <View className="flex-row items-center mb-2">
@@ -953,10 +868,7 @@ const TruckOwnerTripDetailScreen = () => {
                       <Text className="ml-2 text-sm font-semibold text-white">Call</Text>
                     </TouchableOpacity>
                   </View>
-
                   <View className="mx-5 border-b border-gray-200/60" />
-
-                  {/* Vehicle */}
                   <View className="flex-row items-center justify-between px-5 py-4">
                     <View className="flex-row items-center flex-1">
                       <View className="items-center justify-center w-8 h-8 mr-3 bg-green-100 rounded-lg">
@@ -966,10 +878,7 @@ const TruckOwnerTripDetailScreen = () => {
                     </View>
                     <Text className="text-base font-semibold text-gray-900">{trip?.truck_id?.name}</Text>
                   </View>
-
                   <View className="mx-5 border-b border-gray-200/60" />
-
-                  {/* Registration */}
                   <View className="flex-row items-center justify-between px-5 py-4">
                     <View className="flex-row items-center flex-1">
                       <View className="items-center justify-center w-8 h-8 mr-3 bg-indigo-100 rounded-lg">
@@ -985,11 +894,8 @@ const TruckOwnerTripDetailScreen = () => {
               </View>
             </View>
           </View>
-
-          {/* Trip Timeline Section */}
           <View className="px-4 py-3">
             <View className="bg-white border border-gray-100 shadow-lg rounded-2xl">
-              {/* Header Section */}
               <View className="px-6 py-5 border-b border-gray-100">
                 <View className="flex-row items-center">
                   <View className="items-center justify-center w-12 h-12 mr-4 overflow-hidden rounded-xl">
@@ -1009,8 +915,6 @@ const TruckOwnerTripDetailScreen = () => {
                   </View>
                 </View>
               </View>
-
-              {/* Timeline Content */}
               <View className="px-4 py-4">
                 <View className="relative">
                   {allMilestones.map((milestone, index) => {
@@ -1020,14 +924,11 @@ const TruckOwnerTripDetailScreen = () => {
 
                     return (
                       <View key={milestone.id} className="relative flex-row items-start">
-                        {/* Timeline Line */}
                         {!isLast && (
                           <View style={styles.timelineLine}>
                             <LinearGradient colors={isCompleted ? ["#10B981", "#059669"] : ["#E5E7EB", "#D1D5DB"]} className="w-full h-full" />
                           </View>
                         )}
-
-                        {/* Timeline Node */}
                         <View className="relative z-10 mr-4">
                            <View style={[styles.milestoneNode, isCurrent ? styles.milestoneNodeCurrent : isCompleted ? styles.milestoneNodeCompleted : styles.milestoneNodePending]}>
                             {isCurrent && <View style={styles.pulseAnimation} />}
@@ -1035,12 +936,9 @@ const TruckOwnerTripDetailScreen = () => {
                             <View className="relative z-10">{isCompleted ? <FontAwesome5 name="check" size={14} color="white" /> : isCurrent ? <FontAwesome5 name="truck" size={14} color="white" /> : <FontAwesome5 name="clock" size={14} color="#9CA3AF" />}</View>
                           </View>
                         </View>
-
-                        {/* Content */}
                         <View className={`flex-1 ${!isLast ? "pb-6" : ""}`}>
                            <View style={[styles.milestoneContentBox, isCurrent ? styles.milestoneContentBoxCurrent : isCompleted ? styles.milestoneContentBoxCompleted : styles.milestoneContentBoxPending]}>
                             <Text style={[styles.milestoneLabel, isCurrent ? styles.milestoneLabelCurrent : isCompleted ? styles.milestoneLabelCompleted : styles.milestoneLabelPending]}>{milestone.label}</Text>
-
                             <View className="flex-row items-center justify-between mt-2">
                               <View className="flex-row items-center">
                                  <View style={[styles.milestoneBadge, isCurrent ? styles.milestoneBadgeCurrent : isCompleted ? styles.milestoneBadgeCompleted : styles.milestoneBadgePending]}>
@@ -1055,7 +953,6 @@ const TruckOwnerTripDetailScreen = () => {
                               </View>
                               {isCompleted && <Text className="text-xs font-medium text-gray-600">{format(new Date(milestone.timestamp), "MMM d • hh:mm a")}</Text>}
                             </View>
-
                             {isCurrent && (
                               <View className="p-3 mt-3 border rounded-lg bg-blue-100/50 border-blue-200/50">
                                 <Text className="text-sm leading-5 text-blue-800">This step is currently in progress. You'll receive updates as the status changes.</Text>
@@ -1068,8 +965,6 @@ const TruckOwnerTripDetailScreen = () => {
                   })}
                 </View>
               </View>
-
-              {/* Footer with Progress Summary */}
               <View className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl">
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center">
@@ -1090,13 +985,10 @@ const TruckOwnerTripDetailScreen = () => {
               </View>
             </View>
           </View>
-
-          {/* Verification Modal */}
           <View className="flex-1 w-full h-full">
             <Modal visible={isModalVisible} transparent={true} animationType="fade" onRequestClose={() => setModalVisible(false)}>
               <View className="justify-center flex-1 px-6 bg-black/60">
                 <View className="p-8 mx-2 bg-white shadow-2xl rounded-2xl">
-                  {/* Header Section */}
                   <View className="items-center mb-8">
                     <View style={styles.modalIconContainer} className="mb-4">
                       <LinearGradient colors={["#2563eb", "#1d4ed8"]} style={styles.modalIconGradient}>
@@ -1106,24 +998,18 @@ const TruckOwnerTripDetailScreen = () => {
                     <Text className="mb-3 text-2xl font-bold text-center text-gray-900">Delivery Verification Required</Text>
                     <Text className="px-2 leading-6 text-center text-gray-600">Please verify that the delivery milestone "{actionToTake?.label}" has been completed successfully. This confirmation will mark the trip as complete and cannot be reversed.</Text>
                   </View>
-
-                  {/* Verification Notice */}
                   <View className="p-4 mb-6 border-l-4 border-blue-400 rounded-r-lg bg-blue-50">
                     <Text className="mb-1 text-sm font-medium text-blue-800">Verification Checklist</Text>
                     <Text className="text-sm text-blue-700">
                       • Delivery completed at correct location{"\n"}• All goods delivered in acceptable condition{"\n"}• Required documentation received
                     </Text>
                   </View>
-
-                  {/* Confirmation Checkbox */}
                   <TouchableOpacity activeOpacity={0.8} onPress={() => setIsConfirmed(!isConfirmed)} className="flex-row items-start p-4 mb-8 bg-gray-50 rounded-xl">
                     <View style={[styles.checkboxBase, isConfirmed && styles.checkboxChecked]}>
                       {isConfirmed && <Feather name="check" size={16} color="white" />}
                     </View>
                     <Text className="flex-1 leading-6 text-gray-800">I confirm that I have verified the delivery completion and all requirements have been met. I understand this action will finalize the trip.</Text>
                   </TouchableOpacity>
-
-                  {/* Action Buttons */}
                   <View className="flex-row gap-4">
                     <TouchableOpacity
                       activeOpacity={0.8}
@@ -1135,7 +1021,6 @@ const TruckOwnerTripDetailScreen = () => {
                     >
                       <Text className="text-base font-semibold text-center text-gray-700">Cancel</Text>
                     </TouchableOpacity>
-
                     <TouchableOpacity
                       activeOpacity={0.8}
                       onPress={handleVerifyMilestone}
@@ -1145,7 +1030,6 @@ const TruckOwnerTripDetailScreen = () => {
                       {isPress ? (
                         <>
                           <ActivityIndicator size="small" color="white" />
-                          {/* <Text style={styles.verifyButtonText}>Processing...</Text> */}
                         </>
                       ) : (
                         <>
@@ -1161,7 +1045,6 @@ const TruckOwnerTripDetailScreen = () => {
           </View>
         </ScrollView>
       </View>
-      {/* Action Button */}
       {actionToTake && (
         <View className="absolute bottom-0 left-0 right-0 px-6 py-4 bg-white border-t border-gray-200">
           <TouchableOpacity activeOpacity={0.8} onPress={() => setModalVisible(true)} className="flex-row items-center justify-center w-full py-4 bg-green-500 rounded-2xl">
@@ -1170,8 +1053,6 @@ const TruckOwnerTripDetailScreen = () => {
           </TouchableOpacity>
         </View>
       )}
-
-      {/* Mine Owner Contact Bottom Sheet */}
       <ReusableBottomSheet ref={mineContactSheetRef} enablePanDownToClose={true} backgroundStyle={{ backgroundColor: "#fff" }} handleIndicatorStyle={{ backgroundColor: "#d1d5db" }}>
         <View className="flex-1 p-6">
           <View className="items-center mb-8">
@@ -1219,8 +1100,6 @@ const TruckOwnerTripDetailScreen = () => {
           </View>
         </View>
       </ReusableBottomSheet>
-
-      {/* Buyer Contact Bottom Sheet */}
       <ReusableBottomSheet ref={buyerContactSheetRef} enablePanDownToClose={true} backgroundStyle={{ backgroundColor: "#fff" }} handleIndicatorStyle={{ backgroundColor: "#d1d5db" }}>
         <View className="flex-1 p-6">
           <View className="items-center mb-8">
@@ -1268,8 +1147,6 @@ const TruckOwnerTripDetailScreen = () => {
           </View>
         </View>
       </ReusableBottomSheet>
-
-      {/* Driver Contact Bottom Sheet */}
       <ReusableBottomSheet ref={driverContactSheetRef} enablePanDownToClose={true} backgroundStyle={{ backgroundColor: "#fff" }} handleIndicatorStyle={{ backgroundColor: "#d1d5db" }}>
         <View className="flex-1 p-6">
           <View className="items-center mb-8">
@@ -1319,7 +1196,6 @@ const TruckOwnerTripDetailScreen = () => {
 export default TruckOwnerTripDetailScreen;
 
 const styles = StyleSheet.create({
-  // MODAL STYLES
   modalIconContainer: {
     width: 64,
     height: 64,
@@ -1374,14 +1250,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "white",
   },
-
-  // TIMELINE STYLES
   timelineLine: {
     position: 'absolute',
-    left: 24, // half of node width
-    top: 48, // below the node
+    left: 24,
+    top: 48,
     width: 2,
-    height: 64, // space between nodes
+    height: 64,
     zIndex: 0,
   },
   milestoneNode: {

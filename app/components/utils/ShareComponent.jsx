@@ -7,11 +7,9 @@ import ViewShot from "react-native-view-shot";
 import * as Sharing from "expo-sharing";
 import Clipboard from "@react-native-clipboard/clipboard";
 import Toast from "react-native-toast-message";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { LinearGradient } from "expo-linear-gradient";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
-// Dark Theme Card Component
 const DarkThemeCard = React.forwardRef(({ data }, ref) => {
   const imageUrl = data?.imageUrl || "https://placehold.co/600x400/e2e8f0/e2e8f0?text=Image";
   const initials = data?.ownerName
@@ -84,7 +82,6 @@ const DarkThemeCard = React.forwardRef(({ data }, ref) => {
   );
 });
 
-// Light Theme Card Component
 const LightThemeCard = React.forwardRef(({ data }, ref) => {
   const imageUrl = data?.imageUrl || "https://placehold.co/600x400/e2e8f0/e2e8f0?text=Image";
   const initials = data?.ownerName
@@ -165,7 +162,6 @@ const ThemeSelectionModal = ({ visible, onClose, onSelectTheme, data }) => (
         <Text className="mb-8 text-base text-center text-gray-500">Select your preferred card design</Text>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mx-auto mb-6">
-          {/* Dark Theme Preview */}
           <TouchableOpacity activeOpacity={1} className="items-center mx-3" onPress={() => onSelectTheme("dark")}>
             <View className="w-[140px] bg-slate-800 rounded-xl overflow-hidden shadow-lg mb-2">
               <View className="relative h-20">
@@ -185,7 +181,6 @@ const ThemeSelectionModal = ({ visible, onClose, onSelectTheme, data }) => (
             <Text className="text-sm font-semibold text-center text-gray-700">Dark Theme</Text>
           </TouchableOpacity>
 
-          {/* Light Theme Preview */}
           <TouchableOpacity activeOpacity={1} className="items-center mx-3" onPress={() => onSelectTheme("light")}>
             <View className="w-[140px] bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200 mb-2">
               <View className="relative h-20">
@@ -234,7 +229,6 @@ const ShareComponent = React.forwardRef(({ shareableData }, ref) => {
 
   const redirectorUrl = `https://buildorite.pages.dev/${shareableData.path}?app=${shareableData.app}`;
 
-  // Enhanced Professional Sharing Logic
   const shareWithDeepLink = async () => {
     try {
       const mineName = shareableData.name || "Mining Operation";
@@ -309,13 +303,10 @@ const ShareComponent = React.forwardRef(({ shareableData }, ref) => {
 
   return (
     <>
-      {/* Hidden card components */}
       <DarkThemeCard data={shareableData} ref={darkCardRef} />
       <LightThemeCard data={shareableData} ref={lightCardRef} />
 
-      {/* Enhanced Bottom Sheet */}
       <ReusableBottomSheet ref={bottomSheetRef} enablePanDownToClose={true}>
-        {/* Theme Selection Modal */}
         <ThemeSelectionModal visible={showThemeModal} onClose={() => setShowThemeModal(false)} onSelectTheme={shareCardWithTheme} data={shareableData} />
         <View className="flex-1 p-6">
           <View className="items-center mb-8">
